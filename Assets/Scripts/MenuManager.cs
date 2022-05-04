@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class MenuManager : MonoBehaviour
 {
@@ -16,6 +17,10 @@ public class MenuManager : MonoBehaviour
 
     public MenuButton modeButton;
     public MenuButton difficultyButton;
+
+    public AudioSource buttonAudio;
+    public AudioSource resetAudio;
+    public AudioMixer audioMixer;
 
     private int musicVolume;
     private int soundVolume;
@@ -50,9 +55,15 @@ public class MenuManager : MonoBehaviour
 
         // Update resetting UI
         if (isResetting)
+        {
             resetButton.SetDefaultText("resetting: " + (Mathf.Clamp01(resetTimer / 3f) * 100f).ToString("F0") + "%");
+            resetAudio.Play();
+        }
         else
+        {
             resetButton.SetDefaultText("reset save file");
+            resetAudio.Stop();
+        }
     }
 
     // Closes the game, why must I do this Unity...
@@ -99,15 +110,15 @@ public class MenuManager : MonoBehaviour
                 break;
         }
 
-        UpdateSettingsUI();
+        UpdateSettings();
     }
 
     void LoadSettings()
     {
-        musicVolume = PlayerPrefs.GetInt("MusicVolume", 10);
-        soundVolume = PlayerPrefs.GetInt("SoundVolume", 10);
+        musicVolume = PlayerPrefs.GetInt("MusicVolume", 8);
+        soundVolume = PlayerPrefs.GetInt("SoundVolume", 8);
 
-        UpdateSettingsUI();
+        UpdateSettings();
     }
 
     void SaveSettings()
@@ -132,18 +143,31 @@ public class MenuManager : MonoBehaviour
                 break;
         }
 
-        UpdateSettingsUI();
+        UpdateSettings();
         SaveSettings();
     }
 
-    void UpdateSettingsUI()
+    void UpdateSettings()
     {
+        // UI
         musicButton.SetDefaultText("music volume: " + musicVolume.ToString());
         soundButton.SetDefaultText("sound volume: " + soundVolume.ToString());
+
+        // Sound
+        float scaledMusic = (musicVolume > 0) ? Mathf.Log10(Mathf.Clamp(musicVolume / 10f, 0.001f, 1f)) * 20f : -80f;
+        audioMixer.SetFloat("MusicVolume", scaledMusic);
+
+        float scaledSound = (soundVolume > 0) ? Mathf.Log10(Mathf.Clamp(soundVolume / 10f, 0.001f, 1f)) * 20f : -80f;
+        audioMixer.SetFloat("SoundVolume", scaledSound);
     }
 
     public void SetResetState(bool state)
     {
         isResetting = state;
+    }
+
+    public void PlayButtonSound(AudioClip clip)
+    {
+        buttonAudio.PlayOneShot(clip);
     }
 }
