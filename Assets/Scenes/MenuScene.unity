@@ -4236,7 +4236,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: -8772257279745564523, guid: 0c3d3c540e0d5db4c934c5be1649df63, type: 2}
-  m_audioClip: {fileID: 8300000, guid: 46917ef2c413be84e8e45016356a7f71, type: 3}
+  m_audioClip: {fileID: 8300000, guid: f1afda7970798c4449b28354752bd95d, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -6613,7 +6613,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1377044283}
   - component: {fileID: 1377044282}
-  - component: {fileID: 1377044284}
   m_Layer: 0
   m_Name: MenuManager
   m_TagString: Untagged
@@ -6636,7 +6635,6 @@ MonoBehaviour:
   mainMenu: {fileID: 292166083}
   optionsMenu: {fileID: 1209847600}
   playMenu: {fileID: 2021500293}
-  loadingMenu: {fileID: 524034126}
   backgroundObjects: {fileID: 703698083}
   musicButton: {fileID: 1724348380}
   soundButton: {fileID: 29722208}
@@ -6663,22 +6661,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1377044284
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1377044281}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0fd6d735520c0c43a759f4cad5abc29, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  progressText: {fileID: 541311500}
-  progressBar: {fileID: 587009692}
-  flavourText: {fileID: 164560079}
-  progress: 0
 --- !u!1 &1402252446
 GameObject:
   m_ObjectHideFlags: 0

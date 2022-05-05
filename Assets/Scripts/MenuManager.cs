@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Audio;
 
 public class MenuManager : MonoBehaviour
@@ -8,7 +9,6 @@ public class MenuManager : MonoBehaviour
     public GameObject mainMenu;
     public GameObject optionsMenu;
     public GameObject playMenu;
-    public GameObject loadingMenu;
     public GameObject backgroundObjects;
 
     public MenuButton musicButton;
@@ -40,7 +40,7 @@ public class MenuManager : MonoBehaviour
         if (isResetting)
         {
             resetTimer += Time.deltaTime;
-            float progress = Mathf.Clamp01(resetTimer / 3f);
+            float progress = Mathf.Clamp01(resetTimer / 2f);
 
             if (progress >= 1f)
             {
@@ -56,7 +56,7 @@ public class MenuManager : MonoBehaviour
         // Update resetting UI
         if (isResetting)
         {
-            resetButton.SetDefaultText("resetting: " + (Mathf.Clamp01(resetTimer / 3f) * 100f).ToString("F0") + "%");
+            resetButton.SetDefaultText("resetting: " + (Mathf.Clamp01(resetTimer / 2f) * 100f).ToString("F0") + "%");
             resetAudio.Play();
         }
         else
@@ -75,7 +75,7 @@ public class MenuManager : MonoBehaviour
     /// <summary>
     /// Changes the menu state
     /// </summary>
-    /// <param name="menuIndex">0 = main, 1 = options, 2 = play, 3 = loading</param>
+    /// <param name="menuIndex">0 = main, 1 = options, 2 = play</param>
     public void SetMenuState(int menuIndex)
     {
         switch (menuIndex)
@@ -84,29 +84,19 @@ public class MenuManager : MonoBehaviour
                 mainMenu.SetActive(true);
                 optionsMenu.SetActive(false);
                 playMenu.SetActive(false);
-                loadingMenu.SetActive(false);
                 backgroundObjects.SetActive(true);
                 break;
             case 1:
                 mainMenu.SetActive(false);
                 optionsMenu.SetActive(true);
                 playMenu.SetActive(false);
-                loadingMenu.SetActive(false);
                 backgroundObjects.SetActive(true);
                 break;
             case 2:
                 mainMenu.SetActive(false);
                 optionsMenu.SetActive(false);
                 playMenu.SetActive(true);
-                loadingMenu.SetActive(false);
                 backgroundObjects.SetActive(true);
-                break;
-            case 3:
-                mainMenu.SetActive(false);
-                optionsMenu.SetActive(false);
-                playMenu.SetActive(false);
-                loadingMenu.SetActive(true);
-                backgroundObjects.SetActive(false);
                 break;
         }
 
@@ -115,8 +105,8 @@ public class MenuManager : MonoBehaviour
 
     void LoadSettings()
     {
-        musicVolume = PlayerPrefs.GetInt("MusicVolume", 8);
-        soundVolume = PlayerPrefs.GetInt("SoundVolume", 8);
+        musicVolume = PlayerPrefs.GetInt("MusicVolume", 5);
+        soundVolume = PlayerPrefs.GetInt("SoundVolume", 5);
 
         UpdateSettings();
     }
@@ -169,5 +159,14 @@ public class MenuManager : MonoBehaviour
     public void PlayButtonSound(AudioClip clip)
     {
         buttonAudio.PlayOneShot(clip);
+    }
+
+    /// <summary>
+    /// Loads a new scene, given a build index
+    /// </summary>
+    /// <param name="sceneIndex">0 = menu, 1 = level, 2 = editor</param>
+    public void LoadScene(int sceneIndex)
+    {
+        SceneManager.LoadScene(sceneIndex);
     }
 }
