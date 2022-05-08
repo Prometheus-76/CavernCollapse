@@ -103,6 +103,15 @@ public class MenuManager : MonoBehaviour
         UpdateSettings();
     }
 
+    /// <summary>
+    /// Loads a new scene to transition to
+    /// </summary>
+    /// <param name="sceneIndex">The build index of the scene we are transitioning to</param>
+    public void SceneTransition(int sceneIndex)
+    {
+        SceneManager.LoadScene(sceneIndex);
+    }
+
     void LoadSettings()
     {
         musicVolume = PlayerPrefs.GetInt("MusicVolume", 5);

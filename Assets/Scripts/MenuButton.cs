@@ -10,6 +10,8 @@ public class MenuButton : MonoBehaviour
     private bool isClicking;
     private bool isHovering;
 
+    public int buttonSide = 0;
+
     void Awake()
     {
         textComponent = GetComponent<TextMeshProUGUI>();
@@ -27,13 +29,38 @@ public class MenuButton : MonoBehaviour
     {
         if (isHovering)
         {
-            if (isClicking)
+            if (buttonSide == 0)
             {
-                textComponent.text = "- " + buttonText + " -";
+                if (isClicking)
+                {
+                    textComponent.text = "- " + buttonText + " -";
+                }
+                else
+                {
+                    textComponent.text = "> " + buttonText + " <";
+                }
             }
-            else
+            else if (buttonSide == 1)
             {
-                textComponent.text = "> " + buttonText + " <";
+                if (isClicking)
+                {
+                    textComponent.text = buttonText + " -";
+                }
+                else
+                {
+                    textComponent.text = buttonText + " <";
+                }
+            }
+            else if (buttonSide == -1)
+            {
+                if (isClicking)
+                {
+                    textComponent.text = "- " + buttonText;
+                }
+                else
+                {
+                    textComponent.text = "> " + buttonText;
+                }
             }
         }
         else
