@@ -9,7 +9,7 @@ public class FileManager : MonoBehaviour
     #region Variables
 
     [Header("Parameters")]
-    [SerializeField, Range(0f, 3f), Tooltip("How long it takes to delete a dataset or sample")] private float deleteTime;
+    [Range(0f, 3f), Tooltip("How long it takes to delete a dataset or sample")] public float deleteTime;
     
     [Header("Components")]
     public EditorManager editorManager;
