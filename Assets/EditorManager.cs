@@ -68,6 +68,7 @@ public class EditorManager : MonoBehaviour
 
     [Header("Components")]
     public FileManager fileManager;
+    public EditorAudio editorAudio;
 
     [HideInInspector] public TileData[,] sampleData;
     [HideInInspector] public BlockType currentBlockType;
@@ -207,13 +208,42 @@ public class EditorManager : MonoBehaviour
     // Place a tile at this position in the grid
     void PlaceTile(int x, int y)
     {
+        // Don't allow blocks to be placed on top of each other when they are of identical type
+        if (sampleData[x, y].blockType == currentBlockType)
+            return;
 
+        // Pan audio left/right based on x position in the grid (cool Animal Crossing audio technique!)
+        // https://www.youtube.com/watch?v=A4mN7CsAys8 (video referencing this)
+
+        float horizontalAmount = (x + 1f) / buildZoneSize.x;
+        float stereoValue = Mathf.Lerp(-1f, 1f, horizontalAmount);
+        editorAudio.PlayOneshotStereo(EditorAudio.OneshotSounds.Place, stereoValue);
+
+        // Set the new block type
+        sampleData[x, y].blockType = currentBlockType;
+
+        // Recalculate all tiles and replace them
     }
 
     // Ensure there is no tile at this position in the grid
     void RemoveTile(int x, int y)
     {
+        // Don't allow the player to delete a block which is already deleted
+        if (sampleData[x, y].blockType == BlockType.None)
+            return;
 
+        // Pan audio left/right based on x position in the grid (cool Animal Crossing audio technique!)
+        // https://www.youtube.com/watch?v=A4mN7CsAys8 (video referencing this)
+
+        float horizontalAmount = (x + 1f) / buildZoneSize.x;
+        float stereoValue = Mathf.Lerp(-1f, 1f, horizontalAmount);
+        editorAudio.PlayOneshotStereo(EditorAudio.OneshotSounds.Delete, stereoValue);
+
+        // Reset the block type to none
+        sampleData[x, y].blockType = BlockType.None;
+
+        // Remove tile at this position
+        // Recalculate all tiles
     }
 
     #endregion
@@ -227,6 +257,8 @@ public class EditorManager : MonoBehaviour
         // Only allow undo when list is not empty
         if (undoList.Count <= 0)
             return;
+
+        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
     }
 
     // Reverts to state before undo-ing an action
@@ -236,6 +268,8 @@ public class EditorManager : MonoBehaviour
         // Only allow redo when list is not empty
         if (redoList.Count <= 0)
             return;
+
+        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
     }
 
     #endregion
@@ -255,18 +289,23 @@ public class EditorManager : MonoBehaviour
 
         // Set new current block type
         currentBlockType = (BlockType)currentIndex;
+        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
     }
 
     #region Other
 
     public void OpenTutorial()
     {
+        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Positive);
+
         // This is a total stopgap right now, but it let me cut down on the time to develop an in-engine tutorial for the editor
         Application.OpenURL("https://prometheus-76.github.io");
     }
 
     public void ReturnToMenu()
     {
+        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Negative);
+        
         SceneManager.LoadScene(0);
     }
 

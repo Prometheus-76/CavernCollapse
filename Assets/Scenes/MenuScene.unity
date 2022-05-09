@@ -175,6 +175,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &29722209
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1097,6 +1098,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &203932679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1573,6 +1575,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &265415149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2087,6 +2090,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &332175229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2788,6 +2792,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &499841593
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3073,7 +3078,7 @@ GameObject:
   - component: {fileID: 521889134}
   - component: {fileID: 521889135}
   m_Layer: 0
-  m_Name: ButtonAudio
+  m_Name: OneshotAudio
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4206,7 +4211,7 @@ GameObject:
   - component: {fileID: 806371738}
   - component: {fileID: 806371739}
   m_Layer: 0
-  m_Name: ResetAudio
+  m_Name: LoopingAudio
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4599,6 +4604,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &926346152
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5729,6 +5735,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &1264905895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7143,6 +7150,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &1445192009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8307,6 +8315,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &1673888344
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8696,6 +8705,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &1724348381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9533,6 +9543,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0c2f16b399704589d695ae8338194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonSide: 0
 --- !u!114 &1985360919
 MonoBehaviour:
   m_ObjectHideFlags: 0
