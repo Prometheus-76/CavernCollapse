@@ -256,7 +256,10 @@ public class EditorManager : MonoBehaviour
     {
         // Only allow undo when list is not empty
         if (undoList.Count <= 0)
+        {
+            editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Denied);
             return;
+        }
 
         editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
     }
@@ -267,7 +270,10 @@ public class EditorManager : MonoBehaviour
     {
         // Only allow redo when list is not empty
         if (redoList.Count <= 0)
+        {
+            editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Denied);
             return;
+        }
 
         editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
     }

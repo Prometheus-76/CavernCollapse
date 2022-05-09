@@ -20,6 +20,12 @@ public class EditorUI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Load buttons
+        if (fileManager.currentDataset == 0) datasetButton.SetDefaultText("dataset: [ default ]");
+        if (fileManager.currentDataset != 0) datasetButton.SetDefaultText("dataset: [ custom " + fileManager.currentDataset.ToString() + " ]");
+
+        sampleButton.SetDefaultText("sample: [ " + fileManager.currentSample.ToString("D2") + " ]");
+
         // Delete buttons
         datasetDeleteButton.SetDefaultText("[ DELETE DATASET ]");
         sampleDeleteButton.SetDefaultText("[ DELETE SAMPLE ]");

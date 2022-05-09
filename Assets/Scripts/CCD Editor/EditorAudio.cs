@@ -18,6 +18,7 @@ public class EditorAudio : MonoBehaviour
     public AudioClip deleteClip;
     public AudioClip placeClip;
     public AudioClip descendingClip;
+    public AudioClip deniedClip;
 
     [Header("Audio Settings")]
     [SerializeField, Range(0f, 1f), Tooltip("How intensely the audio pans from left to right when placing and deleting")] private float stereoIntensity;
@@ -30,7 +31,8 @@ public class EditorAudio : MonoBehaviour
         Scratch,
         Delete,
         Place,
-        Descending
+        Descending,
+        Denied
     }
 
     // Set the looping audio to start or stop playing
@@ -80,6 +82,8 @@ public class EditorAudio : MonoBehaviour
                 return placeClip;
             case OneshotSounds.Descending:
                 return descendingClip;
+            case OneshotSounds.Denied:
+                return deniedClip;
             default:
                 return null;
         }
