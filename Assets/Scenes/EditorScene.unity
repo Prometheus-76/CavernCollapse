@@ -4014,7 +4014,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4417d79d64183784b8670e93c4194ca5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deleteTime: 2
+  deleteTime: 1
   editorManager: {fileID: 1425894191}
   editorAudio: {fileID: 1425894195}
 --- !u!114 &1425894194
