@@ -40,7 +40,7 @@ public class EditorManager : MonoBehaviour
     public struct EditorAction
     {
         public Vector2Int position;
-        public TileData newTile;
+        public TileData tileData;
     }
 
     // For determining sprite based on surroundings
@@ -152,11 +152,11 @@ public class EditorManager : MonoBehaviour
         {
             if (inputMaster.Editor.Place.ReadValue<float>() != 0f)
             {
-                PlaceTile(gridCursorPos.x, gridCursorPos.y);
+                PlaceTile(gridCursorPos.x, gridCursorPos.y, true);
             }
             else if (inputMaster.Editor.Remove.ReadValue<float>() != 0f)
             {
-                RemoveTile(gridCursorPos.x, gridCursorPos.y);
+                RemoveTile(gridCursorPos.x, gridCursorPos.y, true);
             }
         }
 
@@ -226,7 +226,7 @@ public class EditorManager : MonoBehaviour
     #region Place/Remove Tile
 
     // Place a tile at this position in the grid
-    void PlaceTile(int x, int y)
+    void PlaceTile(int x, int y, bool directAction)
     {
         // Don't allow blocks to be placed on top of each other when they are of identical type
         if (sampleData[x, y].blockType == currentBlockType)
@@ -236,12 +236,18 @@ public class EditorManager : MonoBehaviour
         if (fileManager.currentDataset == 0)
             return;
 
-        // Pan audio left/right based on x position in the grid (cool Animal Crossing audio technique!)
-        // https://www.youtube.com/watch?v=A4mN7CsAys8 (video referencing this)
+        if (directAction)
+        {
+            // Pan audio left/right based on x position in the grid (cool Animal Crossing audio technique!)
+            // https://www.youtube.com/watch?v=A4mN7CsAys8 (video referencing this)
 
-        float horizontalAmount = (x + 1f) / buildZoneSize.x;
-        float stereoValue = Mathf.Lerp(-1f, 1f, horizontalAmount);
-        editorAudio.PlayOneshotStereo(EditorAudio.OneshotSounds.Place, stereoValue);
+            float horizontalAmount = (x + 1f) / buildZoneSize.x;
+            float stereoValue = Mathf.Lerp(-1f, 1f, horizontalAmount);
+            editorAudio.PlayOneshotStereo(EditorAudio.OneshotSounds.Place, stereoValue);
+
+            UndoAdd(x, y, true);
+        }
+
 
         // Set the new block type
         sampleData[x, y].blockType = currentBlockType;
@@ -252,7 +258,7 @@ public class EditorManager : MonoBehaviour
     }
 
     // Ensure there is no tile at this position in the grid
-    void RemoveTile(int x, int y)
+    void RemoveTile(int x, int y, bool directAction)
     {
         // Don't allow the player to delete a block which is already deleted
         if (sampleData[x, y].blockType == BlockType.None)
@@ -262,12 +268,17 @@ public class EditorManager : MonoBehaviour
         if (fileManager.currentDataset == 0)
             return;
 
-        // Pan audio left/right based on x position in the grid (cool Animal Crossing audio technique!)
-        // https://www.youtube.com/watch?v=A4mN7CsAys8 (video referencing this)
+        if (directAction)
+        {
+            // Pan audio left/right based on x position in the grid (cool Animal Crossing audio technique!)
+            // https://www.youtube.com/watch?v=A4mN7CsAys8 (video referencing this)
 
-        float horizontalAmount = (x + 1f) / buildZoneSize.x;
-        float stereoValue = Mathf.Lerp(-1f, 1f, horizontalAmount);
-        editorAudio.PlayOneshotStereo(EditorAudio.OneshotSounds.Delete, stereoValue);
+            float horizontalAmount = (x + 1f) / buildZoneSize.x;
+            float stereoValue = Mathf.Lerp(-1f, 1f, horizontalAmount);
+            editorAudio.PlayOneshotStereo(EditorAudio.OneshotSounds.Delete, stereoValue);
+
+            UndoAdd(x, y, true);
+        }
 
         // Reset the block type to none
         sampleData[x, y].blockType = BlockType.None;
@@ -294,8 +305,66 @@ public class EditorManager : MonoBehaviour
         
         unsavedChanges = true;
 
+        // Add to the redo list
+        RedoAdd(undoList[undoList.Count - 1].position.x, undoList[undoList.Count - 1].position.y);
+
+        // Undo the previous tile action (add or remove)
+        if (undoList[undoList.Count - 1].tileData.blockType == BlockType.None)
+            RemoveTile(undoList[undoList.Count - 1].position.x, undoList[undoList.Count - 1].position.y, false);
+        else
+            PlaceTile(undoList[undoList.Count - 1].position.x, undoList[undoList.Count - 1].position.y, false);
+
+        undoList.RemoveAt(undoList.Count - 1);
+
         editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
         UpdateTiles();
+    }
+
+    // Adds an action to the undo list
+    void UndoAdd(int x, int y, bool newAction)
+    {
+        EditorAction editorAction = new EditorAction();
+
+        // Where the action took place
+        editorAction.position.x = x;
+        editorAction.position.y = y;
+
+        // What the data at this position contained
+        editorAction.tileData.tileIndex = sampleData[x, y].tileIndex;
+        editorAction.tileData.blockType = sampleData[x, y].blockType;
+
+        undoList.Add(editorAction);
+
+        // Keep undo list at or below the max length
+        while (undoList.Count > undoStackSize)
+        {
+            undoList.RemoveAt(0);
+        }
+
+        // Clear redo list when actions are added
+        if (newAction) redoList.Clear();
+    }
+
+    // Adds an action to the redo list
+    void RedoAdd(int x, int y)
+    {
+        EditorAction editorAction = new EditorAction();
+
+        // Where the action took place
+        editorAction.position.x = x;
+        editorAction.position.y = y;
+
+        // What the data at this position contained
+        editorAction.tileData.tileIndex = sampleData[x, y].tileIndex;
+        editorAction.tileData.blockType = sampleData[x, y].blockType;
+
+        redoList.Add(editorAction);
+
+        // Keep undo list at or below the max length
+        while (redoList.Count > undoStackSize)
+        {
+            redoList.RemoveAt(0);
+        }
     }
 
     // Reverts to state before undo-ing an action
@@ -310,6 +379,17 @@ public class EditorManager : MonoBehaviour
         }
 
         unsavedChanges = true;
+
+        // Add back to the undo list
+        UndoAdd(redoList[redoList.Count - 1].position.x, redoList[redoList.Count - 1].position.y, false);
+
+        // Redo the previous tile action (add or remove)
+        if (redoList[redoList.Count - 1].tileData.blockType == BlockType.None)
+            RemoveTile(redoList[redoList.Count - 1].position.x, redoList[redoList.Count - 1].position.y, false);
+        else
+            PlaceTile(redoList[redoList.Count - 1].position.x, redoList[redoList.Count - 1].position.y, false);
+
+        redoList.RemoveAt(redoList.Count - 1);
 
         editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
         UpdateTiles();
