@@ -292,6 +292,31 @@ public class EditorManager : MonoBehaviour
 
     #region Undo/Redo
 
+    // Adds an action to the undo list
+    void UndoAdd(int x, int y, bool newAction)
+    {
+        EditorAction editorAction = new EditorAction();
+
+        // Where the action took place
+        editorAction.position.x = x;
+        editorAction.position.y = y;
+
+        // What the data at this position contained
+        editorAction.tileData.tileIndex = sampleData[x, y].tileIndex;
+        editorAction.tileData.blockType = sampleData[x, y].blockType;
+
+        undoList.Add(editorAction);
+
+        // Keep undo list at or below the max length
+        while (undoList.Count > undoStackSize)
+        {
+            undoList.RemoveAt(0);
+        }
+
+        // Clear redo list when actions are added
+        if (newAction) redoList.Clear();
+    }
+
     // Reverts to previous grid state
     // Note: Tile actions are only recorded when a tile is placed or deleted manually
     public void Undo()
@@ -318,31 +343,6 @@ public class EditorManager : MonoBehaviour
 
         editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
         UpdateTiles();
-    }
-
-    // Adds an action to the undo list
-    void UndoAdd(int x, int y, bool newAction)
-    {
-        EditorAction editorAction = new EditorAction();
-
-        // Where the action took place
-        editorAction.position.x = x;
-        editorAction.position.y = y;
-
-        // What the data at this position contained
-        editorAction.tileData.tileIndex = sampleData[x, y].tileIndex;
-        editorAction.tileData.blockType = sampleData[x, y].blockType;
-
-        undoList.Add(editorAction);
-
-        // Keep undo list at or below the max length
-        while (undoList.Count > undoStackSize)
-        {
-            undoList.RemoveAt(0);
-        }
-
-        // Clear redo list when actions are added
-        if (newAction) redoList.Clear();
     }
 
     // Adds an action to the redo list
