@@ -8,8 +8,6 @@ using UnityEngine.Tilemaps;
 // ...it also handles determining which sprites to show given neighbouring tiles
 public class EditorManager : MonoBehaviour
 {
-    #region Variables
-
     #region Data Structures
 
     // Every distinct type of tile which can appear in the game
@@ -28,6 +26,7 @@ public class EditorManager : MonoBehaviour
     }
 
     // Represents each space in the grid
+    [System.Serializable]
     public struct TileData
     {
         public BlockType blockType;
@@ -60,6 +59,8 @@ public class EditorManager : MonoBehaviour
 
     #endregion
 
+    #region Variables
+
     [Header("Build Settings")]
     public Vector2Int buildZoneSize;
     public Vector2 buildZoneOffset;
@@ -79,6 +80,7 @@ public class EditorManager : MonoBehaviour
     [HideInInspector] public TileData[,] sampleData;
     [HideInInspector] public TileNeighbours[,] sampleNeighbours;
     [HideInInspector] public BlockType currentBlockType;
+    [HideInInspector] public bool unsavedChanges;
 
     #region Private 
 
@@ -111,6 +113,7 @@ public class EditorManager : MonoBehaviour
         redoList = new List<EditorAction>();
 
         currentBlockType = BlockType.Solid;
+        unsavedChanges = false;
 
         // Align tilemap with world position of grid, this means inserting items into the grid matches the tilemap coordinates
         tilesParent.position = buildZoneOffset - ((Vector2)buildZoneSize / 2f);
@@ -242,6 +245,7 @@ public class EditorManager : MonoBehaviour
 
         // Set the new block type
         sampleData[x, y].blockType = currentBlockType;
+        unsavedChanges = true;
 
         // Recalculate all tiles and replace them
         UpdateTiles();
@@ -267,6 +271,7 @@ public class EditorManager : MonoBehaviour
 
         // Reset the block type to none
         sampleData[x, y].blockType = BlockType.None;
+        unsavedChanges = true;
 
         // Recalculate all tiles
         UpdateTiles();
@@ -281,11 +286,13 @@ public class EditorManager : MonoBehaviour
     public void Undo()
     {
         // Only allow undo on non-default samples when list is not empty
-        if (undoList.Count <= 0 && fileManager.currentDataset != 0)
+        if (undoList.Count <= 0 || fileManager.currentDataset == 0)
         {
             editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Denied);
             return;
         }
+        
+        unsavedChanges = true;
 
         editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
         UpdateTiles();
@@ -296,11 +303,13 @@ public class EditorManager : MonoBehaviour
     public void Redo()
     {
         // Only allow redo on non-default samples when list is not empty
-        if (redoList.Count <= 0 && fileManager.currentDataset != 0)
+        if (redoList.Count <= 0 || fileManager.currentDataset == 0)
         {
             editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Denied);
             return;
         }
+
+        unsavedChanges = true;
 
         editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
         UpdateTiles();
@@ -471,24 +480,6 @@ public class EditorManager : MonoBehaviour
         // Set new current block type
         currentBlockType = (BlockType)currentIndex;
         editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (sampleData != null)
-        {
-            for (int x = 0; x < buildZoneSize.x; x++)
-            {
-                for (int y = 0; y < buildZoneSize.y; y++)
-                {
-                    if (sampleData[x, y].blockType != BlockType.None)
-                    {
-                        Vector3 pos = GridToWorld(x, y);
-                        Gizmos.DrawSphere(pos, 0.5f);
-                    }
-                }
-            }
-        }
     }
 
     #region Other

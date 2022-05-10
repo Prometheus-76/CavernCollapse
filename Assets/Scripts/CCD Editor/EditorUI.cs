@@ -24,7 +24,7 @@ public class EditorUI : MonoBehaviour
         if (fileManager.currentDataset == 0) datasetButton.SetDefaultText("dataset: [ default ]");
         if (fileManager.currentDataset != 0) datasetButton.SetDefaultText("dataset: [ custom " + fileManager.currentDataset.ToString() + " ]");
 
-        sampleButton.SetDefaultText("sample: [ " + fileManager.currentSample.ToString("D2") + " ]");
+        sampleButton.SetDefaultText("sample: [ " + fileManager.currentSample.ToString("D2") + " / " + fileManager.currentSampleCount.ToString("D2") + " ]");
 
         // Delete buttons
         datasetDeleteButton.SetDefaultText("[ DELETE DATASET ]");
@@ -40,5 +40,8 @@ public class EditorUI : MonoBehaviour
 
         // Block type button
         blockTypeButton.SetDefaultText("block type: [ " + editorManager.currentBlockType.ToString().ToUpper() + " ]");
+
+        // Save sample button
+        saveButton.SetDefaultText("[ save current" + (editorManager.unsavedChanges ? "* ]" : " ]"));
     }
 }

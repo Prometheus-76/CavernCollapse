@@ -6,6 +6,46 @@ using System.IO;
 // Interfaces directly with the files and directories used for storing datasets and samples
 public class FileManager : MonoBehaviour
 {
+    #region Custom Data Structures
+
+    // Wrapped "JSON-friendly" version of sample data
+    [System.Serializable]
+    public class SerialisedSample
+    {
+        // JsonUtility.ToJson() doesn't like:
+        // Multidimensional arrays
+        // Non-serializable classes and structs
+        // Being directly passed an array instead of a singular object (like this class!)
+
+        public EditorManager.TileData[] data;
+        // EditorManager is not stored here, as it would be overwritten every time the JSON data is parsed back in on load
+
+        // Constructor
+        public SerialisedSample(EditorManager editorManager)
+        {
+            // Allocate the memory for the sample data
+            data = new EditorManager.TileData[editorManager.buildZoneSize.x * editorManager.buildZoneSize.y];
+        }
+
+        // Updates the data array from the 2D editor data array
+        public void UpdateData(EditorManager editorManager)
+        {
+            // Write to 1D array
+            for (int y = 0; y < editorManager.buildZoneSize.y; y++)
+            {
+                for (int x = 0; x < editorManager.buildZoneSize.x; x++)
+                {
+                    data[y * editorManager.buildZoneSize.x + x] = editorManager.sampleData[x, y];
+                }
+            }
+        }
+    }
+
+    [HideInInspector]
+    public SerialisedSample serialisedSample;
+
+    #endregion
+
     #region Variables
 
     [Header("Parameters")]
@@ -19,6 +59,7 @@ public class FileManager : MonoBehaviour
     public float deleteTimer { get; private set; }
     public int currentDataset { get; private set; } // If this is 0, then load the default dataset from the resources folder
     public int currentSample { get; private set; } // This starts at 1, since a "default sample" for each dataset doesn't really make sense
+    public int currentSampleCount { get; private set; } // How many samples are in the current dataset
     public bool deleteDataset { get; private set; } // Whether the timer should delete a dataset or a sample
 
     #endregion
@@ -34,6 +75,8 @@ public class FileManager : MonoBehaviour
         // Create the customs directory if it doesn't already exist
         if (Directory.Exists(Application.persistentDataPath + "/SampleData") == false)
             Directory.CreateDirectory(Application.persistentDataPath + "/SampleData");
+
+        serialisedSample = new SerialisedSample(editorManager);
 
         // Load the first sample in the default dataset
         // This MUST be done in Start() and not Awake(), or it could be reset by the EditorManager
@@ -75,6 +118,22 @@ public class FileManager : MonoBehaviour
         // 1. Convert sampleData in EditorManager to 1D array and serialize
         // 2. Parse to JSON
         // 3. Write JSON to current file
+
+        // Convert sample to 1D array and store in our serialisedSample variable
+        serialisedSample.UpdateData(editorManager);
+
+        // Serialise the object to JSON string
+        string sampleDataJSON = JsonUtility.ToJson(serialisedSample, true);
+
+        // Save to the current sample file
+        string fileDirectory = Application.persistentDataPath + "/SampleData/Dataset" + currentDataset + "/Sample" + currentSample + ".ccd";
+        StreamWriter streamWriter = new StreamWriter(fileDirectory);
+        streamWriter.Write(sampleDataJSON);
+        streamWriter.Close();
+        streamWriter.Dispose();
+
+        // No more unsaved changes!
+        editorManager.unsavedChanges = false;
     }
 
     // Finds the next dataset or sample and sets it appropriately with the currentDataset and currentSample variables
@@ -130,12 +189,56 @@ public class FileManager : MonoBehaviour
 
         // Clean slate for when loading a new sample
         editorManager.ResetSample();
+
+        // Open the file and read the data
+        string fileData;
+        if (currentDataset == 0)
+        {
+            // Loading default dataset sample
+            // String syntax here for Resources.Load is EXTREMELY fussy!
+            fileData = Resources.Load<TextAsset>("SampleData/Sample" + currentSample).text;
+        }
+        else
+        {
+            // Loading custom dataset sample
+            string fileDirectory = Application.persistentDataPath + "/SampleData/Dataset" + currentDataset + "/Sample" + currentSample + ".ccd";
+
+            StreamReader streamReader = new StreamReader(fileDirectory);
+            fileData = streamReader.ReadToEnd();
+            streamReader.Close();
+            streamReader.Dispose();
+        }
+
+        // Parse data as JSON and assign to serialisedSample
+        serialisedSample = JsonUtility.FromJson<SerialisedSample>(fileData);
+
+        // Convert back to 2D array and assign to EditorManager
+        for (int y = 0; y < editorManager.buildZoneSize.y; y++)
+        {
+            for (int x = 0; x < editorManager.buildZoneSize.x; x++)
+            {
+                editorManager.sampleData[x, y] = serialisedSample.data[y * editorManager.buildZoneSize.x + x];
+            }
+        }
+
+        // No more unsaved changes!
+        editorManager.unsavedChanges = false;
+
+        // How many samples are in this dataset?
+        if (currentDataset == 0)
+            currentSampleCount = Resources.LoadAll("SampleData/").Length;
+        else
+            currentSampleCount = Directory.GetFiles(Application.persistentDataPath + "/SampleData/Dataset" + currentDataset).Length;
+
+        // Recalculate and load in tiles, making sure everything is okay
+        editorManager.UpdateTiles();
     }
 
     // Creates a new sample file or dataset folder, new datasets also create a new sample within
     public void New(bool dataset)
     {
         editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Scratch);
+        editorManager.ResetSample();
 
         // If we should create a new dataset
         // Either directly by choice or if the player is trying to create something new while on the default dataset
@@ -148,7 +251,6 @@ public class FileManager : MonoBehaviour
 
             int datasetCount = Directory.GetDirectories(Application.persistentDataPath + "/SampleData").Length;
             Directory.CreateDirectory(Application.persistentDataPath + "/SampleData/Dataset" + (datasetCount + 1).ToString());
-            File.Create(Application.persistentDataPath + "/SampleData/Dataset" + (datasetCount + 1).ToString() + "/Sample1.ccd");
 
             // Select the first sample in the latest dataset (just created)
             currentDataset = datasetCount + 1;
@@ -162,10 +264,11 @@ public class FileManager : MonoBehaviour
 
             // Just make a new sample normally, within the current dataset
             int sampleCount = Directory.GetFiles(Application.persistentDataPath + "/SampleData/Dataset" + currentDataset).Length;
-            File.Create(Application.persistentDataPath + "/SampleData/Dataset" + currentDataset + "/Sample" + (sampleCount + 1).ToString() + ".ccd");
-
             currentSample = sampleCount + 1;
         }
+
+        // Save (and inherently, create if necessary) the file with default values (empty samples still store info!)
+        Save();
 
         // Load the new file
         LoadSample();

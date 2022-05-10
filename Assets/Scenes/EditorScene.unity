@@ -3986,6 +3986,7 @@ MonoBehaviour:
   tilemapRenderer: {fileID: 1817225071}
   tilesParent: {fileID: 1817225069}
   currentBlockType: 0
+  unsavedChanges: 0
 --- !u!4 &1425894192
 Transform:
   m_ObjectHideFlags: 0
@@ -4014,6 +4015,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4417d79d64183784b8670e93c4194ca5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  serialisedSample:
+    data: []
   deleteTime: 1
   editorManager: {fileID: 1425894191}
   editorAudio: {fileID: 1425894195}
@@ -5009,7 +5012,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'sample: [ 01 ]'
+  m_text: 'sample: [ 01 / 01 ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1bd226d3ddf21104784f1fa2242b97b9, type: 2}
   m_sharedMaterial: {fileID: 2027933923960231310, guid: 1bd226d3ddf21104784f1fa2242b97b9, type: 2}
