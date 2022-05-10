@@ -34,6 +34,11 @@ public class FileManager : MonoBehaviour
         // Create the customs directory if it doesn't already exist
         if (Directory.Exists(Application.persistentDataPath + "/SampleData") == false)
             Directory.CreateDirectory(Application.persistentDataPath + "/SampleData");
+
+        // Load the first sample in the default dataset
+        // This MUST be done in Start() and not Awake(), or it could be reset by the EditorManager
+        // calling ResetSample() when the sample data is first instantiated
+        LoadSample();
     }
 
     // Update is called once per frame
@@ -122,6 +127,9 @@ public class FileManager : MonoBehaviour
         // 2. Parse back as JSON
         // 3. Convert to 2D array and populate sampleData in the EditorManager
         // 4. Call EditorManager to recalculate tiles
+
+        // Clean slate for when loading a new sample
+        editorManager.ResetSample();
     }
 
     // Creates a new sample file or dataset folder, new datasets also create a new sample within
@@ -256,6 +264,7 @@ public class FileManager : MonoBehaviour
             }
         }
 
+        // Load the sample to fall back on
         LoadSample();
     }
 
