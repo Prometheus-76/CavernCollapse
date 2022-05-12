@@ -242,7 +242,7 @@ public class EditorManager : MonoBehaviour
 
     #endregion
 
-    #region Place/Remove/Cycle Tile
+    #region Place/Remove/Cycle/Switch Tile
 
     // Place a tile at this position in the grid
     void PlaceTile(int x, int y, bool directAction)
@@ -339,6 +339,24 @@ public class EditorManager : MonoBehaviour
         UpdateTiles();
     }
 
+    // Goes to the next or the previous block type in the set
+    public void SwitchBlockType(bool next)
+    {
+        // Increment enum as int
+        int currentIndex = (int)currentBlockType;
+        currentIndex += (next ? 1 : -1);
+
+        // Wrap around if below min or above max ("None" is not an option, as this would be the same as deletion)
+        if (currentIndex < 1)
+            currentIndex = (int)BlockType.Count - 1;
+        if (currentIndex > (int)BlockType.Count - 1)
+            currentIndex = 1;
+
+        // Set new current block type
+        currentBlockType = (BlockType)currentIndex;
+        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
+    }
+
     #endregion
 
     #region Undo/Redo
@@ -385,11 +403,12 @@ public class EditorManager : MonoBehaviour
         
         unsavedChanges = true;
 
+        EditorAction undoAction = undoList[undoList.Count - 1];
+
         // Add to the redo list
-        RedoAdd(undoList[undoList.Count - 1].position.x, undoList[undoList.Count - 1].position.y, undoList[undoList.Count - 1].actionType, undoList[undoList.Count - 1].previousType);
+        RedoAdd(undoAction.position.x, undoAction.position.y, undoAction.actionType, undoAction.previousType);
 
         // Undo the previous tile action (add or remove)
-        EditorAction undoAction = undoList[undoList.Count - 1];
         if (undoAction.actionType == EditorAction.ActionType.CycleForward)
         {
             CycleTile(undoAction.position.x, undoAction.position.y, false, false);
@@ -411,6 +430,7 @@ public class EditorManager : MonoBehaviour
         }
         else
         {
+            currentBlockType = undoAction.tileData.blockType;
             PlaceTile(undoAction.position.x, undoAction.position.y, false);
         }
 
@@ -464,7 +484,7 @@ public class EditorManager : MonoBehaviour
         UndoAdd(redoAction.position.x, redoAction.position.y, false, redoAction.actionType, redoAction.previousType);
 
         // Redo the previous tile action
-        if (redoList[redoList.Count - 1].actionType == EditorAction.ActionType.CycleForward)
+        if (redoAction.actionType == EditorAction.ActionType.CycleForward)
         {
             CycleTile(redoAction.position.x, redoAction.position.y, false, true);
         }
@@ -474,18 +494,12 @@ public class EditorManager : MonoBehaviour
         }
         else if (redoAction.actionType == EditorAction.ActionType.Place)
         {
+            currentBlockType = redoAction.tileData.blockType;
             PlaceTile(redoAction.position.x, redoAction.position.y, false);
         }
         else
         {
             RemoveTile(redoAction.position.x, redoAction.position.y, false);
-
-            // Replace tile
-            if (redoAction.previousType != BlockType.None)
-            {
-                currentBlockType = redoAction.previousType;
-                PlaceTile(redoAction.position.x, redoAction.position.y, false);
-            }
         }
 
         redoList.RemoveAt(redoList.Count - 1);
@@ -839,24 +853,6 @@ public class EditorManager : MonoBehaviour
 
         // Reload visuals
         UpdateTiles();
-    }
-
-    // Goes to the next or the previous block type in the set
-    public void SwitchBlockType(bool next)
-    {
-        // Increment enum as int
-        int currentIndex = (int)currentBlockType;
-        currentIndex += (next ? 1 : -1);
-
-        // Wrap around if below min or above max ("None" is not an option, as this would be the same as deletion)
-        if (currentIndex < 1)
-            currentIndex = (int)BlockType.Count - 1;
-        if (currentIndex > (int)BlockType.Count - 1)
-            currentIndex = 1;
-
-        // Set new current block type
-        currentBlockType = (BlockType)currentIndex;
-        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
     }
 
     #region Other
