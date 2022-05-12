@@ -4,73 +4,45 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Audio;
 
+// Manages the UI and screen transitions of the main menu
+// Also coordinates calling settings related functions in the SettingsManager for the main menu
+
 public class MenuManager : MonoBehaviour
 {
+    [Header("Menu Screens")]
     public GameObject mainMenu;
     public GameObject optionsMenu;
     public GameObject playMenu;
-    public GameObject backgroundObjects;
 
+    [Header("Components")]
+    // Options menu
     public MenuButton musicButton;
     public MenuButton soundButton;
-    public MenuButton resetButton;
+    public MenuButton postProcessButton;
 
+    // Play menu
     public MenuButton modeButton;
     public MenuButton difficultyButton;
 
-    public AudioSource buttonAudio;
-    public AudioSource resetAudio;
-    public AudioMixer audioMixer;
+    [Header("Settings")]
+    public GameSettings gameSettings;
+    public SettingsManager settingsManager;
 
-    private int musicVolume;
-    private int soundVolume;
+    [Header("Audio")]
+    public MenuAudio menuAudio;
+    public KeepWhilePlaying buttonAudioSource;
 
-    private float resetTimer;
-    private bool isResetting;
+    [Header("Camera")]
+    public MenuCamera menuCamera;
 
     void Start()
     {
-        LoadSettings();
-        resetTimer = 0f;
-        isResetting = false;
+        // Load the settings and update the UI to reflect the changes
+        settingsManager.LoadSettings();
+        UpdateSettingsUI();
     }
 
-    private void LateUpdate()
-    {
-        if (isResetting)
-        {
-            resetTimer += Time.deltaTime;
-            float progress = Mathf.Clamp01(resetTimer / 2f);
-
-            if (progress >= 1f)
-            {
-                isResetting = false;
-                // Delete the player save file
-            }
-        }
-        else
-        {
-            resetTimer = 0f;
-        }
-
-        // Update resetting UI
-        if (isResetting)
-        {
-            resetButton.SetDefaultText("resetting: " + (Mathf.Clamp01(resetTimer / 2f) * 100f).ToString("F0") + "%");
-            resetAudio.Play();
-        }
-        else
-        {
-            resetButton.SetDefaultText("reset save file");
-            resetAudio.Stop();
-        }
-    }
-
-    // Closes the game, why must I do this Unity...
-    public void CloseGame()
-    {
-        Application.Quit();
-    }
+    #region Menu Navigation
 
     /// <summary>
     /// Changes the menu state
@@ -84,47 +56,64 @@ public class MenuManager : MonoBehaviour
                 mainMenu.SetActive(true);
                 optionsMenu.SetActive(false);
                 playMenu.SetActive(false);
-                backgroundObjects.SetActive(true);
+                menuAudio.PlaySound(MenuAudio.MenuSounds.Negative);
                 break;
             case 1:
                 mainMenu.SetActive(false);
                 optionsMenu.SetActive(true);
                 playMenu.SetActive(false);
-                backgroundObjects.SetActive(true);
+                menuAudio.PlaySound(MenuAudio.MenuSounds.Positive);
                 break;
             case 2:
                 mainMenu.SetActive(false);
                 optionsMenu.SetActive(false);
                 playMenu.SetActive(true);
-                backgroundObjects.SetActive(true);
+                menuAudio.PlaySound(MenuAudio.MenuSounds.Positive);
                 break;
         }
 
-        UpdateSettings();
+        UpdateSettingsUI();
     }
 
-    /// <summary>
-    /// Loads a new scene to transition to
-    /// </summary>
-    /// <param name="sceneIndex">The build index of the scene we are transitioning to</param>
-    public void SceneTransition(int sceneIndex)
+    // Closes the game, why must I do this Unity...
+    public void CloseGame()
     {
-        SceneManager.LoadScene(sceneIndex);
+        menuAudio.PlaySound(MenuAudio.MenuSounds.Negative);
+        Application.Quit();
     }
 
-    void LoadSettings()
+    #endregion  
+
+    #region Scene Navigation
+
+    public void LoadEditor()
     {
-        musicVolume = PlayerPrefs.GetInt("MusicVolume", 5);
-        soundVolume = PlayerPrefs.GetInt("SoundVolume", 5);
-
-        UpdateSettings();
+        menuAudio.PlaySound(MenuAudio.MenuSounds.Positive);
+        buttonAudioSource.canBeDestroyed = true;
+        SceneManager.LoadScene(1);
     }
 
-    void SaveSettings()
+    public void StartGameTransition()
     {
-        PlayerPrefs.SetInt("MusicVolume", musicVolume);
-        PlayerPrefs.SetInt("SoundVolume", soundVolume);
+        menuAudio.PlaySound(MenuAudio.MenuSounds.Play);
+        MusicPlayer.GetInstance().CrossFade(0);
+        MusicPlayer.GetInstance().SetLooping(true);
+
+        menuCamera.FlyUpwards();
+
+        mainMenu.SetActive(false);
+        optionsMenu.SetActive(false);
+        playMenu.SetActive(false);
     }
+
+    public void LoadGame()
+    {
+        SceneManager.LoadScene(2);
+    }
+
+    #endregion
+
+    #region Modifying Settings
 
     /// <summary>
     /// Increases the sound index until 10, then resets to 0
@@ -135,47 +124,35 @@ public class MenuManager : MonoBehaviour
         switch(settingIndex)
         {
             case 0:
-                musicVolume = ((musicVolume + 1) % 11);
+                gameSettings.musicVolume = ((gameSettings.musicVolume + 1) % 11);
                 break;
             case 1:
-                soundVolume = ((soundVolume + 1) % 11);
+                gameSettings.soundVolume = ((gameSettings.soundVolume + 1) % 11);
                 break;
         }
 
-        UpdateSettings();
-        SaveSettings();
+        menuAudio.PlaySound(MenuAudio.MenuSounds.Toggle);
+        UpdateSettingsUI();
+        settingsManager.ApplySettings();
+        settingsManager.SaveSettings();
     }
 
-    void UpdateSettings()
+    public void TogglePostProcessing()
     {
-        // UI
-        musicButton.SetDefaultText("music volume: " + musicVolume.ToString());
-        soundButton.SetDefaultText("sound volume: " + soundVolume.ToString());
+        gameSettings.usingPostProcessing = !gameSettings.usingPostProcessing;
 
-        // Sound
-        float scaledMusic = (musicVolume > 0) ? Mathf.Log10(Mathf.Clamp(musicVolume / 10f, 0.001f, 1f)) * 20f : -80f;
-        audioMixer.SetFloat("MusicVolume", scaledMusic);
-
-        float scaledSound = (soundVolume > 0) ? Mathf.Log10(Mathf.Clamp(soundVolume / 10f, 0.001f, 1f)) * 20f : -80f;
-        audioMixer.SetFloat("SoundVolume", scaledSound);
+        menuAudio.PlaySound(MenuAudio.MenuSounds.Toggle);
+        UpdateSettingsUI();
+        settingsManager.ApplySettings();
+        settingsManager.SaveSettings();
     }
 
-    public void SetResetState(bool state)
-    {
-        isResetting = state;
-    }
+    #endregion
 
-    public void PlayButtonSound(AudioClip clip)
+    void UpdateSettingsUI()
     {
-        buttonAudio.PlayOneShot(clip);
-    }
-
-    /// <summary>
-    /// Loads a new scene, given a build index
-    /// </summary>
-    /// <param name="sceneIndex">0 = menu, 1 = level, 2 = editor</param>
-    public void LoadScene(int sceneIndex)
-    {
-        SceneManager.LoadScene(sceneIndex);
+        musicButton.SetDefaultText("music volume: " + gameSettings.musicVolume.ToString());
+        soundButton.SetDefaultText("sound volume: " + gameSettings.soundVolume.ToString());
+        postProcessButton.SetDefaultText("visual effects: " + (gameSettings.usingPostProcessing ? "on" : "off"));
     }
 }

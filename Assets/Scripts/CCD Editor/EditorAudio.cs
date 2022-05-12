@@ -23,7 +23,7 @@ public class EditorAudio : MonoBehaviour
     [Header("Audio Settings")]
     [SerializeField, Range(0f, 1f), Tooltip("How intensely the audio pans from left to right when placing and deleting")] private float stereoIntensity;
 
-    public enum OneshotSounds
+    public enum EditorSounds
     {
         Positive,
         Negative,
@@ -42,7 +42,7 @@ public class EditorAudio : MonoBehaviour
         if (playing == false) loopingAudio.Stop();
     }
 
-    public void PlayOneshot(OneshotSounds sound)
+    public void PlayOneshot(EditorSounds sound)
     {
         // Get the clip
         AudioClip clip = EnumToClip(sound);
@@ -51,7 +51,7 @@ public class EditorAudio : MonoBehaviour
         if (clip != null) oneshotAudio.PlayOneShot(clip);
     }
 
-    public void PlayOneshotStereo(OneshotSounds sound, float stereo)
+    public void PlayOneshotStereo(EditorSounds sound, float stereo)
     {
         // Get the clip
         AudioClip clip = EnumToClip(sound);
@@ -64,25 +64,25 @@ public class EditorAudio : MonoBehaviour
     }
 
     // Translates from the enum of sounds to actual sound clip
-    public AudioClip EnumToClip(OneshotSounds sound)
+    public AudioClip EnumToClip(EditorSounds sound)
     {
         switch (sound)
         {
-            case OneshotSounds.Positive:
+            case EditorSounds.Positive:
                 return positiveClip;
-            case OneshotSounds.Negative:
+            case EditorSounds.Negative:
                 return negativeClip;
-            case OneshotSounds.Toggle:
+            case EditorSounds.Toggle:
                 return toggleClip;
-            case OneshotSounds.Scratch:
+            case EditorSounds.Scratch:
                 return scratchClip;
-            case OneshotSounds.Delete:
+            case EditorSounds.Delete:
                 return deleteClip;
-            case OneshotSounds.Place:
+            case EditorSounds.Place:
                 return placeClip;
-            case OneshotSounds.Descending:
+            case EditorSounds.Descending:
                 return descendingClip;
-            case OneshotSounds.Denied:
+            case EditorSounds.Denied:
                 return deniedClip;
             default:
                 return null;

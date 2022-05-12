@@ -3483,6 +3483,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1248566784}
   - component: {fileID: 1248566785}
+  - component: {fileID: 1248566786}
   m_Layer: 0
   m_Name: OneshotAudio
   m_TagString: Untagged
@@ -3600,6 +3601,20 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1248566786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1248566783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89f692030aaa7ff41af0d58b5cc479ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioSource: {fileID: 1248566785}
+  canBeDestroyed: 0
 --- !u!1 &1257947900
 GameObject:
   m_ObjectHideFlags: 0
@@ -3985,6 +4000,7 @@ MonoBehaviour:
   tilemap: {fileID: 1817225072}
   tilemapRenderer: {fileID: 1817225071}
   tilesParent: {fileID: 1817225069}
+  buttonAudioSource: {fileID: 1248566786}
   currentBlockType: 0
   unsavedChanges: 0
 --- !u!4 &1425894192

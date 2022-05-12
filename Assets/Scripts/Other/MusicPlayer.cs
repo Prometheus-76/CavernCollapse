@@ -36,8 +36,14 @@ public class MusicPlayer : MonoBehaviour
     void Start()
     {
         // Fade in main menu theme and make it loop
-        CrossFade(0);
+        CrossFade(1);
         SetLooping(true);
+    }
+
+    // This is required because the instance is not always present in a given scene it may be referenced in
+    public static MusicPlayer GetInstance()
+    {
+        return instance;
     }
 
     // Update is called once per frame

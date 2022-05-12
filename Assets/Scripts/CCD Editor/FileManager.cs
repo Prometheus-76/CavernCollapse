@@ -107,12 +107,12 @@ public class FileManager : MonoBehaviour
         if (currentDataset == 0)
         {
             // Changes are not allowed to be made to the default dataset
-            editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Denied);
+            editorAudio.PlayOneshot(EditorAudio.EditorSounds.Denied);
             return;
         }
         else
         {
-            editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Positive);
+            editorAudio.PlayOneshot(EditorAudio.EditorSounds.Positive);
         }
 
         // 1. Convert sampleData in EditorManager to 1D array and serialize
@@ -139,7 +139,7 @@ public class FileManager : MonoBehaviour
     // Finds the next dataset or sample and sets it appropriately with the currentDataset and currentSample variables
     public void LoadNext(bool dataset)
     {
-        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
+        editorAudio.PlayOneshot(EditorAudio.EditorSounds.Toggle);
 
         if (dataset)
         {
@@ -237,7 +237,7 @@ public class FileManager : MonoBehaviour
     // Creates a new sample file or dataset folder, new datasets also create a new sample within
     public void New(bool dataset)
     {
-        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Scratch);
+        editorAudio.PlayOneshot(EditorAudio.EditorSounds.Scratch);
         editorManager.ResetSample();
 
         // If we should create a new dataset
@@ -279,7 +279,7 @@ public class FileManager : MonoBehaviour
     // Cannot be triggered when on a sample within the default dataset (see StartDeleting() function)
     void Delete(bool dataset)
     {
-        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Descending);
+        editorAudio.PlayOneshot(EditorAudio.EditorSounds.Descending);
 
         if (dataset)
         {
@@ -379,7 +379,7 @@ public class FileManager : MonoBehaviour
         if (currentDataset == 0)
         {
             // Don't allow deleting the default samples
-            editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Denied);
+            editorAudio.PlayOneshot(EditorAudio.EditorSounds.Denied);
             return;
         }
 

@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 // Interfaces with the user, allowing them to build templates
-// ...it also handles determining which sprites to show given neighbouring tiles
+// It also handles determining which sprites to show given neighbouring tiles
 public class EditorManager : MonoBehaviour
 {
     #region Data Structures
@@ -93,6 +93,7 @@ public class EditorManager : MonoBehaviour
     public Tilemap tilemap;
     public TilemapRenderer tilemapRenderer;
     public Transform tilesParent;
+    public KeepWhilePlaying buttonAudioSource;
 
     [HideInInspector] public TileData[,] sampleData;
     [HideInInspector] public BlockType currentBlockType;
@@ -262,7 +263,7 @@ public class EditorManager : MonoBehaviour
 
             float horizontalAmount = (x + 1f) / buildZoneSize.x;
             float stereoValue = Mathf.Lerp(-1f, 1f, horizontalAmount);
-            editorAudio.PlayOneshotStereo(EditorAudio.OneshotSounds.Place, stereoValue);
+            editorAudio.PlayOneshotStereo(EditorAudio.EditorSounds.Place, stereoValue);
 
             UndoAdd(x, y, true, EditorAction.ActionType.Place, sampleData[x, y].blockType);
         }
@@ -293,7 +294,7 @@ public class EditorManager : MonoBehaviour
 
             float horizontalAmount = (x + 1f) / buildZoneSize.x;
             float stereoValue = Mathf.Lerp(-1f, 1f, horizontalAmount);
-            editorAudio.PlayOneshotStereo(EditorAudio.OneshotSounds.Delete, stereoValue);
+            editorAudio.PlayOneshotStereo(EditorAudio.EditorSounds.Delete, stereoValue);
 
             UndoAdd(x, y, true, EditorAction.ActionType.Remove, sampleData[x, y].blockType);
         }
@@ -327,7 +328,7 @@ public class EditorManager : MonoBehaviour
 
                 float horizontalAmount = (x + 1f) / buildZoneSize.x;
                 float stereoValue = Mathf.Lerp(-1f, 1f, horizontalAmount);
-                editorAudio.PlayOneshotStereo(EditorAudio.OneshotSounds.Toggle, stereoValue);
+                editorAudio.PlayOneshotStereo(EditorAudio.EditorSounds.Toggle, stereoValue);
                 
                 UndoAdd(x, y, true, EditorAction.ActionType.CycleForward, sampleData[x, y].blockType);
                 
@@ -354,7 +355,7 @@ public class EditorManager : MonoBehaviour
 
         // Set new current block type
         currentBlockType = (BlockType)currentIndex;
-        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
+        editorAudio.PlayOneshot(EditorAudio.EditorSounds.Toggle);
     }
 
     #endregion
@@ -397,7 +398,7 @@ public class EditorManager : MonoBehaviour
         // Only allow undo on non-default samples when list is not empty
         if (undoList.Count <= 0 || fileManager.currentDataset == 0)
         {
-            editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Denied);
+            editorAudio.PlayOneshot(EditorAudio.EditorSounds.Denied);
             return;
         }
         
@@ -424,19 +425,27 @@ public class EditorManager : MonoBehaviour
             // Replace tile
             if (undoAction.previousType != BlockType.None)
             {
+                BlockType typeBeforeUndo = currentBlockType;
+
                 currentBlockType = undoAction.previousType;
                 PlaceTile(undoAction.position.x, undoAction.position.y, false);
+
+                currentBlockType = typeBeforeUndo;
             }
         }
         else
         {
+            BlockType typeBeforeUndo = currentBlockType;
+
             currentBlockType = undoAction.tileData.blockType;
             PlaceTile(undoAction.position.x, undoAction.position.y, false);
+
+            currentBlockType = typeBeforeUndo;
         }
 
         undoList.RemoveAt(undoList.Count - 1);
 
-        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
+        editorAudio.PlayOneshot(EditorAudio.EditorSounds.Toggle);
         UpdateTiles();
     }
 
@@ -473,7 +482,7 @@ public class EditorManager : MonoBehaviour
         // Only allow redo on non-default samples when list is not empty
         if (redoList.Count <= 0 || fileManager.currentDataset == 0)
         {
-            editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Denied);
+            editorAudio.PlayOneshot(EditorAudio.EditorSounds.Denied);
             return;
         }
 
@@ -494,8 +503,12 @@ public class EditorManager : MonoBehaviour
         }
         else if (redoAction.actionType == EditorAction.ActionType.Place)
         {
+            BlockType typeBeforeRedo = currentBlockType;
+
             currentBlockType = redoAction.tileData.blockType;
             PlaceTile(redoAction.position.x, redoAction.position.y, false);
+
+            currentBlockType = typeBeforeRedo;
         }
         else
         {
@@ -504,7 +517,7 @@ public class EditorManager : MonoBehaviour
 
         redoList.RemoveAt(redoList.Count - 1);
 
-        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Toggle);
+        editorAudio.PlayOneshot(EditorAudio.EditorSounds.Toggle);
         UpdateTiles();
     }
 
@@ -859,7 +872,7 @@ public class EditorManager : MonoBehaviour
 
     public void OpenTutorial()
     {
-        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Positive);
+        editorAudio.PlayOneshot(EditorAudio.EditorSounds.Positive);
 
         // This is a total stopgap right now, but it let me cut down on the time to develop an in-engine tutorial for the editor
         Application.OpenURL("https://prometheus-76.github.io");
@@ -867,8 +880,8 @@ public class EditorManager : MonoBehaviour
 
     public void ReturnToMenu()
     {
-        editorAudio.PlayOneshot(EditorAudio.OneshotSounds.Negative);
-        
+        editorAudio.PlayOneshot(EditorAudio.EditorSounds.Negative);
+        buttonAudioSource.canBeDestroyed = true;
         SceneManager.LoadScene(0);
     }
 
