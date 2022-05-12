@@ -13,6 +13,7 @@ public class MenuMusicPlayer : MonoBehaviour
     private static MenuMusicPlayer instance;
 
     private List<AudioClip> songQueue;
+    private AudioClip previousSong;
     private float fadeOutTimer;
     private bool fadingOut;
 
@@ -69,10 +70,17 @@ public class MenuMusicPlayer : MonoBehaviour
                 songQueue.Add(remainingSongs[choice]);
                 remainingSongs.RemoveAt(choice);
             }
+
+            // If a song would have been played twice in a row
+            if (previousSong == songQueue[0])
+            {
+                songQueue.Reverse();
+            }
         }
 
         if (audioSource.isPlaying == false)
         {
+            previousSong = audioSource.clip;
             audioSource.clip = songQueue[0];
             songQueue.RemoveAt(0);
             audioSource.Play();
