@@ -42,14 +42,15 @@ public class MenuManager : MonoBehaviour
 
     void Start()
     {
+        // Load the settings and update the UI to reflect the changes
+        settingsManager.LoadSettings();
+        settingsManager.ApplySettings();
+        UpdateSettingsUI();
+
         // Default gameplay config
         datasetStyle = 0;
         difficulty = 0;
         UpdateGameplayConfiguration();
-
-        // Load the settings and update the UI to reflect the changes
-        settingsManager.LoadSettings();
-        UpdateSettingsUI();
     }
 
     #region Menu Navigation
@@ -175,6 +176,7 @@ public class MenuManager : MonoBehaviour
         int datasetCount = Directory.GetDirectories(Application.persistentDataPath + "/SampleData").Length;
         datasetStyle %= datasetCount + 1;
 
+        menuAudio.PlaySound(MenuAudio.MenuSounds.Toggle);
         UpdateGameplayConfiguration();
     }
 
@@ -182,8 +184,9 @@ public class MenuManager : MonoBehaviour
     public void IncrementDifficulty()
     {
         difficulty += 1;
-        difficulty %= 3;
+        difficulty %= (int)GameplayConfiguration.DifficultyOptions.Expert + 1;
 
+        menuAudio.PlaySound(MenuAudio.MenuSounds.Toggle);
         UpdateGameplayConfiguration();
     }
 

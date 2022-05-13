@@ -44,9 +44,13 @@ public class IntroTransition : MonoBehaviour
             transitionProgress += Time.deltaTime / transitionTime;
             transitionProgress = Mathf.Clamp01(transitionProgress);
 
-            Color newPanelColour = panelImage.color;
-            newPanelColour.a = 1f - (transitionProgress * transitionProgress);
-            panelImage.color = newPanelColour;
+            // If the player transitions scenes too quickly then the references to the main scene will break
+            if (panelImage != null)
+            {
+                Color newPanelColour = panelImage.color;
+                newPanelColour.a = 1f - (transitionProgress * transitionProgress);
+                panelImage.color = newPanelColour;
+            }
 
             postProcessing.weight = transitionProgress * transitionProgress;
         }

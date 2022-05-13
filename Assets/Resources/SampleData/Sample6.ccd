@@ -1,4 +1,8 @@
 {
+    "sampleSize": {
+        "x": 13,
+        "y": 10
+    },
     "data": [
         {
             "blockType": 1,
@@ -705,7 +709,7 @@
         {
             "blockType": 7,
             "tileIndex": 50,
-            "tileOffset": 18,
+            "tileOffset": 0,
             "usingOffset": true
         },
         {

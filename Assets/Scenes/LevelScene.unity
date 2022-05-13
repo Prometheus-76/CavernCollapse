@@ -533,7 +533,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1227997534
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -543,11 +543,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1227997533}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 243bd7143845db94e9cd96d80b2ee697, type: 3}
+  m_Script: {fileID: 11500000, guid: 2f609d6608780064088e1f389b354201, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stageSize: {x: 10, y: 10}
-  roomSize: {x: 20, y: 15}
+  tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
+  gameplayConfiguration: {fileID: 11400000, guid: f8a02774c90ec804297f31bdcd35b1ba, type: 2}
 --- !u!4 &1227997535
 Transform:
   m_ObjectHideFlags: 0

@@ -7,9 +7,9 @@ public class GameplayConfiguration : ScriptableObject
 {
     public enum DifficultyOptions
     {
-        Easy,
-        Normal,
-        Hard
+        Basic,
+        Standard,
+        Expert
     }
 
     public int dataset;

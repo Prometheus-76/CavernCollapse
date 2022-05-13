@@ -3,49 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-// Interfaces directly with the files and directories used for storing datasets and samples
+// Interfaces on behalf of the level editor directly with the files and directories used for storing datasets and samples
 public class FileManager : MonoBehaviour
 {
-    #region Custom Data Structures
-
-    // Wrapped "JSON-friendly" version of sample data
-    [System.Serializable]
-    public class SerialisedSample
-    {
-        // JsonUtility.ToJson() doesn't like:
-        // Multidimensional arrays
-        // Non-serializable classes and structs
-        // Being directly passed an array instead of a singular object (like this class!)
-
-        public EditorManager.TileData[] data;
-        // EditorManager is not stored here, as it would be overwritten every time the JSON data is parsed back in on load
-
-        // Constructor
-        public SerialisedSample(EditorManager editorManager)
-        {
-            // Allocate the memory for the sample data
-            data = new EditorManager.TileData[editorManager.buildZoneSize.x * editorManager.buildZoneSize.y];
-        }
-
-        // Updates the data array from the 2D editor data array
-        public void UpdateData(EditorManager editorManager)
-        {
-            // Write to 1D array
-            for (int y = 0; y < editorManager.buildZoneSize.y; y++)
-            {
-                for (int x = 0; x < editorManager.buildZoneSize.x; x++)
-                {
-                    data[y * editorManager.buildZoneSize.x + x] = editorManager.sampleData[x, y];
-                }
-            }
-        }
-    }
-
-    [HideInInspector]
-    public SerialisedSample serialisedSample;
-
-    #endregion
-
     #region Variables
 
     [Header("Parameters")]
@@ -54,6 +14,9 @@ public class FileManager : MonoBehaviour
     [Header("Components")]
     public EditorManager editorManager;
     public EditorAudio editorAudio;
+
+    [HideInInspector]
+    public SerialisedSample serialisedSample;
 
     // PROPERTIES
     public float deleteTimer { get; private set; }
@@ -76,7 +39,7 @@ public class FileManager : MonoBehaviour
         if (Directory.Exists(Application.persistentDataPath + "/SampleData") == false)
             Directory.CreateDirectory(Application.persistentDataPath + "/SampleData");
 
-        serialisedSample = new SerialisedSample(editorManager);
+        serialisedSample = new SerialisedSample(editorManager.buildZoneSize.x, editorManager.buildZoneSize.y);
 
         // Load the first sample in the default dataset
         // This MUST be done in Start() and not Awake(), or it could be reset by the EditorManager
@@ -120,7 +83,7 @@ public class FileManager : MonoBehaviour
         // 3. Write JSON to current file
 
         // Convert sample to 1D array and store in our serialisedSample variable
-        serialisedSample.UpdateData(editorManager);
+        serialisedSample.UpdateData(editorManager.sampleData);
 
         // Serialise the object to JSON string
         string sampleDataJSON = JsonUtility.ToJson(serialisedSample, true);

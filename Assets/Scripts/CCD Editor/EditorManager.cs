@@ -10,39 +10,6 @@ public class EditorManager : MonoBehaviour
 {
     #region Data Structures
 
-    // Every distinct type of tile which can appear in the game
-    public enum BlockType
-    {
-        None,
-        Solid,
-        OneWay,
-        Ladder,
-        Spike,
-        Coin,
-        Vine,
-        Foliage,
-        Sign,
-        Torch,
-        Count
-    }
-
-    // Represents each space in the grid
-    [System.Serializable]
-    public struct TileData
-    {
-        public BlockType blockType;
-
-        // This is only used for tiles like grass that have variations but don't affect gameplay
-        // It looks up into a TileCollection scriptable object to find the tile prefab to use
-        public int tileIndex;
-
-        // An offset from a given tile, used for cycling through variations
-        public int tileOffset;
-
-        // Whether to add the offset to the index to find the tile
-        public bool usingOffset;
-    }
-
     // For undo/redo stack
     public struct EditorAction
     {
@@ -767,11 +734,17 @@ public class EditorManager : MonoBehaviour
         return 71;
     }
 
-    // Returns the appropriate tile, taking into account the offset
+    // Returns the appropriate tile, taking into account the offset, also ensures that tileOffset is kept within range
     int GetOffsetTile(int x, int y, int start, int end)
     {
         sampleData[x, y].usingOffset = true;
-        return start + (sampleData[x, y].tileOffset % (end - start + 1));
+
+        if (sampleData[x, y].tileOffset < 0)
+            sampleData[x, y].tileOffset = (end - start);
+        if (sampleData[x, y].tileOffset > (end - start))
+            sampleData[x, y].tileOffset = 0;
+
+        return start + sampleData[x, y].tileOffset;
     }
 
     /// <summary>
