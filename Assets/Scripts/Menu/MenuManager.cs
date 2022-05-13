@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Audio;
+using System.IO;
 
 // Manages the UI and screen transitions of the main menu
 // Also coordinates calling settings related functions in the SettingsManager for the main menu
@@ -21,7 +21,7 @@ public class MenuManager : MonoBehaviour
     public MenuButton postProcessButton;
 
     // Play menu
-    public MenuButton modeButton;
+    public MenuButton styleButton;
     public MenuButton difficultyButton;
 
     [Header("Settings")]
@@ -35,8 +35,18 @@ public class MenuManager : MonoBehaviour
     [Header("Camera")]
     public MenuCamera menuCamera;
 
+    [Header("Gameplay")]
+    public GameplayConfiguration gameplayConfiguration;
+    private int datasetStyle;
+    private int difficulty;
+
     void Start()
     {
+        // Default gameplay config
+        datasetStyle = 0;
+        difficulty = 0;
+        UpdateGameplayConfiguration();
+
         // Load the settings and update the UI to reflect the changes
         settingsManager.LoadSettings();
         UpdateSettingsUI();
@@ -147,12 +157,51 @@ public class MenuManager : MonoBehaviour
         settingsManager.SaveSettings();
     }
 
-    #endregion
-
     void UpdateSettingsUI()
     {
         musicButton.SetDefaultText("music volume: " + gameSettings.musicVolume.ToString());
         soundButton.SetDefaultText("sound volume: " + gameSettings.soundVolume.ToString());
         postProcessButton.SetDefaultText("visual effects: " + (gameSettings.usingPostProcessing ? "on" : "off"));
     }
+
+    #endregion
+
+    #region Gameplay Configuration
+
+    // Cycles through dataset options
+    public void IncrementStyle()
+    {
+        datasetStyle += 1;
+        int datasetCount = Directory.GetDirectories(Application.persistentDataPath + "/SampleData").Length;
+        datasetStyle %= datasetCount + 1;
+
+        UpdateGameplayConfiguration();
+    }
+
+    // Cycles through difficulty options
+    public void IncrementDifficulty()
+    {
+        difficulty += 1;
+        difficulty %= 3;
+
+        UpdateGameplayConfiguration();
+    }
+
+    // Updates gameplay config ScriptableObject
+    void UpdateGameplayConfiguration()
+    {
+        gameplayConfiguration.dataset = datasetStyle;
+        gameplayConfiguration.difficulty = (GameplayConfiguration.DifficultyOptions)difficulty;
+
+        UpdatePlayMenuUI();
+    }
+
+    // Updates the UI used on the play menu (selecting difficulty, style, etc)
+    void UpdatePlayMenuUI()
+    {
+        styleButton.SetDefaultText("style: " + (gameplayConfiguration.dataset == 0 ? "default" : "custom " + gameplayConfiguration.dataset.ToString()));
+        difficultyButton.SetDefaultText("difficulty: " + gameplayConfiguration.difficulty.ToString().ToLower());
+    }
+
+    #endregion
 }
