@@ -11,8 +11,12 @@ public class LevelGenerator : MonoBehaviour
     {
         public LevelRoom room;
 
-        // Variable between stages
-        public bool isReservedSpace;
+        // Whether a tile has been locked in or not 
+        public bool tileAssigned;
+        public bool onCriticalPath;
+
+        public int[] possibleTiles;
+        public BlockType blockType;
     }
 
     // Represents a room within the level
@@ -41,6 +45,7 @@ public class LevelGenerator : MonoBehaviour
 
     #region Variables
 
+    public TileCollection tileCollection;
     [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
     [SerializeField, Tooltip("The dimensions of each room (in tiles)")] private Vector2Int roomSize;
 
@@ -95,6 +100,7 @@ public class LevelGenerator : MonoBehaviour
             for (int x = 0; x < roomSize.x; x++)
             {
                 level[roomX, roomY].tiles[x, y] = new LevelTile();
+                level[roomX, roomY].tiles[x, y].possibleTiles = new int[tileCollection.tiles.Length];
 
                 level[roomX, roomY].tiles[x, y].room = level[roomX, roomY];
             }
@@ -118,7 +124,9 @@ public class LevelGenerator : MonoBehaviour
                 {
                     for (int roomX = 0; roomX < roomSize.x; roomX++)
                     {
-                        level[stageX, stageY].tiles[roomX, roomY].isReservedSpace = false;
+                        level[stageX, stageY].tiles[roomX, roomY].tileAssigned = false;
+                        level[stageX, stageY].tiles[roomX, roomY].onCriticalPath = false;
+                        level[stageX, stageY].tiles[roomX, roomY].blockType = BlockType.None;
                     }
                 }
             }
@@ -236,73 +244,8 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-    // This is kind of shit but we can do better later!
-    // TODO 
     void ReserveRoomPaths()
     {
-        // For every room index in the critical path list...
-        for (int i = 0; i < criticalPath.Count; i++)
-        {
-            // Get the room we will be working on
-            LevelRoom room = level[criticalPath[i].x, criticalPath[i].y];
-
-            // Choose a starting point on the left of the room above the ground (which cannot be destroyed... yet)
-            int startHeight = Random.Range(1, roomSize.y);
-            Vector2Int currentTile = new Vector2Int(0, startHeight);
-            int moveDirection = 0;
-
-            // Until the algorithm hits the end of the room (on the right)
-            while (currentTile.x <= roomSize.x - 1)
-            {
-                if (currentTile.y <= 1)
-                {
-                    // Must move up or right
-                    if (moveDirection == 0)
-                    {
-                        // Go up
-                        moveDirection = 1;
-                    }
-                    else
-                    {
-                        // We hit a wall so go right
-                        moveDirection = 0;
-                    }
-                }
-                else if (currentTile.y >= roomSize.y - 1)
-                {
-                    // Must move down or right
-                    if (moveDirection == 0)
-                    {
-                        // Go down
-                        moveDirection = -1;
-                    }
-                    else
-                    {
-                        // We hit a wall so go right
-                        moveDirection = 0;
-                    }
-                }
-                else
-                {
-                    // Chance to move right, otherwise continue in same direction
-                    moveDirection = Mathf.RoundToInt(Mathf.Clamp(Random.Range(-2, 3), -1f, 1f));
-                }
-
-                // Mark tile as being reserved
-                room.tiles[currentTile.x, currentTile.y].isReservedSpace = true;
-
-                // Move in the direction and connect a room
-                if (moveDirection == 0)
-                {
-                    // Go right
-                    currentTile.x += 1;
-                }
-                else
-                {
-                    // Move up or down
-                    currentTile.y += moveDirection;
-                }
-            }
-        }
+        
     }
 }
