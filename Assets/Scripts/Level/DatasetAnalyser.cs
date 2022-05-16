@@ -3,20 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-// Loads in all samples within a dataset and constructs a ruleset for them, which can be queried by external scripts
-
+// Loads in all samples within a dataset and constructs a ruleset for them, which can be queried by external script
 public class DatasetAnalyser : MonoBehaviour
 {
+    public struct RuleData
+    {
+        public int tileWeight;
+        public BlockType blockType;
+    }
+
     public TileCollection tileCollection;
     public GameplayConfiguration gameplayConfiguration;
     private SerialisedSample[] datasetSamples;
-    private int[,,] constructedRuleset; // Centre tile, neighbour space, neighbour tile -> weight/possibility of tile at position
+    private RuleData[,,] constructedRuleset; // Centre tile, neighbour space, neighbour tile -> weight/possibility and type of tile at position
 
     // Start is called before the first frame update
     void Start()
     {
         // Allocate ruleset memory
-        constructedRuleset = new int[tileCollection.tiles.Length, 8, tileCollection.tiles.Length];
+        constructedRuleset = new RuleData[tileCollection.tiles.Length, 8, tileCollection.tiles.Length];
 
         LoadDataset(gameplayConfiguration.dataset);
         ConstructRuleset();
@@ -94,7 +99,8 @@ public class DatasetAnalyser : MonoBehaviour
                     for (int neighbourTileIndex = 0; neighbourTileIndex < constructedRuleset.GetLength(2); neighbourTileIndex++)
                     {
                         // Reset ruleset data
-                        constructedRuleset[centreIndex, neighbourIndex, neighbourTileIndex] = 0;
+                        constructedRuleset[centreIndex, neighbourIndex, neighbourTileIndex].tileWeight = 0;
+                        constructedRuleset[centreIndex, neighbourIndex, neighbourTileIndex].blockType = BlockType.None;
                     }
 
                     neighbourIndex++;
@@ -146,7 +152,11 @@ public class DatasetAnalyser : MonoBehaviour
                                 int neighbourTileIndex = datasetSamples[sampleIndex].data[neighbourPos1D].tileIndex;
 
                                 // This specific case has now occurred once, so add some weight
-                                constructedRuleset[centreTileIndex, neighbourIndex, neighbourTileIndex] += 1;
+                                constructedRuleset[centreTileIndex, neighbourIndex, neighbourTileIndex].tileWeight += 1;
+
+                                // ...and set the block type
+                                constructedRuleset[centreTileIndex, neighbourIndex, neighbourTileIndex].blockType = 
+                                    datasetSamples[sampleIndex].data[neighbourPos1D].blockType;
                             }
                         }
 

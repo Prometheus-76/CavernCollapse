@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Audio;
 
 // Responsible for saving and loading settings in all scenes
-// Does NOT have autonomous function (ie. other scripts must call its functions for it to do anything)
 
 public class SettingsManager : MonoBehaviour
 {
@@ -12,6 +11,16 @@ public class SettingsManager : MonoBehaviour
     public GameSettings gameSettings;
     public GameObject postProcessing;
     public AudioMixer audioMixer;
+    public bool loadSettingsOnStart;
+
+    void Start()
+    {
+        if (loadSettingsOnStart)
+        {
+            LoadSettings();
+            ApplySettings();
+        }
+    }
 
     public void ApplySettings()
     {
