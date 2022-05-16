@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a17c683d2fbc32341acdc55ed23a2787, type: 3}
   m_Name: GameSettings
   m_EditorClassIdentifier: 
-  musicVolume: 0
-  soundVolume: 0
-  usingPostProcessing: 0
+  musicVolume: 5
+  soundVolume: 5
+  targetFPS: 60
+  usingPostProcessing: 1

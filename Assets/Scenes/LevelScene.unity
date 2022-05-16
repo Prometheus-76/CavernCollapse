@@ -207,7 +207,7 @@ Transform:
   m_Children:
   - {fileID: 1576899061}
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &452522663
 MonoBehaviour:
@@ -309,6 +309,81 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &483705825
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 483705826}
+  - component: {fileID: 483705828}
+  - component: {fileID: 483705827}
+  m_Layer: 5
+  m_Name: StepBar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &483705826
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483705825}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2041545779}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -0.15}
+  m_SizeDelta: {x: 20, y: 0.1}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &483705827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483705825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: e17c2864c8e332b46a7c9b39b2a8070b, type: 3}
+  m_Type: 3
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 0
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &483705828
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483705825}
+  m_CullTransparentMesh: 1
 --- !u!1 &534583241
 GameObject:
   m_ObjectHideFlags: 0
@@ -417,7 +492,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 12.8, y: 0.5}
+  m_AnchoredPosition: {x: 12.8, y: 0.65}
   m_SizeDelta: {x: 44, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1167875817
@@ -527,6 +602,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1227997535}
   - component: {fileID: 1227997534}
+  - component: {fileID: 1227997536}
+  - component: {fileID: 1227997537}
   m_Layer: 0
   m_Name: Level
   m_TagString: Untagged
@@ -546,8 +623,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f609d6608780064088e1f389b354201, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  filesPerFrame: 1
+  rulesPerFrame: 500
   tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
   gameplayConfiguration: {fileID: 11400000, guid: f8a02774c90ec804297f31bdcd35b1ba, type: 2}
+  levelGenerator: {fileID: 1227997536}
 --- !u!4 &1227997535
 Transform:
   m_ObjectHideFlags: 0
@@ -560,8 +640,46 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1227997536
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1227997533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 243bd7143845db94e9cd96d80b2ee697, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stepProgress: 0
+  resetIterationsPerFrame: 1000
+  roomSequenceFloorsPerFrame: 1
+  pathReservationRoomsPerFrame: 3
+  stageSize: {x: 5, y: 10}
+  roomSize: {x: 20, y: 15}
+  tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
+  gameplayConfiguration: {fileID: 11400000, guid: f8a02774c90ec804297f31bdcd35b1ba, type: 2}
+  loadingScreen: {fileID: 1227997537}
+  datasetAnalyser: {fileID: 1227997534}
+--- !u!114 &1227997537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1227997533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1cee69f35665e34885c52227e21ffc6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainBarImage: {fileID: 1416804458}
+  stepBarImage: {fileID: 483705827}
+  progressText: {fileID: 1167875817}
+  stepFlavourText: {fileID: 1618317313}
 --- !u!1 &1416804456
 GameObject:
   m_ObjectHideFlags: 0
@@ -597,7 +715,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: 0.1}
+  m_SizeDelta: {x: 20, y: 0.2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1416804458
 MonoBehaviour:
@@ -714,7 +832,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1618317311
 GameObject:
@@ -746,11 +864,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2041545779}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 12.8, y: -0.35}
+  m_AnchoredPosition: {x: 12.8, y: -0.6}
   m_SizeDelta: {x: 44, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1618317313
@@ -773,7 +891,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '> extracting wave function'
+  m_text: '> waiting for flavour text'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1bd226d3ddf21104784f1fa2242b97b9, type: 2}
   m_sharedMaterial: {fileID: 2027933923960231310, guid: 1bd226d3ddf21104784f1fa2242b97b9, type: 2}
@@ -979,6 +1097,7 @@ RectTransform:
   m_Children:
   - {fileID: 1167875816}
   - {fileID: 1416804457}
+  - {fileID: 483705826}
   - {fileID: 1618317312}
   m_Father: {fileID: 1697298784}
   m_RootOrder: 0

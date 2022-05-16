@@ -12,19 +12,23 @@ public class DatasetAnalyser : MonoBehaviour
         public BlockType blockType;
     }
 
+    [Header("Configuration")]
+    public int filesPerFrame;
+    public int rulesPerFrame;
+
+    [Header("Components")]
     public TileCollection tileCollection;
     public GameplayConfiguration gameplayConfiguration;
+    public LevelGenerator levelGenerator;
+
     private SerialisedSample[] datasetSamples;
-    private RuleData[,,] constructedRuleset; // Centre tile, neighbour space, neighbour tile -> weight/possibility and type of tile at position
+    private RuleData[,,] constructedRuleset; // Centre tile, neighbour space, neighbour tile
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         // Allocate ruleset memory
         constructedRuleset = new RuleData[tileCollection.tiles.Length, 8, tileCollection.tiles.Length];
-
-        LoadDataset(gameplayConfiguration.dataset);
-        ConstructRuleset();
     }
 
     // Update is called once per frame
@@ -33,8 +37,9 @@ public class DatasetAnalyser : MonoBehaviour
 
     }
 
+    // Step 2 of level generation
     // Loads in all samples from a dataset and stores within the datasetSamples array
-    public void LoadDataset(int datasetIndex)
+    public IEnumerator LoadDataset(int datasetIndex)
     {
         // How many samples are in this dataset?
         int sampleCount;
@@ -45,6 +50,7 @@ public class DatasetAnalyser : MonoBehaviour
 
         // Clear the dataset to load in a new one
         datasetSamples = new SerialisedSample[sampleCount];
+        int processedSamples = 0;
 
         // Load in each sample one at a time
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++)
@@ -70,15 +76,22 @@ public class DatasetAnalyser : MonoBehaviour
 
             // Parse data as JSON and assign to serialisedSample
             datasetSamples[sampleIndex - 1] = new SerialisedSample(JsonUtility.FromJson<SerialisedSample>(fileData));
+
+            // Proceed to the next frame
+            processedSamples++;
+            levelGenerator.stepProgress = (float)processedSamples / sampleCount;
+            if (processedSamples % filesPerFrame == 0)
+                yield return null;
         }
+
+        yield return null;
+        levelGenerator.CompleteStep();
     }
 
-    public void ConstructRuleset()
+    // Step 3 of level generation
+    // Analyses all tiles within the dataset samples and constructs a ruleset that can describe them all
+    public IEnumerator ConstructRuleset()
     {
-        // Requires the dataset to be loaded in already
-        if (datasetSamples == null)
-            return;
-
         #region Reset Ruleset Data
 
         // For each centre tile
@@ -112,9 +125,13 @@ public class DatasetAnalyser : MonoBehaviour
 
         #region Analyse Samples
 
+        int totalRuleCount = datasetSamples.Length * datasetSamples[0].data.Length * 8;
+        int tileRulesProcessed = 0;
+
         // For each sample in the dataset...
         for (int sampleIndex = 0; sampleIndex < datasetSamples.Length; sampleIndex++)
         {
+
             // For each cell in the 1D sample...
             for (int tilePos1D = 0; tilePos1D < datasetSamples[sampleIndex].data.Length; tilePos1D++)
             {
@@ -161,11 +178,20 @@ public class DatasetAnalyser : MonoBehaviour
                         }
 
                         neighbourIndex++;
+
+                        tileRulesProcessed++;
+                        levelGenerator.stepProgress = (float)tileRulesProcessed / totalRuleCount;
+                        if (tileRulesProcessed % rulesPerFrame == 0)
+                            yield return null;
                     }
                 }
+
             }
         }
 
         #endregion
+
+        yield return null;
+        levelGenerator.CompleteStep();
     }
 }

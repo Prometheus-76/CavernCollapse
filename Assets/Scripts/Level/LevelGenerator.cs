@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Generates the data of the level and coordinates all the steps required for the process
 public class LevelGenerator : MonoBehaviour
 {
     #region Structs
@@ -45,9 +46,33 @@ public class LevelGenerator : MonoBehaviour
 
     #region Variables
 
-    public TileCollection tileCollection;
+    enum GenerationStep
+    {
+        ResetStageData,
+        LoadDataset,
+        ConstructRuleset,
+        AssembleRoomSequence,
+        ReserveRoomPaths,
+        GenerationComplete
+    }
+
+    private GenerationStep currentStep;
+    private float mainProgress;
+    [HideInInspector] public float stepProgress;
+    private bool awaitingNewStep;
+
+    [Header("Configuration")]
+    [SerializeField, Tooltip("The amount of resetting iterations to do per frame")] private int resetIterationsPerFrame;
+    [SerializeField, Tooltip("The amount of floors of rooms to create per frame")] private int roomSequenceFloorsPerFrame;
+    [SerializeField, Tooltip("The amount of rooms to reserve a path through per frame")] private int pathReservationRoomsPerFrame;
     [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
     [SerializeField, Tooltip("The dimensions of each room (in tiles)")] private Vector2Int roomSize;
+
+    [Header("Components")]
+    public TileCollection tileCollection;
+    public GameplayConfiguration gameplayConfiguration;
+    public LoadingScreen loadingScreen;
+    public DatasetAnalyser datasetAnalyser;
 
     #region Private
 
@@ -65,9 +90,74 @@ public class LevelGenerator : MonoBehaviour
 
         // Allocate and initialise the level, all rooms and all default tiles within those rooms
         InitialiseLevel();
-
-        GenerateLevel();
     }
+
+    void Start()
+    {
+        StartCoroutine(GenerateLevel());
+    }
+
+    void Update()
+    {
+        UpdateLoadingUI();
+    }
+
+    // Updates the loading screen UI
+    void UpdateLoadingUI()
+    {
+        mainProgress = (float)currentStep / (float)GenerationStep.GenerationComplete;
+        mainProgress += (1f / (float)GenerationStep.GenerationComplete) * stepProgress;
+
+        loadingScreen.SetMainProgress(mainProgress);
+        loadingScreen.SetStepProgress(stepProgress);
+
+        switch (currentStep)
+        {
+            case GenerationStep.ResetStageData:
+                loadingScreen.SetStepText("Resetting stage data");
+                break;
+            case GenerationStep.LoadDataset:
+                loadingScreen.SetStepText("Loading dataset samples");
+                break;
+            case GenerationStep.ConstructRuleset:
+                loadingScreen.SetStepText("Constructing wave function");
+                break;
+            case GenerationStep.AssembleRoomSequence:
+                loadingScreen.SetStepText("Assembling room sequence");
+                break;
+            case GenerationStep.ReserveRoomPaths:
+                loadingScreen.SetStepText("Reserving room paths");
+                break;
+            case GenerationStep.GenerationComplete:
+                loadingScreen.SetStepText("Stage generation complete");
+                break;
+        }
+    }
+
+    // Called whenever a step is completed
+    public void CompleteStep()
+    {
+        // Move to next step
+        int newStep = (int)currentStep + 1;
+        newStep = Mathf.Clamp(newStep, 0, (int)GenerationStep.GenerationComplete);
+        currentStep = (GenerationStep)newStep;
+
+        // When preparing for the next step
+        if (currentStep != GenerationStep.GenerationComplete)
+        {
+            // Allow next step to occur
+            awaitingNewStep = true;
+            stepProgress = 0f;
+        }
+    }
+
+    // Called when all generation steps are completed
+    void GenerationCompleted()
+    {
+        Debug.Log("Generation complete!");
+    }
+
+    #region Initialisation
 
     void InitialiseLevel()
     {
@@ -86,7 +176,7 @@ public class LevelGenerator : MonoBehaviour
         }
 
         // Set variable level data to default state
-        ResetLevelData();
+        ResetStageData();
     }   
     
     void InitialiseRoom(int roomX, int roomY)
@@ -107,8 +197,61 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-    void ResetLevelData()
+    #endregion
+
+    // Coroutines are dangerous, so I have to be super careful about when things are called in here!
+    IEnumerator GenerateLevel()
     {
+        currentStep = (GenerationStep)0;
+        awaitingNewStep = true;
+
+        // Run until the generation is completed
+        while (currentStep != GenerationStep.GenerationComplete)
+        {
+            // Only start a new coroutine when the previous one is finished (resetting awaiting new step will do this)
+            if (awaitingNewStep)
+            {
+                awaitingNewStep = false;
+
+                // Find the next step to do
+                switch (currentStep)
+                {
+                    case GenerationStep.ResetStageData:
+                        StartCoroutine(ResetStageData());
+                        break;
+                    case GenerationStep.LoadDataset:
+                        StartCoroutine(datasetAnalyser.LoadDataset(gameplayConfiguration.dataset));
+                        break;
+                    case GenerationStep.ConstructRuleset:
+                        StartCoroutine(datasetAnalyser.ConstructRuleset());
+                        break;
+                    case GenerationStep.AssembleRoomSequence:
+                        StartCoroutine(AssembleRoomSequence());
+                        break;
+                    case GenerationStep.ReserveRoomPaths:
+                        StartCoroutine(ReserveRoomPaths());
+                        break;
+                    case GenerationStep.GenerationComplete: 
+                        // This should be unreachable
+                        break;
+                }
+            }
+
+            yield return null;
+        }
+
+        GenerationCompleted();
+        yield return null;
+    }
+
+    #region Level Generation Steps
+
+    // Step 1 of level generation
+    // Resets all local data within this script
+    IEnumerator ResetStageData()
+    {
+        int iterationsCompleted = 0;
+
         // For every room...
         for (int stageY = 0; stageY < stageSize.y; stageY++)
         {
@@ -127,28 +270,31 @@ public class LevelGenerator : MonoBehaviour
                         level[stageX, stageY].tiles[roomX, roomY].tileAssigned = false;
                         level[stageX, stageY].tiles[roomX, roomY].onCriticalPath = false;
                         level[stageX, stageY].tiles[roomX, roomY].blockType = BlockType.None;
+
+                        iterationsCompleted++;
+                        stepProgress = (float)iterationsCompleted / (stageSize.y * stageSize.x * roomSize.y * roomSize.x);
+                        if (iterationsCompleted % resetIterationsPerFrame == 0)
+                            yield return null;
                     }
                 }
+
             }
         }
         
         criticalPath.Clear();
+        yield return null;
+        CompleteStep();
     }
 
-    void GenerateLevel()
+    // Step 2 is done in DatasetAnalyser class
+    // Step 3 is done in DatasetAnalyser class
+
+    // Step 4 of level generation
+    // Moves from the top of the stage to the bottom, placing rooms to the left and right as it goes down
+    IEnumerator AssembleRoomSequence()
     {
-        // Ensure we start from fresh
-        ResetLevelData();
+        int levelsCreated = 0;
 
-        // Set spawn and winding snake order of rooms from top to bottom
-        CreateRoomOrder();
-
-        // Build a critical path layout with some organic variation in every room to ensure a path exists
-        ReserveRoomPaths();
-    }
-
-    void CreateRoomOrder()
-    {
         criticalPath.Clear();
 
         // The x value of the room which will be the starting point of the level
@@ -196,7 +342,7 @@ public class LevelGenerator : MonoBehaviour
                 if (moveDirection != 0)
                 {
                     // Chance to drop down, otherwise continue in same direction
-                    moveDirection = Random.Range(0, Mathf.CeilToInt(stageSize.x / 2f)) == 0 ? 0 : moveDirection;
+                    moveDirection = Random.Range(0, Mathf.CeilToInt(stageSize.x / 2f) + 1) == 0 ? 0 : moveDirection;
                 }
                 else
                 {
@@ -230,6 +376,11 @@ public class LevelGenerator : MonoBehaviour
                     level[currentRoom.x, currentRoom.y].roomType = LevelRoom.RoomType.Exit;
                     break;
                 }
+
+                levelsCreated++;
+                stepProgress = (float)levelsCreated / stageSize.y;
+                if (levelsCreated % roomSequenceFloorsPerFrame == 0)
+                    yield return null;
             }
             else
             {
@@ -242,10 +393,89 @@ public class LevelGenerator : MonoBehaviour
                 currentRoom.x += moveDirection;
             }
         }
+
+        yield return null;
+        CompleteStep();
     }
 
-    void ReserveRoomPaths()
+    // Step 5 of level generation
+    // Builds a path through the room using a biased drunk walking algorithm
+    IEnumerator ReserveRoomPaths()
     {
-        
+        int roomPathsCreated = 0;
+        Vector2Int lastTile = Vector2Int.zero;
+
+        // For every room in the level
+        for (int r = 0; r < criticalPath.Count; r++)
+        {
+            bool pathCompleted = false;
+            Vector2Int nextRoomDirection = Vector2Int.zero; // The direction to the next room in the sequence
+            Vector2Int lastMoveDirection = Vector2Int.zero;
+
+            if (r + 1 < criticalPath.Count)
+            {
+                // For each room after the first one
+                nextRoomDirection = criticalPath[r + 1] - criticalPath[r];
+            }
+
+            // If the current room requires a fresh start point for the algorithm
+            if (level[criticalPath[r].x, criticalPath[r].y].roomType == LevelRoom.RoomType.Landing ||
+                level[criticalPath[r].x, criticalPath[r].y].roomType == LevelRoom.RoomType.Spawn)
+            {
+                if (r + 1 < criticalPath.Count)
+                {
+                    // Set the start tile to the back of the room, furthest from the next one
+                    if (nextRoomDirection.x == -1)
+                        lastTile.x = roomSize.x - 1;
+                    else
+                        lastTile.x = 0;
+                    
+                    lastTile.y = Random.Range(1, roomSize.y - 1);
+                }
+            }
+
+            // Drunk walking algorithm until the path trace inside the room is completed
+            while (pathCompleted == false)
+            {
+                if (Random.Range(0, 2) == 0)
+                {
+                    // Move in a new direction
+
+                }
+                else
+                {
+                    // Continue in same direction
+
+                }
+
+                break;
+            }
+
+            // Continue on the next frame
+            roomPathsCreated++;
+            stepProgress = (float)roomPathsCreated / criticalPath.Count;
+            if (roomPathsCreated % pathReservationRoomsPerFrame == 0)
+                yield return null;
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    #endregion
+
+    // Draw the stage arrangement of rooms with gizmos
+    private void OnDrawGizmos()
+    {
+        if (currentStep == GenerationStep.GenerationComplete && criticalPath != null)
+        {
+            for (int r = 0; r < criticalPath.Count; r++)
+            {
+                Vector3 position = Vector3.zero;
+                position.x = criticalPath[r].x;
+                position.y = criticalPath[r].y;
+                Gizmos.DrawSphere(position, 0.5f);
+            }
+        }
     }
 }

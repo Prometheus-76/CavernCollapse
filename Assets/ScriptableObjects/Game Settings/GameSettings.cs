@@ -9,5 +9,6 @@ public class GameSettings : ScriptableObject
 {
     public int musicVolume;
     public int soundVolume;
+    public int targetFPS;
     public bool usingPostProcessing;
 }

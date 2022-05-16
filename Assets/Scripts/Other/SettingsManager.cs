@@ -33,6 +33,9 @@ public class SettingsManager : MonoBehaviour
 
         // Post processing
         postProcessing.SetActive(gameSettings.usingPostProcessing);
+
+        // FPS Limit
+        Application.targetFrameRate = gameSettings.targetFPS;
     }
 
     public void LoadSettings()
