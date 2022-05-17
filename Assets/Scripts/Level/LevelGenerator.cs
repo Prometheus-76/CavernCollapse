@@ -52,9 +52,9 @@ public class LevelGenerator : MonoBehaviour
         ConstructRuleset,
         AssembleRoomSequence,
         ReserveRoomPaths,
+        CreateMapBorder,
         ConnectVerticalRooms,
         CreateRoomBorders,
-        CreateMapBorder,
         GenerationComplete
     }
 
@@ -68,6 +68,7 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField, Tooltip("The amount of resetting iterations to do per frame")] private int resetIterationsPerFrame;
     [SerializeField, Tooltip("The amount of floors of rooms to create per frame")] private int roomSequenceFloorsPerFrame;
     [SerializeField, Tooltip("The amount of rooms to reserve a path through per frame")] private int pathReservationRoomsPerFrame;
+    [SerializeField, Tooltip("The amount of rooms to set up the map borders within per frame")] private int roomMapBordersPerFrame;
     [SerializeField, Tooltip("The amount of rooms to connect vertically per frame")] private int verticalRoomConnectionsPerFrame;
     [SerializeField, Tooltip("The amount of room borders to set up per frame")] private int roomBordersPerFrame;
     [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
@@ -144,7 +145,7 @@ public class LevelGenerator : MonoBehaviour
                 loadingScreen.SetStepText("Building room borders");
                 break;
             case GenerationStep.GenerationComplete:
-                loadingScreen.SetStepText("Stage generation complete");
+                loadingScreen.SetStepText("Entering caverns...");
                 break;
         }
     }
@@ -219,6 +220,16 @@ public class LevelGenerator : MonoBehaviour
 
         Vector2Int gridPosition = StageToGrid(stageX, stageY, roomX, roomY);
         levelTileManager.PlaceTileOfType(gridPosition.x, gridPosition.y, tileIndex, blockType);
+    }
+
+    void RemoveTile(int stageX, int stageY, int roomX, int roomY)
+    {
+        level[stageX, stageY].tiles[roomX, roomY].blockType = BlockType.None;
+        level[stageX, stageY].tiles[roomX, roomY].tileIndex = -1;
+        level[stageX, stageY].tiles[roomX, roomY].tileAssigned = false;
+
+        Vector2Int gridPosition = StageToGrid(stageX, stageY, roomX, roomY);
+        levelTileManager.RemoveTile(gridPosition.x, gridPosition.y);
     }
 
     // Coroutines can be dangerous, so I have to be super careful about when things are called in here!
@@ -302,6 +313,7 @@ public class LevelGenerator : MonoBehaviour
                 {
                     for (int roomX = 0; roomX < roomSize.x; roomX++)
                     {
+                        level[stageX, stageY].tiles[roomX, roomY].tileIndex = -1;
                         level[stageX, stageY].tiles[roomX, roomY].tileAssigned = false;
                         level[stageX, stageY].tiles[roomX, roomY].onCriticalPath = false;
                         level[stageX, stageY].tiles[roomX, roomY].blockType = BlockType.None;
@@ -434,7 +446,7 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 5 of level generation
-    // Builds a path through the room using a biased drunk walking algorithm (padded 1 off the ceiling and 2 off the ground)
+    // Builds a path through the room using a biased drunk walking algorithm (padded 2 off the ceiling and 2 off the ground)
     IEnumerator ReserveRoomPaths()
     {
         int roomPathsCreated = 0;
@@ -471,7 +483,7 @@ public class LevelGenerator : MonoBehaviour
                     else
                         lastTile.x = 0;
                     
-                    lastTile.y = Random.Range(2, roomSize.y - 1); // Inclusive, Exclusive
+                    lastTile.y = Random.Range(2, roomSize.y - 2); // Inclusive, Exclusive
 
                     // The x value which, when reached, concludes the drunk walking algorithm
                     targetX = (roomSize.x - 1) - lastTile.x;
@@ -504,7 +516,7 @@ public class LevelGenerator : MonoBehaviour
                 }
 
                 lastTile += lastMoveDirection;
-                lastTile.y = Mathf.Clamp(lastTile.y, 2, roomSize.y - 2);
+                lastTile.y = Mathf.Clamp(lastTile.y, 2, roomSize.y - 3);
 
                 // Mark the tile as being on critical path
                 level[criticalPath[r].x, criticalPath[r].y].tiles[lastTile.x, lastTile.y].onCriticalPath = true;
@@ -534,9 +546,12 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 6 of level generation
-    // Builds a border of blank walls around the map to be grown inward by wave function collapse
+    // Builds a border of inner walls and blank spaces around the map to be grown inward by wave function collapse
     IEnumerator CreateMapBorder()
     {
+        int roomMapBordersCreated = 0;
+
+        // For every cell in the map
         for (int stageY = 0; stageY < stageSize.y; stageY++)
         {
             for (int stageX = 0; stageX < stageSize.x; stageX++)
@@ -546,11 +561,31 @@ public class LevelGenerator : MonoBehaviour
                     for (int roomX = 0; roomX < roomSize.x; roomX++)
                     {
                         Vector2Int gridPos = StageToGrid(stageX, stageY, roomX, roomY);
-                        // SOME MORE STUFF HERE WIP
+                        
+                        // Outer edge of border (place inner wall)
+                        if (gridPos.x == 0 || gridPos.x == (roomSize.x * stageSize.x) - 1 || gridPos.y == 0 || gridPos.y == (roomSize.y * stageSize.y) - 1)
+                        {
+                            PlaceTile(stageX, stageY, roomX, roomY, 46, BlockType.Solid);
+                            level[stageX, stageY].tiles[roomX, roomY].onCriticalPath = false;
+                            continue;
+                        }
+
+                        // Inner edge of border (set as blank space)
+                        if (gridPos.x == 1 || gridPos.x == (roomSize.x * stageSize.x) - 2 || gridPos.y == 1 || gridPos.y == (roomSize.y * stageSize.y) - 2)
+                        {
+                            RemoveTile(stageX, stageY, roomX, roomY);
+                            level[stageX, stageY].tiles[roomX, roomY].onCriticalPath = false;
+                        }
                     }
                 }
+
+                roomMapBordersCreated++;
+                stepProgress = (float)roomMapBordersCreated / (stageSize.x * stageSize.y);
+                if (roomMapBordersCreated % roomMapBordersPerFrame == 0)
+                    yield return null;
             }
         }
+
         yield return null;
         CompleteStep();
     }

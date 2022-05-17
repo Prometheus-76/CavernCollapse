@@ -22,6 +22,16 @@ public class LevelTileManager : MonoBehaviour
         }
     }
 
+    public void RemoveTile(int x, int y)
+    {
+        Vector3Int position = Vector3Int.zero;
+
+        position.x = x;
+        position.y = y;
+
+        solidTilemap.SetTile(position, null);
+    }
+
     // Recalculates all the tilemap colliders and other things
     public void RecalculateAllComponents()
     {

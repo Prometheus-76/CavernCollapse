@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: GameSettings
   m_EditorClassIdentifier: 
   musicVolume: 5
-  soundVolume: 5
+  soundVolume: 8
   targetFPS: 60
   usingPostProcessing: 1
