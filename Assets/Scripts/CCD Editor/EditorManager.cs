@@ -731,7 +731,7 @@ public class EditorManager : MonoBehaviour
         }
 
         // Default fail state, something is probably cooked
-        return 71;
+        return -1;
     }
 
     // Returns the appropriate tile, taking into account the offset, also ensures that tileOffset is kept within range

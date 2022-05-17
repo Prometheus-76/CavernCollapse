@@ -10,14 +10,13 @@ public class LevelGenerator : MonoBehaviour
     // Represents one tile in the level
     struct LevelTile
     {
-        public LevelRoom room;
-
         // Whether a tile has been locked in or not 
         public bool tileAssigned;
         public bool onCriticalPath;
 
         public int[] possibleTiles;
         public BlockType blockType;
+        public int tileIndex;
     }
 
     // Represents a room within the level
@@ -53,6 +52,9 @@ public class LevelGenerator : MonoBehaviour
         ConstructRuleset,
         AssembleRoomSequence,
         ReserveRoomPaths,
+        ConnectVerticalRooms,
+        CreateRoomBorders,
+        CreateMapBorder,
         GenerationComplete
     }
 
@@ -60,11 +62,14 @@ public class LevelGenerator : MonoBehaviour
     private float mainProgress;
     [HideInInspector] public float stepProgress;
     private bool awaitingNewStep;
+    private int seed;
 
     [Header("Configuration")]
     [SerializeField, Tooltip("The amount of resetting iterations to do per frame")] private int resetIterationsPerFrame;
     [SerializeField, Tooltip("The amount of floors of rooms to create per frame")] private int roomSequenceFloorsPerFrame;
     [SerializeField, Tooltip("The amount of rooms to reserve a path through per frame")] private int pathReservationRoomsPerFrame;
+    [SerializeField, Tooltip("The amount of rooms to connect vertically per frame")] private int verticalRoomConnectionsPerFrame;
+    [SerializeField, Tooltip("The amount of room borders to set up per frame")] private int roomBordersPerFrame;
     [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
     [SerializeField, Tooltip("The dimensions of each room (in tiles)")] private Vector2Int roomSize;
 
@@ -73,6 +78,7 @@ public class LevelGenerator : MonoBehaviour
     public GameplayConfiguration gameplayConfiguration;
     public LoadingScreen loadingScreen;
     public DatasetAnalyser datasetAnalyser;
+    public LevelTileManager levelTileManager;
 
     #region Private
 
@@ -127,6 +133,15 @@ public class LevelGenerator : MonoBehaviour
                 break;
             case GenerationStep.ReserveRoomPaths:
                 loadingScreen.SetStepText("Reserving room paths");
+                break;
+            case GenerationStep.CreateMapBorder:
+                loadingScreen.SetStepText("Building map border");
+                break;
+            case GenerationStep.ConnectVerticalRooms:
+                loadingScreen.SetStepText("Connecting vertical rooms");
+                break;
+            case GenerationStep.CreateRoomBorders:
+                loadingScreen.SetStepText("Building room borders");
                 break;
             case GenerationStep.GenerationComplete:
                 loadingScreen.SetStepText("Stage generation complete");
@@ -191,17 +206,28 @@ public class LevelGenerator : MonoBehaviour
             {
                 level[roomX, roomY].tiles[x, y] = new LevelTile();
                 level[roomX, roomY].tiles[x, y].possibleTiles = new int[tileCollection.tiles.Length];
-
-                level[roomX, roomY].tiles[x, y].room = level[roomX, roomY];
             }
         }
     }
 
     #endregion
 
-    // Coroutines are dangerous, so I have to be super careful about when things are called in here!
+    void PlaceTile(int stageX, int stageY, int roomX, int roomY, int tileIndex, BlockType blockType)
+    {        
+        level[stageX, stageY].tiles[roomX, roomY].blockType = blockType;
+        level[stageX, stageY].tiles[roomX, roomY].tileIndex = tileIndex;
+
+        Vector2Int gridPosition = StageToGrid(stageX, stageY, roomX, roomY);
+        levelTileManager.PlaceTileOfType(gridPosition.x, gridPosition.y, tileIndex, blockType);
+    }
+
+    // Coroutines can be dangerous, so I have to be super careful about when things are called in here!
     IEnumerator GenerateLevel()
     {
+        // Randomise the seed
+        seed = Random.Range(int.MinValue, int.MaxValue);
+        Random.InitState(seed);
+
         currentStep = (GenerationStep)0;
         awaitingNewStep = true;
 
@@ -230,6 +256,15 @@ public class LevelGenerator : MonoBehaviour
                         break;
                     case GenerationStep.ReserveRoomPaths:
                         StartCoroutine(ReserveRoomPaths());
+                        break;
+                    case GenerationStep.CreateMapBorder:
+                        StartCoroutine(CreateMapBorder());
+                        break;
+                    case GenerationStep.ConnectVerticalRooms:
+                        StartCoroutine(ConnectVerticalRooms());
+                        break;
+                    case GenerationStep.CreateRoomBorders:
+                        StartCoroutine(CreateRoomBorders());
                         break;
                     case GenerationStep.GenerationComplete: 
                         // This should be unreachable
@@ -399,23 +434,29 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 5 of level generation
-    // Builds a path through the room using a biased drunk walking algorithm
+    // Builds a path through the room using a biased drunk walking algorithm (padded 1 off the ceiling and 2 off the ground)
     IEnumerator ReserveRoomPaths()
     {
         int roomPathsCreated = 0;
         Vector2Int lastTile = Vector2Int.zero;
+        int targetX = -1;
 
         // For every room in the level
         for (int r = 0; r < criticalPath.Count; r++)
         {
-            bool pathCompleted = false;
-            Vector2Int nextRoomDirection = Vector2Int.zero; // The direction to the next room in the sequence
+            int roomProgressDirection = 0; // The x direction passing through this room
             Vector2Int lastMoveDirection = Vector2Int.zero;
 
-            if (r + 1 < criticalPath.Count)
+            // Find the direction of the room on the x axis
+            if (r + 1 < criticalPath.Count && criticalPath[r + 1].x - criticalPath[r].x != 0)
             {
-                // For each room after the first one
-                nextRoomDirection = criticalPath[r + 1] - criticalPath[r];
+                // Check next room
+                roomProgressDirection = criticalPath[r + 1].x - criticalPath[r].x;
+            }
+            else if (r - 1 >= 0)
+            {
+                // Check previous room
+                roomProgressDirection = criticalPath[r].x - criticalPath[r - 1].x;
             }
 
             // If the current room requires a fresh start point for the algorithm
@@ -425,30 +466,60 @@ public class LevelGenerator : MonoBehaviour
                 if (r + 1 < criticalPath.Count)
                 {
                     // Set the start tile to the back of the room, furthest from the next one
-                    if (nextRoomDirection.x == -1)
+                    if (roomProgressDirection == -1)
                         lastTile.x = roomSize.x - 1;
                     else
                         lastTile.x = 0;
                     
-                    lastTile.y = Random.Range(1, roomSize.y - 1);
+                    lastTile.y = Random.Range(2, roomSize.y - 1); // Inclusive, Exclusive
+
+                    // The x value which, when reached, concludes the drunk walking algorithm
+                    targetX = (roomSize.x - 1) - lastTile.x;
                 }
             }
 
+            // Mark the first tile as being on critical path
+            level[criticalPath[r].x, criticalPath[r].y].tiles[lastTile.x, lastTile.y].onCriticalPath = true;
+
             // Drunk walking algorithm until the path trace inside the room is completed
-            while (pathCompleted == false)
+            while (true)
             {
-                if (Random.Range(0, 2) == 0)
+                // If the walker should change directions
+                if (Random.Range(0, 3) <= 1 || lastMoveDirection == Vector2Int.zero)
                 {
                     // Move in a new direction
-
+                    int newDirection = Random.Range(-1, 2);
+                    if (newDirection == 0)
+                    {
+                        // Go towards next room
+                        lastMoveDirection.x = roomProgressDirection;
+                        lastMoveDirection.y = 0;
+                    }
+                    else
+                    {
+                        // Go up/down
+                        lastMoveDirection.x = 0;
+                        lastMoveDirection.y = newDirection;
+                    }
                 }
-                else
+
+                lastTile += lastMoveDirection;
+                lastTile.y = Mathf.Clamp(lastTile.y, 2, roomSize.y - 2);
+
+                // Mark the tile as being on critical path
+                level[criticalPath[r].x, criticalPath[r].y].tiles[lastTile.x, lastTile.y].onCriticalPath = true;
+
+                // If the room path has completely finished being drawn
+                if (lastTile.x == targetX)
                 {
-                    // Continue in same direction
+                    // Set the start tile to the back of the room, furthest from the next one
+                    if (roomProgressDirection == -1)
+                        lastTile.x = roomSize.x - 1;
+                    else
+                        lastTile.x = 0;
 
+                    break;
                 }
-
-                break;
             }
 
             // Continue on the next frame
@@ -462,19 +533,253 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
+    // Step 6 of level generation
+    // Builds a border of blank walls around the map to be grown inward by wave function collapse
+    IEnumerator CreateMapBorder()
+    {
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        Vector2Int gridPos = StageToGrid(stageX, stageY, roomX, roomY);
+                        // SOME MORE STUFF HERE WIP
+                    }
+                }
+            }
+        }
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 7 of level generation
+    // Creates an aligned vertical access point between dropdown and landing rooms, marking it as critical path
+    IEnumerator ConnectVerticalRooms()
+    {
+        int roomCutoutsCompleted = 0;
+
+        // Mark areas to cut in dropdown and landing rooms
+        for (int r = 0; r < criticalPath.Count; r++)
+        {
+            // For dropdown rooms, find the lowest point in the critical path and mark them
+            if (level[criticalPath[r].x, criticalPath[r].y].roomType == LevelRoom.RoomType.Dropdown)
+            {
+                bool groundMarked = false;
+
+                // Run through the tiles in the room from left to right, bottom to top
+                for (int y = 0; y < roomSize.y; y++)
+                {
+                    bool previousTileState = false;
+                    for (int x = 1; x < roomSize.x - 1; x++)
+                    {
+                        if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath && previousTileState == false)
+                        {
+                            // If this is the start of a trough in the critical path
+                            level[criticalPath[r].x, criticalPath[r].y].verticalAccessMin = x;
+                            previousTileState = true;
+                        }
+                        
+                        if (x + 1 < roomSize.x && level[criticalPath[r].x, criticalPath[r].y].tiles[x + 1, y].onCriticalPath == false && previousTileState)
+                        {
+                            // If this is the natural end of a trough in the critical path
+                            level[criticalPath[r].x, criticalPath[r].y].verticalAccessMax = x;
+                            groundMarked = true;
+                            break;
+                        }
+
+                        if (x + 1 >= roomSize.x && level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath == true)
+                        {
+                            // If this is the forced end of a trough in the critical path
+                            level[criticalPath[r].x, criticalPath[r].y].verticalAccessMax = x;
+                            groundMarked = true;
+                            break;
+                        }
+
+                        previousTileState = level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath;
+                    }
+
+                    if (groundMarked)
+                        break;
+                }
+            }
+
+            // For landing rooms, mark points in the ceiling matching the drilled hole in the ground in the room above
+            if (level[criticalPath[r].x, criticalPath[r].y].roomType == LevelRoom.RoomType.Landing)
+            {
+                level[criticalPath[r].x, criticalPath[r].y].verticalAccessMin = level[criticalPath[r].x, criticalPath[r].y + 1].verticalAccessMin;
+                level[criticalPath[r].x, criticalPath[r].y].verticalAccessMax = level[criticalPath[r].x, criticalPath[r].y + 1].verticalAccessMax;
+            }
+        }
+
+        // Cut holes between dropdown and landing rooms
+        for (int r = 0; r < criticalPath.Count; r++)
+        {
+            // For dropdown rooms, cut up from the bottom of the room
+            if (level[criticalPath[r].x, criticalPath[r].y].roomType == LevelRoom.RoomType.Dropdown)
+            {
+                // Left to right for each marked column
+                for (int x = level[criticalPath[r].x, criticalPath[r].y].verticalAccessMin; x <= level[criticalPath[r].x, criticalPath[r].y].verticalAccessMax; x++)
+                {
+                    // Dig up from the ground until hitting the main path
+                    for (int y = 0; y < roomSize.y - 1; y++)
+                    {
+                        level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath = true;
+
+                        // Check if the column has completed
+                        if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y + 1].onCriticalPath)
+                            break;
+                    }
+                }
+            }
+
+            // For landing rooms, cut down from the top of the room
+            if (level[criticalPath[r].x, criticalPath[r].y].roomType == LevelRoom.RoomType.Landing)
+            {
+                // Left to right for each marked column
+                for (int x = level[criticalPath[r].x, criticalPath[r].y].verticalAccessMin; x <= level[criticalPath[r].x, criticalPath[r].y].verticalAccessMax; x++)
+                {
+                    // Dig down from the ceiling until hitting the main path
+                    for (int y = roomSize.y - 1; y > 0; y--)
+                    {
+                        level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath = true;
+
+                        // Check if the column has completed
+                        if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y - 1].onCriticalPath)
+                            break;
+                    }
+                }
+            }
+
+            roomCutoutsCompleted++;
+            stepProgress = (float)roomCutoutsCompleted / criticalPath.Count;
+            if (roomCutoutsCompleted % verticalRoomConnectionsPerFrame == 0)
+                yield return null;
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 8 of level generation
+    // Places border tiles along the bottom of *every* room (not only on critical path), except for places that contact the vertical access points
+    IEnumerator CreateRoomBorders()
+    {
+        int roomBordersCreated = 0;
+
+        // For each room in the stage...
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                // For each tile in the bottom row of this room
+                for (int roomX = 0; roomX < roomSize.x; roomX++)
+                {
+                    // Scan along the bottom row, this bool is true if there is a critical path tile to the left/right or on top of the current tile
+                    bool criticalPathNearby = false;
+                    if (level[stageX, stageY].tiles[roomX, 0].onCriticalPath) criticalPathNearby = true;
+                    if (roomX - 1 >= 0 && level[stageX, stageY].tiles[roomX - 1, 0].onCriticalPath) criticalPathNearby = true;
+                    if (roomX + 1 <= roomSize.x - 1 && level[stageX, stageY].tiles[roomX + 1, 0].onCriticalPath) criticalPathNearby = true;
+                    if (roomX == roomSize.x - 1 && stageX + 1 <= stageSize.x - 1 && level[stageX + 1, stageY].tiles[0, 0].onCriticalPath) criticalPathNearby = true;
+                    if (roomX == 0 && stageX - 1 >= 0 && level[stageX - 1, stageY].tiles[roomSize.x - 1, 0].onCriticalPath) criticalPathNearby = true;
+
+                    // Set wall tile on this space since it's not near a vertical access
+                    if (criticalPathNearby == false)
+                    {
+                        PlaceTile(stageX, stageY, roomX, 0, 46, BlockType.Solid); // FINAL WILL USE 45 (OR MAYBE 45-46 RAND) BUT THIS IS TEMP FOR DEBUG
+                    }
+                }
+
+                // Update progress
+                roomBordersCreated++;
+                stepProgress = (float)roomBordersCreated / (stageSize.x * stageSize.y);
+                if (roomBordersCreated % roomBordersPerFrame == 0)
+                    yield return null;
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // STEPS FOR WAVE FUNCTION COLLAPSE IMPLEMENTATION IN THIS GAME
+    // 1. Do a pass of solid/air (highest priority)
+    // 2. Delete all air and do a pass of ladders/platforms/air (second priority)
+    // 3. Delete all air again and do a pass of air/spikes/coins (third priority)
+    // 4. Finally, delete all air again and do a fresh pass of foliage/torches/vines/signs/air (lowest priority)
+
+    #endregion
+
+    #region Grid/Stage/Room Conversion
+
+    Vector2Int StageToGrid(int stageX, int stageY, int roomX, int roomY)
+    {
+        Vector2Int result = Vector2Int.zero;
+
+        result.x = stageX * roomSize.x + roomX;
+        result.y = stageY * roomSize.y + roomY;
+
+        return result;
+    }
+
+    Vector2Int GridToRoom(int x, int y)
+    {
+        Vector2Int result = Vector2Int.zero;
+
+        result.x = x % roomSize.x;
+        result.y = y % roomSize.y;
+
+        return result;
+    }
+
+    Vector2Int GridToStage(int x, int y)
+    {
+        Vector2Int result = Vector2Int.zero;
+        Vector2Int room = GridToRoom(x, y);
+
+        result.x = (x - room.x) / roomSize.x;
+        result.y = (y - room.y) / roomSize.y;
+
+        return result;
+    }
+
     #endregion
 
     // Draw the stage arrangement of rooms with gizmos
     private void OnDrawGizmos()
     {
-        if (currentStep == GenerationStep.GenerationComplete && criticalPath != null)
+        if (level != null)
         {
-            for (int r = 0; r < criticalPath.Count; r++)
+            Vector3Int offset = Vector3Int.zero;
+            for (int stageY = 0; stageY < stageSize.y; stageY++)
             {
-                Vector3 position = Vector3.zero;
-                position.x = criticalPath[r].x;
-                position.y = criticalPath[r].y;
-                Gizmos.DrawSphere(position, 0.5f);
+                for (int stageX = 0; stageX < stageSize.x; stageX++)
+                {
+                    for (int roomY = 0; roomY < roomSize.y; roomY++)
+                    {
+                        for (int roomX = 0; roomX < roomSize.x; roomX++)
+                        {
+                            Vector3 position = Vector3.zero;
+                            position.x = stageX * roomSize.x + roomX;
+                            position.y = stageY * roomSize.y + roomY;
+                            position += offset;
+
+                            if (level[stageX, stageY].tiles[roomX, roomY].onCriticalPath)
+                                Gizmos.DrawSphere(position, 0.2f);
+                            else if (level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.Solid)
+                                Gizmos.DrawCube(position, Vector3.one * 0.5f);
+                            else
+                                Gizmos.DrawSphere(position, 0.5f);
+                        }
+                    }
+
+                    offset.x += 1;
+                }
+
+                offset.x = 0;
+                offset.y += 1;
             }
         }
     }
