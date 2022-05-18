@@ -10,9 +10,11 @@ public class LevelGenerator : MonoBehaviour
     // Represents one tile in the level
     struct LevelTile
     {
+        // Whether a tile is reserved for the critical path through a room
+        public bool reservedTile;
+
         // Whether a tile has been locked in or not 
         public bool tileAssigned;
-        public bool onCriticalPath;
 
         public int[] possibleTiles;
         public BlockType blockType;
@@ -35,8 +37,9 @@ public class LevelGenerator : MonoBehaviour
         public LevelTile[,] tiles;
 
         // Variable between stages
-        public bool onCriticalPath;
+        public bool reservedRoom;
         public RoomType roomType;
+
         public int verticalAccessMin; // Represents the left-most column of any gaps in the ceiling or floor used for room transitions
         public int verticalAccessMax; // Represents the right-most column of any gaps in the ceiling or floor used for room transitions
     }
@@ -55,6 +58,11 @@ public class LevelGenerator : MonoBehaviour
         CreateMapBorder,
         ConnectVerticalRooms,
         CreateRoomBorders,
+        WaveFunctionCollapseWalls,
+        WaveFunctionCollapsePlatforming,
+        WaveFunctionCollapseGameplay,
+        WaveFunctionCollapseDeco,
+        PlaceSpawnAndExit,
         GenerationComplete
     }
 
@@ -71,6 +79,7 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField, Tooltip("The amount of rooms to set up the map borders within per frame")] private int roomMapBordersPerFrame;
     [SerializeField, Tooltip("The amount of rooms to connect vertically per frame")] private int verticalRoomConnectionsPerFrame;
     [SerializeField, Tooltip("The amount of room borders to set up per frame")] private int roomBordersPerFrame;
+    [SerializeField, Tooltip("The amount of tiles to collapse per frame")] private int tilesCollapsedPerFrame;
     [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
     [SerializeField, Tooltip("The dimensions of each room (in tiles)")] private Vector2Int roomSize;
 
@@ -80,6 +89,8 @@ public class LevelGenerator : MonoBehaviour
     public LoadingScreen loadingScreen;
     public DatasetAnalyser datasetAnalyser;
     public LevelTileManager levelTileManager;
+    public WaveFunctionCollapse waveFunctionCollapse;
+    public CameraController cameraController;
 
     #region Private
 
@@ -144,6 +155,21 @@ public class LevelGenerator : MonoBehaviour
             case GenerationStep.CreateRoomBorders:
                 loadingScreen.SetStepText("Building room borders");
                 break;
+            case GenerationStep.WaveFunctionCollapseWalls:
+                loadingScreen.SetStepText("Collapsing cavern walls");
+                break;
+            case GenerationStep.WaveFunctionCollapsePlatforming:
+                loadingScreen.SetStepText("Placing platforms and ladders");
+                break;
+            case GenerationStep.WaveFunctionCollapseGameplay:
+                loadingScreen.SetStepText("Setting up risk and reward");
+                break;
+            case GenerationStep.WaveFunctionCollapseDeco:
+                loadingScreen.SetStepText("Growing vines and foliage");
+                break;
+            case GenerationStep.PlaceSpawnAndExit:
+                loadingScreen.SetStepText("Placing doors");
+                break;
             case GenerationStep.GenerationComplete:
                 loadingScreen.SetStepText("Entering caverns...");
                 break;
@@ -170,7 +196,9 @@ public class LevelGenerator : MonoBehaviour
     // Called when all generation steps are completed
     void GenerationCompleted()
     {
-        Debug.Log("Generation complete!");
+        // Play level music when generation is completed
+        if (MusicPlayer.GetInstance() != null)
+            MusicPlayer.GetInstance().CrossFade(2);
     }
 
     #region Initialisation
@@ -220,6 +248,7 @@ public class LevelGenerator : MonoBehaviour
 
         Vector2Int gridPosition = StageToGrid(stageX, stageY, roomX, roomY);
         levelTileManager.PlaceTileOfType(gridPosition.x, gridPosition.y, tileIndex, blockType);
+        waveFunctionCollapse.SetTile(gridPosition.x, gridPosition.y, blockType, tileIndex);
     }
 
     void RemoveTile(int stageX, int stageY, int roomX, int roomY)
@@ -230,6 +259,7 @@ public class LevelGenerator : MonoBehaviour
 
         Vector2Int gridPosition = StageToGrid(stageX, stageY, roomX, roomY);
         levelTileManager.RemoveTile(gridPosition.x, gridPosition.y);
+        waveFunctionCollapse.ResetTile(gridPosition.x, gridPosition.y);
     }
 
     // Coroutines can be dangerous, so I have to be super careful about when things are called in here!
@@ -241,6 +271,8 @@ public class LevelGenerator : MonoBehaviour
 
         currentStep = (GenerationStep)0;
         awaitingNewStep = true;
+
+        waveFunctionCollapse.InitialiseWaveFunction(stageSize.x * roomSize.x, stageSize.y * roomSize.y);
 
         // Run until the generation is completed
         while (currentStep != GenerationStep.GenerationComplete)
@@ -277,6 +309,21 @@ public class LevelGenerator : MonoBehaviour
                     case GenerationStep.CreateRoomBorders:
                         StartCoroutine(CreateRoomBorders());
                         break;
+                    case GenerationStep.WaveFunctionCollapseWalls:
+                        StartCoroutine(WaveFunctionCollapseWalls());
+                        break;
+                    case GenerationStep.WaveFunctionCollapsePlatforming:
+                        StartCoroutine(WaveFunctionCollapsePlatforming());
+                        break;
+                    case GenerationStep.WaveFunctionCollapseGameplay:
+                        StartCoroutine(WaveFunctionCollapseGameplay());
+                        break;
+                    case GenerationStep.WaveFunctionCollapseDeco:
+                        StartCoroutine(WaveFunctionCollapseDeco());
+                        break;
+                    case GenerationStep.PlaceSpawnAndExit:
+                        StartCoroutine(PlaceSpawnAndExit());
+                        break;
                     case GenerationStep.GenerationComplete: 
                         // This should be unreachable
                         break;
@@ -303,7 +350,7 @@ public class LevelGenerator : MonoBehaviour
         {
             for (int stageX = 0; stageX < stageSize.x; stageX++)
             {
-                level[stageX, stageY].onCriticalPath = false;
+                level[stageX, stageY].reservedRoom = false;
                 level[stageX, stageY].roomType = LevelRoom.RoomType.Unassigned;
                 level[stageX, stageY].verticalAccessMin = -1;
                 level[stageX, stageY].verticalAccessMax = -1;
@@ -315,7 +362,7 @@ public class LevelGenerator : MonoBehaviour
                     {
                         level[stageX, stageY].tiles[roomX, roomY].tileIndex = -1;
                         level[stageX, stageY].tiles[roomX, roomY].tileAssigned = false;
-                        level[stageX, stageY].tiles[roomX, roomY].onCriticalPath = false;
+                        level[stageX, stageY].tiles[roomX, roomY].reservedTile = false;
                         level[stageX, stageY].tiles[roomX, roomY].blockType = BlockType.None;
 
                         iterationsCompleted++;
@@ -399,7 +446,7 @@ public class LevelGenerator : MonoBehaviour
             }
 
             // Mark room as being on critical path
-            level[currentRoom.x, currentRoom.y].onCriticalPath = true;
+            level[currentRoom.x, currentRoom.y].reservedRoom = true;
             criticalPath.Add(currentRoom);
 
             // Move in the direction and connect a room
@@ -491,7 +538,7 @@ public class LevelGenerator : MonoBehaviour
             }
 
             // Mark the first tile as being on critical path
-            level[criticalPath[r].x, criticalPath[r].y].tiles[lastTile.x, lastTile.y].onCriticalPath = true;
+            level[criticalPath[r].x, criticalPath[r].y].tiles[lastTile.x, lastTile.y].reservedTile = true;
 
             // Drunk walking algorithm until the path trace inside the room is completed
             while (true)
@@ -519,7 +566,7 @@ public class LevelGenerator : MonoBehaviour
                 lastTile.y = Mathf.Clamp(lastTile.y, 2, roomSize.y - 3);
 
                 // Mark the tile as being on critical path
-                level[criticalPath[r].x, criticalPath[r].y].tiles[lastTile.x, lastTile.y].onCriticalPath = true;
+                level[criticalPath[r].x, criticalPath[r].y].tiles[lastTile.x, lastTile.y].reservedTile = true;
 
                 // If the room path has completely finished being drawn
                 if (lastTile.x == targetX)
@@ -565,8 +612,8 @@ public class LevelGenerator : MonoBehaviour
                         // Outer edge of border (place inner wall)
                         if (gridPos.x == 0 || gridPos.x == (roomSize.x * stageSize.x) - 1 || gridPos.y == 0 || gridPos.y == (roomSize.y * stageSize.y) - 1)
                         {
-                            PlaceTile(stageX, stageY, roomX, roomY, 46, BlockType.Solid);
-                            level[stageX, stageY].tiles[roomX, roomY].onCriticalPath = false;
+                            PlaceTile(stageX, stageY, roomX, roomY, 45, BlockType.Solid);
+                            level[stageX, stageY].tiles[roomX, roomY].reservedTile = false;
                             continue;
                         }
 
@@ -574,7 +621,7 @@ public class LevelGenerator : MonoBehaviour
                         if (gridPos.x == 1 || gridPos.x == (roomSize.x * stageSize.x) - 2 || gridPos.y == 1 || gridPos.y == (roomSize.y * stageSize.y) - 2)
                         {
                             RemoveTile(stageX, stageY, roomX, roomY);
-                            level[stageX, stageY].tiles[roomX, roomY].onCriticalPath = false;
+                            level[stageX, stageY].tiles[roomX, roomY].reservedTile = false;
                         }
                     }
                 }
@@ -610,14 +657,14 @@ public class LevelGenerator : MonoBehaviour
                     bool previousTileState = false;
                     for (int x = 1; x < roomSize.x - 1; x++)
                     {
-                        if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath && previousTileState == false)
+                        if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].reservedTile && previousTileState == false)
                         {
                             // If this is the start of a trough in the critical path
                             level[criticalPath[r].x, criticalPath[r].y].verticalAccessMin = x;
                             previousTileState = true;
                         }
                         
-                        if (x + 1 < roomSize.x && level[criticalPath[r].x, criticalPath[r].y].tiles[x + 1, y].onCriticalPath == false && previousTileState)
+                        if (x + 1 < roomSize.x && level[criticalPath[r].x, criticalPath[r].y].tiles[x + 1, y].reservedTile == false && previousTileState)
                         {
                             // If this is the natural end of a trough in the critical path
                             level[criticalPath[r].x, criticalPath[r].y].verticalAccessMax = x;
@@ -625,7 +672,7 @@ public class LevelGenerator : MonoBehaviour
                             break;
                         }
 
-                        if (x + 1 >= roomSize.x && level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath == true)
+                        if (x + 1 >= roomSize.x && level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].reservedTile == true)
                         {
                             // If this is the forced end of a trough in the critical path
                             level[criticalPath[r].x, criticalPath[r].y].verticalAccessMax = x;
@@ -633,7 +680,7 @@ public class LevelGenerator : MonoBehaviour
                             break;
                         }
 
-                        previousTileState = level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath;
+                        previousTileState = level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].reservedTile;
                     }
 
                     if (groundMarked)
@@ -661,10 +708,10 @@ public class LevelGenerator : MonoBehaviour
                     // Dig up from the ground until hitting the main path
                     for (int y = 0; y < roomSize.y - 1; y++)
                     {
-                        level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath = true;
+                        level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].reservedTile = true;
 
                         // Check if the column has completed
-                        if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y + 1].onCriticalPath)
+                        if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y + 1].reservedTile)
                             break;
                     }
                 }
@@ -679,10 +726,10 @@ public class LevelGenerator : MonoBehaviour
                     // Dig down from the ceiling until hitting the main path
                     for (int y = roomSize.y - 1; y > 0; y--)
                     {
-                        level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].onCriticalPath = true;
+                        level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].reservedTile = true;
 
                         // Check if the column has completed
-                        if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y - 1].onCriticalPath)
+                        if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y - 1].reservedTile)
                             break;
                     }
                 }
@@ -714,16 +761,16 @@ public class LevelGenerator : MonoBehaviour
                 {
                     // Scan along the bottom row, this bool is true if there is a critical path tile to the left/right or on top of the current tile
                     bool criticalPathNearby = false;
-                    if (level[stageX, stageY].tiles[roomX, 0].onCriticalPath) criticalPathNearby = true;
-                    if (roomX - 1 >= 0 && level[stageX, stageY].tiles[roomX - 1, 0].onCriticalPath) criticalPathNearby = true;
-                    if (roomX + 1 <= roomSize.x - 1 && level[stageX, stageY].tiles[roomX + 1, 0].onCriticalPath) criticalPathNearby = true;
-                    if (roomX == roomSize.x - 1 && stageX + 1 <= stageSize.x - 1 && level[stageX + 1, stageY].tiles[0, 0].onCriticalPath) criticalPathNearby = true;
-                    if (roomX == 0 && stageX - 1 >= 0 && level[stageX - 1, stageY].tiles[roomSize.x - 1, 0].onCriticalPath) criticalPathNearby = true;
+                    if (level[stageX, stageY].tiles[roomX, 0].reservedTile) criticalPathNearby = true;
+                    if (roomX - 1 >= 0 && level[stageX, stageY].tiles[roomX - 1, 0].reservedTile) criticalPathNearby = true;
+                    if (roomX + 1 <= roomSize.x - 1 && level[stageX, stageY].tiles[roomX + 1, 0].reservedTile) criticalPathNearby = true;
+                    if (roomX == roomSize.x - 1 && stageX + 1 <= stageSize.x - 1 && level[stageX + 1, stageY].tiles[0, 0].reservedTile) criticalPathNearby = true;
+                    if (roomX == 0 && stageX - 1 >= 0 && level[stageX - 1, stageY].tiles[roomSize.x - 1, 0].reservedTile) criticalPathNearby = true;
 
                     // Set wall tile on this space since it's not near a vertical access
                     if (criticalPathNearby == false)
                     {
-                        PlaceTile(stageX, stageY, roomX, 0, 46, BlockType.Solid); // FINAL WILL USE 45 (OR MAYBE 45-46 RAND) BUT THIS IS TEMP FOR DEBUG
+                        PlaceTile(stageX, stageY, roomX, 0, 45, BlockType.Solid);
                     }
                 }
 
@@ -739,11 +786,478 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // STEPS FOR WAVE FUNCTION COLLAPSE IMPLEMENTATION IN THIS GAME
-    // 1. Do a pass of solid/air (highest priority)
-    // 2. Delete all air and do a pass of ladders/platforms/air (second priority)
-    // 3. Delete all air again and do a pass of air/spikes/coins (third priority)
-    // 4. Finally, delete all air again and do a fresh pass of foliage/torches/vines/signs/air (lowest priority)
+    // Step 9 of level generation
+    // Wave function collapse pass for walls and air
+    IEnumerator WaveFunctionCollapseWalls()
+    {
+        // Set up grid for wave function collapse
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        if (level[stageX, stageY].tiles[roomX, roomY].reservedTile)
+                            PlaceTile(stageX, stageY, roomX, roomY, 48, BlockType.None);
+                    }
+                }
+            }
+        }
+
+        // Set wave function type
+        waveFunctionCollapse.ResetBlockPalette();
+        waveFunctionCollapse.AddToBlockPalette(BlockType.None);
+        waveFunctionCollapse.AddToBlockPalette(BlockType.Solid);
+
+        // Calculate entropy of entire wave function collapse grid
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                waveFunctionCollapse.RecalculateEntropy(x, y);
+            }
+        }
+
+        int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
+
+        int positionsCollapsed = 0;
+        Vector2Int positionToCollapse;
+        while (true)
+        {
+            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile();
+
+            if (positionToCollapse.x != -1)
+            {
+                // Collapse this position
+                if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
+                {
+                    BlockType collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
+                    int collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
+
+                    // Recalculate neighbours
+                    for (int yOffset = 1; yOffset >= -1; yOffset--)
+                    {
+                        for (int xOffset = -1; xOffset <= 1; xOffset++)
+                        {
+                            // Skip the centre tile
+                            if (xOffset == 0 && yOffset == 0)
+                                continue;
+
+                            // Skip the tile if its out of range of the grid
+                            if (positionToCollapse.x + xOffset < 0 || positionToCollapse.x + xOffset >= (stageSize.x * roomSize.x) ||
+                                positionToCollapse.y + yOffset < 0 || positionToCollapse.y + yOffset >= (stageSize.y * roomSize.y))
+                                continue;
+
+                            // Update this neighbour tile
+                            waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
+                        }
+                    }
+                }
+
+                positionsCollapsed++;
+                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                    yield return null;
+            }
+            else
+            {
+                // No positions left to collapse
+                break;
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 10 of level generation
+    // Wave function collapse pass for ladders and platforms
+    IEnumerator WaveFunctionCollapsePlatforming()
+    {
+        // Set up grid for wave function collapse
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        // Remove all air
+                        if (level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.None)
+                            RemoveTile(stageX, stageY, roomX, roomY);
+                    }
+                }
+            }
+        }
+
+        // Set wave function type
+        waveFunctionCollapse.ResetBlockPalette();
+        waveFunctionCollapse.AddToBlockPalette(BlockType.None);
+        waveFunctionCollapse.AddToBlockPalette(BlockType.OneWay);
+        waveFunctionCollapse.AddToBlockPalette(BlockType.Ladder);
+
+        // Calculate entropy of entire wave function collapse grid
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                waveFunctionCollapse.RecalculateEntropy(x, y);
+            }
+        }
+
+        int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
+
+        int positionsCollapsed = 0;
+        Vector2Int positionToCollapse;
+        while (true)
+        {
+            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile();
+
+            if (positionToCollapse.x != -1)
+            {
+                // Collapse this position
+                if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
+                {
+                    BlockType collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
+                    int collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
+
+                    // Recalculate neighbours
+                    for (int yOffset = 1; yOffset >= -1; yOffset--)
+                    {
+                        for (int xOffset = -1; xOffset <= 1; xOffset++)
+                        {
+                            // Skip the centre tile
+                            if (xOffset == 0 && yOffset == 0)
+                                continue;
+
+                            // Skip the tile if its out of range of the grid
+                            if (positionToCollapse.x + xOffset < 0 || positionToCollapse.x + xOffset >= (stageSize.x * roomSize.x) ||
+                                positionToCollapse.y + yOffset < 0 || positionToCollapse.y + yOffset >= (stageSize.y * roomSize.y))
+                                continue;
+
+                            // Update this neighbour tile
+                            waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
+                        }
+                    }
+                }
+
+                positionsCollapsed++;
+                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                    yield return null;
+            }
+            else
+            {
+                // No positions left to collapse
+                break;
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 11 of level generation
+    // Wave function collapse pass for spikes and coins
+    IEnumerator WaveFunctionCollapseGameplay()
+    {
+        // Set up grid for wave function collapse
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        // Remove all air
+                        if (level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.None)
+                            RemoveTile(stageX, stageY, roomX, roomY);
+                    }
+                }
+            }
+        }
+
+        // Set wave function type
+        waveFunctionCollapse.ResetBlockPalette();
+        waveFunctionCollapse.AddToBlockPalette(BlockType.None);
+        waveFunctionCollapse.AddToBlockPalette(BlockType.Spike);
+        waveFunctionCollapse.AddToBlockPalette(BlockType.Coin);
+
+        // Calculate entropy of entire wave function collapse grid
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                waveFunctionCollapse.RecalculateEntropy(x, y);
+            }
+        }
+
+        int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
+
+        int positionsCollapsed = 0;
+        Vector2Int positionToCollapse;
+        while (true)
+        {
+            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile();
+
+            if (positionToCollapse.x != -1)
+            {
+                // Collapse this position
+                if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
+                {
+                    BlockType collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
+                    int collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
+
+                    // Recalculate neighbours
+                    for (int yOffset = 1; yOffset >= -1; yOffset--)
+                    {
+                        for (int xOffset = -1; xOffset <= 1; xOffset++)
+                        {
+                            // Skip the centre tile
+                            if (xOffset == 0 && yOffset == 0)
+                                continue;
+
+                            // Skip the tile if its out of range of the grid
+                            if (positionToCollapse.x + xOffset < 0 || positionToCollapse.x + xOffset >= (stageSize.x * roomSize.x) ||
+                                positionToCollapse.y + yOffset < 0 || positionToCollapse.y + yOffset >= (stageSize.y * roomSize.y))
+                                continue;
+
+                            // Update this neighbour tile
+                            waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
+                        }
+                    }
+                }
+
+                positionsCollapsed++;
+                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                    yield return null;
+            }
+            else
+            {
+                // No positions left to collapse
+                break;
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 12 of level generation
+    // Wave function collapse pass for foliage, vines, signs and torches
+    IEnumerator WaveFunctionCollapseDeco()
+    {
+        // Set up grid for wave function collapse
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        // Remove all air
+                        if (level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.None)
+                            RemoveTile(stageX, stageY, roomX, roomY);
+                    }
+                }
+            }
+        }
+
+        // Set wave function type
+        waveFunctionCollapse.ResetBlockPalette();
+        waveFunctionCollapse.AddToBlockPalette(BlockType.None);
+        waveFunctionCollapse.AddToBlockPalette(BlockType.Vine);
+        waveFunctionCollapse.AddToBlockPalette(BlockType.Foliage);
+        waveFunctionCollapse.AddToBlockPalette(BlockType.Sign);
+        waveFunctionCollapse.AddToBlockPalette(BlockType.Torch);
+
+        // Calculate entropy of entire wave function collapse grid
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                waveFunctionCollapse.RecalculateEntropy(x, y);
+            }
+        }
+
+        int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
+
+        int positionsCollapsed = 0;
+        Vector2Int positionToCollapse;
+        while (true)
+        {
+            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile();
+
+            if (positionToCollapse.x != -1)
+            {
+                // Collapse this position
+                if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
+                {
+                    BlockType collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
+                    int collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
+
+                    // Recalculate neighbours
+                    for (int yOffset = 1; yOffset >= -1; yOffset--)
+                    {
+                        for (int xOffset = -1; xOffset <= 1; xOffset++)
+                        {
+                            // Skip the centre tile
+                            if (xOffset == 0 && yOffset == 0)
+                                continue;
+
+                            // Skip the tile if its out of range of the grid
+                            if (positionToCollapse.x + xOffset < 0 || positionToCollapse.x + xOffset >= (stageSize.x * roomSize.x) ||
+                                positionToCollapse.y + yOffset < 0 || positionToCollapse.y + yOffset >= (stageSize.y * roomSize.y))
+                                continue;
+
+                            // Update this neighbour tile
+                            waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
+                        }
+                    }
+                }
+
+                positionsCollapsed++;
+                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                    yield return null;
+            }
+            else
+            {
+                // No positions left to collapse
+                break;
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 13 of level generation
+    // Sets the player's spawn and end goal points in the level
+    IEnumerator PlaceSpawnAndExit()
+    {
+        // Set spawn
+
+        // Find highest point in critical path
+        bool spawnPlaced = false;
+        Vector2Int spawnPoint = Vector2Int.zero;
+        for (int y = roomSize.y - 1; y >= 0; y--)
+        {
+            for (int x = 1; x < roomSize.x - 1; x++)
+            {
+                // Found the highest point in the critical path of the first room
+                if (level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].reservedTile)
+                {
+                    spawnPoint.x = x;
+                    spawnPoint.y = y;
+
+                    // Trace down until we hit ground
+                    BlockType typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[spawnPoint.x, spawnPoint.y - 1].blockType;
+                    while (typeBelow != BlockType.Solid && typeBelow != BlockType.OneWay)
+                    {
+                        spawnPoint.y -= 1;
+                        typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[spawnPoint.x, spawnPoint.y].blockType;
+                    }
+
+                    spawnPoint.y += 1;
+
+                    // Remove anything that might have been in this space resting on the ground
+                    RemoveTile(criticalPath[0].x, criticalPath[0].y, spawnPoint.x, spawnPoint.y);
+
+                    // Place spawn door
+                    Vector2Int doorPosition = StageToGrid(criticalPath[0].x, criticalPath[0].y, spawnPoint.x, spawnPoint.y);
+                    levelTileManager.PlaceSpecialTile(doorPosition.x, doorPosition.y, LevelTileManager.SpecialTile.EntryDoor);
+
+                    // Ensure both sides of the door are free of spikes
+                    if (level[criticalPath[0].x, criticalPath[0].y].tiles[spawnPoint.x - 1, spawnPoint.y].blockType == BlockType.Spike)
+                        RemoveTile(criticalPath[0].x, criticalPath[0].y, spawnPoint.x - 1, spawnPoint.y);
+
+                    if (level[criticalPath[0].x, criticalPath[0].y].tiles[spawnPoint.x + 1, spawnPoint.y].blockType == BlockType.Spike)
+                        RemoveTile(criticalPath[0].x, criticalPath[0].y, spawnPoint.x + 1, spawnPoint.y);
+
+                    // Set camera starting position
+                    Vector3 spawnPointAsVec3 = new Vector3(doorPosition.x, doorPosition.y, 0f);
+                    cameraController.SetStartPosition(spawnPointAsVec3);
+
+                    spawnPlaced = true;
+                    break;
+                }
+            }
+
+            if (spawnPlaced) break;
+        }
+
+        stepProgress = 0.5f;
+        yield return null;
+
+        // Set exit
+
+        // Find highest point in critical path
+        bool exitPlaced = false;
+        Vector2Int exitPoint = Vector2Int.zero;
+        for (int y = roomSize.y - 1; y >= 0; y--)
+        {
+            for (int x = 1; x < roomSize.x - 1; x++)
+            {
+                // Found the highest point in the critical path of the last room
+                if (level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[x, y].reservedTile)
+                {
+                    exitPoint.x = x;
+                    exitPoint.y = y;
+
+                    // Trace down until we hit ground
+                    BlockType typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[exitPoint.x, exitPoint.y - 1].blockType;
+                    while (typeBelow != BlockType.Solid && typeBelow != BlockType.OneWay)
+                    {
+                        exitPoint.y -= 1;
+                        typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[exitPoint.x, exitPoint.y].blockType;
+                    }
+
+                    exitPoint.y += 1;
+
+                    // Remove anything that might have been in this space resting on the ground
+                    RemoveTile(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x, exitPoint.y);
+
+                    // Place exit door
+                    Vector2Int doorPosition = StageToGrid(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x, exitPoint.y);
+                    levelTileManager.PlaceSpecialTile(doorPosition.x, doorPosition.y, LevelTileManager.SpecialTile.ExitDoor);
+
+                    // Ensure both sides of the door are free of spikes
+                    if (level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[exitPoint.x - 1, exitPoint.y].blockType == BlockType.Spike)
+                        RemoveTile(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x - 1, exitPoint.y);
+
+                    if (level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[exitPoint.x + 1, exitPoint.y].blockType == BlockType.Spike)
+                        RemoveTile(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x + 1, exitPoint.y);
+
+                    exitPlaced = true;
+                    break;
+                }
+            }
+
+            if (exitPlaced) break;
+        }
+
+        yield return null;
+        CompleteStep();
+    }
 
     #endregion
 
@@ -781,41 +1295,4 @@ public class LevelGenerator : MonoBehaviour
     }
 
     #endregion
-
-    // Draw the stage arrangement of rooms with gizmos
-    private void OnDrawGizmos()
-    {
-        if (level != null)
-        {
-            Vector3Int offset = Vector3Int.zero;
-            for (int stageY = 0; stageY < stageSize.y; stageY++)
-            {
-                for (int stageX = 0; stageX < stageSize.x; stageX++)
-                {
-                    for (int roomY = 0; roomY < roomSize.y; roomY++)
-                    {
-                        for (int roomX = 0; roomX < roomSize.x; roomX++)
-                        {
-                            Vector3 position = Vector3.zero;
-                            position.x = stageX * roomSize.x + roomX;
-                            position.y = stageY * roomSize.y + roomY;
-                            position += offset;
-
-                            if (level[stageX, stageY].tiles[roomX, roomY].onCriticalPath)
-                                Gizmos.DrawSphere(position, 0.2f);
-                            else if (level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.Solid)
-                                Gizmos.DrawCube(position, Vector3.one * 0.5f);
-                            else
-                                Gizmos.DrawSphere(position, 0.5f);
-                        }
-                    }
-
-                    offset.x += 1;
-                }
-
-                offset.x = 0;
-                offset.y += 1;
-            }
-        }
-    }
 }

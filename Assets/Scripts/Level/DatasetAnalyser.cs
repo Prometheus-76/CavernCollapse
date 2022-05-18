@@ -31,12 +31,6 @@ public class DatasetAnalyser : MonoBehaviour
         constructedRuleset = new RuleData[tileCollection.tiles.Length, 8, tileCollection.tiles.Length];
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
     // Step 2 of level generation
     // Loads in all samples from a dataset and stores within the datasetSamples array
     public IEnumerator LoadDataset(int datasetIndex)
@@ -194,4 +188,18 @@ public class DatasetAnalyser : MonoBehaviour
         yield return null;
         levelGenerator.CompleteStep();
     }
+
+    #region Ruleset Access
+
+    public int GetWeightFromRuleset(int centreIndex, int neighbourDirection, int neighbourTileIndex)
+    {
+        return constructedRuleset[centreIndex, neighbourDirection, neighbourTileIndex].tileWeight;
+    }
+
+    public BlockType GetTypeFromRuleset(int centreIndex, int neighbourDirection, int neighbourTileIndex)
+    {
+        return constructedRuleset[centreIndex, neighbourDirection, neighbourTileIndex].blockType;
+    }
+
+    #endregion
 }

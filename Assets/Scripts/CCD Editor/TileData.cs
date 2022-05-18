@@ -18,6 +18,24 @@ public enum BlockType
     Count
 }
 
+// SHOULD MATCH ABOVE!
+// This is used by the wave function collapse implementation to mark which tiles can be collapsed and which canot
+// "Count" enum value is not required here, but should remain the last one in the set above
+[System.Flags]
+public enum BlockTypeFlags : int
+{
+    None = 1,
+    Solid = 2,
+    OneWay = 4,
+    Ladder = 8,
+    Spike = 16,
+    Coin = 32,
+    Vine = 64,
+    Foliage = 128,
+    Sign = 256,
+    Torch = 512
+}
+
 // Represents each space in the grid
 [System.Serializable]
 public struct TileData

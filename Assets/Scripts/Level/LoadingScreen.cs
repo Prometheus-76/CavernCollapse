@@ -18,6 +18,7 @@ public class LoadingScreen : MonoBehaviour
     public TextMeshProUGUI elapsedText;
     public RectTransform topPanel;
     public RectTransform bottomPanel;
+    public GameObject loadingScreen;
 
     private float mainProgress;
     private float stepProgress;
@@ -32,6 +33,7 @@ public class LoadingScreen : MonoBehaviour
         stepProgress = 0f;
         elapsedTime = 0f;
         hasStartedTransition = false;
+        loadingScreen.SetActive(true);
     }
 
     void Update()
@@ -41,7 +43,7 @@ public class LoadingScreen : MonoBehaviour
 
         if (mainProgress < 1f)
         {
-            progressText.text = "Generating Cavern... [ " + (mainProgress * 100f).ToString("F0") + "% ]";
+            progressText.text = "Generating Cavern... [ " + (mainProgress * 100f).ToString("F1") + "% ]";
         }
         else
         {
@@ -80,10 +82,10 @@ public class LoadingScreen : MonoBehaviour
 
         // Where the panel starts and finishes during the animation
         Vector2 startPos = Vector3.zero;
-        startPos.y = -50f;
+        startPos.y = -500f;
 
         Vector2 targetPos = Vector3.zero;
-        targetPos.y = -60f;
+        targetPos.y = -1100f;
 
         // Wait a little before animating
         yield return new WaitForSeconds(0.5f);
@@ -103,6 +105,7 @@ public class LoadingScreen : MonoBehaviour
             yield return null;
         }
 
+        loadingScreen.SetActive(false);
         yield return null;
     }
 }
