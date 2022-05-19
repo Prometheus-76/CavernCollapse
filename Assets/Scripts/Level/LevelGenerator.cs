@@ -13,8 +13,8 @@ public class LevelGenerator : MonoBehaviour
         // Whether a tile is reserved for the critical path through a room
         public bool reservedTile;
 
-        // Whether a tile has been locked in or not 
-        public bool tileAssigned;
+        // Used by flood fill algorithm, represents whether floodfill has hit this tile
+        public bool marked;
 
         public int[] possibleTiles;
         public BlockType blockType;
@@ -60,8 +60,11 @@ public class LevelGenerator : MonoBehaviour
         CreateRoomBorders,
         WaveFunctionCollapseWalls,
         WaveFunctionCollapsePlatforming,
+        CleanupPlatforming,
         WaveFunctionCollapseGameplay,
+        CleanupGameplay,
         WaveFunctionCollapseDeco,
+        CleanupDeco,
         PlaceSpawnAndExit,
         GenerateColliders,
         GenerationComplete
@@ -81,6 +84,7 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField, Tooltip("The amount of rooms to connect vertically per frame")] private int verticalRoomConnectionsPerFrame;
     [SerializeField, Tooltip("The amount of room borders to set up per frame")] private int roomBordersPerFrame;
     [SerializeField, Tooltip("The amount of tiles to collapse per frame")] private int tilesCollapsedPerFrame;
+    [SerializeField, Tooltip("The amount of cleanup iterations to do per frame")] private int cleanupIterationsPerFrame;
     [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
     [SerializeField, Tooltip("The dimensions of each room (in tiles)")] private Vector2Int roomSize;
 
@@ -160,13 +164,22 @@ public class LevelGenerator : MonoBehaviour
                 loadingScreen.SetStepText("Collapsing cavern walls");
                 break;
             case GenerationStep.WaveFunctionCollapsePlatforming:
-                loadingScreen.SetStepText("Placing platforms and ladders");
+                loadingScreen.SetStepText("Laying platforms");
+                break;
+            case GenerationStep.CleanupPlatforming:
+                loadingScreen.SetStepText("Adjusting ladders");
                 break;
             case GenerationStep.WaveFunctionCollapseGameplay:
-                loadingScreen.SetStepText("Setting up risk and reward");
+                loadingScreen.SetStepText("Setting up risks and rewards");
+                break;
+            case GenerationStep.CleanupGameplay:
+                loadingScreen.SetStepText("Sharpening spikes");
                 break;
             case GenerationStep.WaveFunctionCollapseDeco:
                 loadingScreen.SetStepText("Growing vines and foliage");
+                break;
+            case GenerationStep.CleanupDeco:
+                loadingScreen.SetStepText("Pruning vegetation");
                 break;
             case GenerationStep.PlaceSpawnAndExit:
                 loadingScreen.SetStepText("Placing doors");
@@ -259,12 +272,76 @@ public class LevelGenerator : MonoBehaviour
     {
         level[stageX, stageY].tiles[roomX, roomY].blockType = BlockType.None;
         level[stageX, stageY].tiles[roomX, roomY].tileIndex = -1;
-        level[stageX, stageY].tiles[roomX, roomY].tileAssigned = false;
 
         Vector2Int gridPosition = StageToGrid(stageX, stageY, roomX, roomY);
         levelTileManager.RemoveTile(gridPosition.x, gridPosition.y);
         waveFunctionCollapse.ResetTile(gridPosition.x, gridPosition.y);
     }
+
+    #region Flood Fill
+
+    // Fills a space, given an origin point
+    void FloodFill(int x, int y)
+    {
+        // Mark the cell
+        Vector2Int stagePos = GridToStage(x, y);
+        Vector2Int roomPos = GridToRoom(x, y);
+        level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].marked = true;
+
+        // Expand to valid neighbours
+        for (int yOffset = 1; yOffset >= -1; yOffset--)
+        {
+            for (int xOffset = -1; xOffset <= 1; xOffset++)
+            {
+                // Skip centre tile
+                if (xOffset == 0 && yOffset == 0)
+                    continue;
+
+                // ...and corners
+                if (Mathf.Abs(xOffset) == 1 && Mathf.Abs(yOffset) == 1)
+                    continue;
+
+                // Skip the tile if its out of range of the grid
+                if (x + xOffset < 0 || x + xOffset >= stageSize.x * roomSize.x || y + yOffset < 0 || y + yOffset >= stageSize.y * roomSize.y)
+                    continue;
+
+                // Expand flood fill to this tile, if it hasn't already
+                Vector2Int neighbourStagePos = GridToStage(x + xOffset, y + yOffset);
+                Vector2Int neighbourRoomPos = GridToRoom(x + xOffset, y + yOffset);
+                if (level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].marked == false &&
+                    level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].blockType != BlockType.Solid)
+                    FloodFill(x + xOffset, y + yOffset);
+
+            }
+        }
+    }
+
+    // Ensures all cells are unmarked
+    void ResetFloodFill()
+    {
+        // For every room...
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                level[stageX, stageY].reservedRoom = false;
+                level[stageX, stageY].roomType = LevelRoom.RoomType.Unassigned;
+                level[stageX, stageY].verticalAccessMin = -1;
+                level[stageX, stageY].verticalAccessMax = -1;
+
+                // ...and every tile in that room
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        level[stageX, stageY].tiles[roomX, roomY].marked = false;
+                    }
+                }
+            }
+        }
+    }
+
+    #endregion
 
     // Coroutines can be dangerous, so I have to be super careful about when things are called in here!
     IEnumerator GenerateLevel()
@@ -319,11 +396,20 @@ public class LevelGenerator : MonoBehaviour
                     case GenerationStep.WaveFunctionCollapsePlatforming:
                         StartCoroutine(WaveFunctionCollapsePlatforming());
                         break;
+                    case GenerationStep.CleanupPlatforming:
+                        StartCoroutine(CleanupPlatforming());
+                        break;
                     case GenerationStep.WaveFunctionCollapseGameplay:
                         StartCoroutine(WaveFunctionCollapseGameplay());
                         break;
+                    case GenerationStep.CleanupGameplay:
+                        StartCoroutine(CleanupGameplay());
+                        break;
                     case GenerationStep.WaveFunctionCollapseDeco:
                         StartCoroutine(WaveFunctionCollapseDeco());
+                        break;
+                    case GenerationStep.CleanupDeco:
+                        StartCoroutine(CleanupDeco());
                         break;
                     case GenerationStep.PlaceSpawnAndExit:
                         StartCoroutine(PlaceSpawnAndExit());
@@ -368,8 +454,8 @@ public class LevelGenerator : MonoBehaviour
                     for (int roomX = 0; roomX < roomSize.x; roomX++)
                     {
                         level[stageX, stageY].tiles[roomX, roomY].tileIndex = -1;
-                        level[stageX, stageY].tiles[roomX, roomY].tileAssigned = false;
                         level[stageX, stageY].tiles[roomX, roomY].reservedTile = false;
+                        level[stageX, stageY].tiles[roomX, roomY].marked = false;
                         level[stageX, stageY].tiles[roomX, roomY].blockType = BlockType.None;
 
                         iterationsCompleted++;
@@ -662,7 +748,7 @@ public class LevelGenerator : MonoBehaviour
                 for (int y = 0; y < roomSize.y; y++)
                 {
                     bool previousTileState = false;
-                    for (int x = 1; x < roomSize.x - 1; x++)
+                    for (int x = 0; x < roomSize.x; x++)
                     {
                         if (level[criticalPath[r].x, criticalPath[r].y].tiles[x, y].reservedTile && previousTileState == false)
                         {
@@ -962,8 +1048,124 @@ public class LevelGenerator : MonoBehaviour
         yield return null;
         CompleteStep();
     }
-
+    
     // Step 11 of level generation
+    // Removes disconnected ladders and platforms, ensures they are capped correctly
+    IEnumerator CleanupPlatforming()
+    {
+        int cleanupIterations = 0;
+
+        // Ladder cleanup
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                Vector2Int stagePos = GridToStage(x, y);
+                Vector2Int roomPos = GridToRoom(x, y);
+
+                if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Ladder)
+                {
+                    Vector2Int stageAbove = GridToStage(x, y + 1);
+                    Vector2Int roomAbove = GridToRoom(x, y + 1);
+                    BlockType blockAbove = level[stageAbove.x, stageAbove.y].tiles[roomAbove.x, roomAbove.y].blockType;
+
+                    Vector2Int stageBelow = GridToStage(x, y - 1);
+                    Vector2Int roomBelow = GridToRoom(x, y - 1);
+                    BlockType blockBelow = level[stageBelow.x, stageBelow.y].tiles[roomBelow.x, roomBelow.y].blockType;
+
+                    // Ensure middle ladders are set correctly
+                    if ((blockAbove == BlockType.Solid || blockAbove == BlockType.Ladder) && blockBelow == BlockType.Ladder)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 65, BlockType.Ladder);
+                    }
+
+                    // Ensure top ladders are capped correctly
+                    if (blockAbove != BlockType.Ladder && blockBelow == BlockType.Ladder)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 66, BlockType.Ladder);
+                    }
+
+                    // Ensure bottom ladders are capped correctly
+                    if (blockAbove == BlockType.Ladder && blockBelow != BlockType.Ladder && blockBelow != BlockType.Solid && blockBelow != BlockType.OneWay)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 67, BlockType.Ladder);
+                    }
+
+                    // Remove single ladders
+                    if (blockAbove != BlockType.Ladder && blockBelow != BlockType.Ladder)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                    }
+                }
+
+                cleanupIterations++;
+                stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2f);
+                if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                    yield return null;
+            }
+        }
+
+        // Platform cleanup
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                Vector2Int stagePos = GridToStage(x, y);
+                Vector2Int roomPos = GridToRoom(x, y);
+
+                if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.OneWay)
+                {
+                    Vector2Int stageLeft = GridToStage(x - 1, y);
+                    Vector2Int roomLeft = GridToRoom(x - 1, y);
+                    BlockType blockLeft = level[stageLeft.x, stageLeft.y].tiles[roomLeft.x, roomLeft.y].blockType;
+
+                    Vector2Int stageRight = GridToStage(x + 1, y);
+                    Vector2Int roomRight = GridToRoom(x + 1, y);
+                    BlockType blockRight = level[stageRight.x, stageRight.y].tiles[roomRight.x, roomRight.y].blockType;
+
+                    // Ensure middle platforms are set correctly
+                    if ((blockLeft == BlockType.Solid || blockLeft == BlockType.OneWay) && (blockRight == BlockType.Solid || blockRight == BlockType.OneWay))
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 69, BlockType.OneWay);
+                    }
+
+                    // Ensure left platforms are capped correctly
+                    if ((blockLeft != BlockType.Solid && blockLeft != BlockType.OneWay) && (blockRight == BlockType.Solid || blockRight == BlockType.OneWay))
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 68, BlockType.OneWay);
+                    }
+
+                    // Ensure right platforms are capped correctly
+                    if ((blockLeft == BlockType.Solid || blockLeft == BlockType.OneWay) && (blockRight != BlockType.Solid && blockRight != BlockType.OneWay))
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 70, BlockType.OneWay);
+                    }
+
+                    // Remove single platforms
+                    if (blockLeft != BlockType.OneWay && blockRight != BlockType.OneWay && blockLeft != BlockType.Solid && blockRight != BlockType.Solid)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                    }
+                }
+
+                cleanupIterations++;
+                stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2f);
+                if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                    yield return null;
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 12 of level generation
     // Wave function collapse pass for spikes and coins
     IEnumerator WaveFunctionCollapseGameplay()
     {
@@ -1049,7 +1251,88 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 12 of level generation
+    // Step 13 of level generation
+    // Removes floating spikes and unreachable coins
+    IEnumerator CleanupGameplay()
+    {
+        // Fresh flood fill from somewhere on the critical path
+        ResetFloodFill();
+        bool floodfillStarted = false;
+        for (int y = 0; y < roomSize.y; y++)
+        {
+            for (int x = 0; x < roomSize.x; x++)
+            {
+                if (level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].reservedTile)
+                {
+                    Vector2Int gridPos = StageToGrid(criticalPath[0].x, criticalPath[0].y, x, y);
+                    FloodFill(gridPos.x, gridPos.y);
+                    floodfillStarted = true;
+                    break;
+                }
+            }
+
+            if (floodfillStarted) break;
+        }
+
+        // Check every tile in the level
+        int cleanupIterations = 0;
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        if (level[stageX, stageY].tiles[roomX, roomY].marked == false &&
+                            level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.Coin)
+                        {
+                            // Remove a coin if it isn't reachable
+                            RemoveTile(stageX, stageY, roomX, roomY);
+                        }
+                        else if (level[stageX, stageY].tiles[roomX, roomY].tileIndex == 61)
+                        {
+                            // Remove up-facing spike if it isn't connected to a wall or platform below
+                            Vector2Int gridPos = StageToGrid(stageX, stageY, roomX, roomY);
+                            Vector2Int stagePosBelow = GridToStage(gridPos.x, gridPos.y - 1);
+                            Vector2Int roomPosBelow = GridToRoom(gridPos.x, gridPos.y - 1);
+
+                            BlockType typeBelow = level[stagePosBelow.x, stagePosBelow.y].tiles[roomPosBelow.x, roomPosBelow.y].blockType;
+
+                            if (typeBelow != BlockType.Solid && typeBelow != BlockType.OneWay)
+                            {
+                                RemoveTile(stageX, stageY, roomX, roomY);
+                            }
+                        }
+                        else if (level[stageX, stageY].tiles[roomX, roomY].tileIndex == 62)
+                        {
+                            // Remove down-facing spike if it isn't connected to a wall above
+                            Vector2Int gridPos = StageToGrid(stageX, stageY, roomX, roomY);
+                            Vector2Int stagePosAbove = GridToStage(gridPos.x, gridPos.y + 1);
+                            Vector2Int roomPosAbove = GridToRoom(gridPos.x, gridPos.y + 1);
+
+                            BlockType typeAbove = level[stagePosAbove.x, stagePosAbove.y].tiles[roomPosAbove.x, roomPosAbove.y].blockType;
+
+                            if (typeAbove != BlockType.Solid)
+                            {
+                                RemoveTile(stageX, stageY, roomX, roomY);
+                            }
+                        }
+
+                        cleanupIterations++;
+                        stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                        if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                            yield return null;
+                    }
+                }
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 14 of level generation
     // Wave function collapse pass for foliage, vines, signs and torches
     IEnumerator WaveFunctionCollapseDeco()
     {
@@ -1137,8 +1420,92 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 13 of level generation
-    // Sets the player's spawn and end goal points in the level
+    // Step 15 of level generation
+    // Removes disconnected vines and floating signs/foliage/torches
+    IEnumerator CleanupDeco()
+    {
+        int cleanupIterations = 0;
+
+        // The tile below/above the current one
+        BlockType previousTile = BlockType.Solid;
+
+        // Loop upward through each column, left to right
+        for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+        {
+            for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+            {
+                Vector2Int stagePos = GridToStage(x, y);
+                Vector2Int roomPos = GridToRoom(x, y);
+
+                // Delete floating foliage
+                if (previousTile != BlockType.Solid && previousTile != BlockType.OneWay)
+                {
+                    if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Foliage ||
+                        level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Torch)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                    }
+                }
+
+                // Delete floating signs
+                if (previousTile != BlockType.Solid && previousTile != BlockType.OneWay && previousTile != BlockType.Sign)
+                {
+                    if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Sign)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                    }
+                }
+
+                previousTile = level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType;
+
+                cleanupIterations++;
+                stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2f);
+                if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                    yield return null;
+            }
+        }
+
+        // Loop downward through each column, left to right
+        for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+        {
+            for (int y = (stageSize.y * roomSize.y) - 1; y >= 0; y--)
+            {
+                Vector2Int stagePos = GridToStage(x, y);
+                Vector2Int roomPos = GridToRoom(x, y);
+
+                // Delete floating vines
+                if (previousTile != BlockType.Solid && previousTile != BlockType.Vine)
+                {
+                    if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Vine)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                    }
+                }
+
+                // Delete uncapped signs
+                if (previousTile != BlockType.Sign)
+                {
+                    if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].tileIndex == 58)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                    }
+                }
+
+                previousTile = level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType;
+
+                cleanupIterations++;
+                stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2f);
+                if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                    yield return null;
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 16 of level generation
+    // Sets the player's spawn and end goal points in the level, and deletes ladders overlapping with the door
     IEnumerator PlaceSpawnAndExit()
     {
         // Set spawn
@@ -1195,7 +1562,7 @@ public class LevelGenerator : MonoBehaviour
             if (spawnPlaced) break;
         }
 
-        stepProgress = 0.5f;
+        stepProgress = 0.25f;
         yield return null;
 
         // Set exit
@@ -1248,11 +1615,53 @@ public class LevelGenerator : MonoBehaviour
             if (exitPlaced) break;
         }
 
+        stepProgress = 0.5f;
+
+        // Remove ladder above entry door
+        Vector2Int spawnPointGrid = StageToGrid(criticalPath[0].x, criticalPath[0].y, spawnPoint.x, spawnPoint.y);
+        spawnPointGrid.y += 1;
+
+        Vector2Int spawnPointStage = GridToStage(spawnPointGrid.x, spawnPointGrid.y);
+        Vector2Int spawnPointRoom = GridToRoom(spawnPointGrid.x, spawnPointGrid.y);
+
+        // If there is a ladder here, delete it and move up
+        while (level[spawnPointStage.x, spawnPointStage.y].tiles[spawnPointRoom.x, spawnPointRoom.y].blockType == BlockType.Ladder)
+        {
+            RemoveTile(spawnPointStage.x, spawnPointStage.y, spawnPointRoom.x, spawnPointRoom.y);
+
+            spawnPointGrid.y += 1;
+
+            spawnPointStage = GridToStage(spawnPointGrid.x, spawnPointGrid.y);
+            spawnPointRoom = GridToRoom(spawnPointGrid.x, spawnPointGrid.y);
+        }
+
+        stepProgress = 0.75f;
+
+        // Remove ladder above exit door
+        Vector2Int exitPointGrid = StageToGrid(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x, exitPoint.y);
+        exitPointGrid.y += 1;
+
+        Vector2Int exitPointStage = GridToStage(exitPointGrid.x, exitPointGrid.y);
+        Vector2Int exitPointRoom = GridToRoom(exitPointGrid.x, exitPointGrid.y);
+
+        // If there is a ladder here, delete it and move up
+        while (level[exitPointStage.x, exitPointStage.y].tiles[exitPointRoom.x, exitPointRoom.y].blockType == BlockType.Ladder)
+        {
+            RemoveTile(exitPointStage.x, exitPointStage.y, exitPointRoom.x, exitPointRoom.y);
+
+            exitPointGrid.y += 1;
+
+            exitPointStage = GridToStage(exitPointGrid.x, exitPointGrid.y);
+            exitPointRoom = GridToRoom(exitPointGrid.x, exitPointGrid.y);
+        }
+
+        stepProgress = 1f;
+
         yield return null;
         CompleteStep();
     }
 
-    // Step 14 of level generation
+    // Step 17 of level generation
     // Generates the colliders used by solids, platforms, ladders and spikes
     IEnumerator GenerateColliders()
     {

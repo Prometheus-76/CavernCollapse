@@ -43,7 +43,7 @@ public class LoadingScreen : MonoBehaviour
 
         if (mainProgress < 1f)
         {
-            progressText.text = "Generating Cavern... [ " + (mainProgress * 100f).ToString("F1") + "% ]";
+            progressText.text = "Generating Cavern... [ " + (mainProgress * 100f).ToString("F0") + "% ]";
         }
         else
         {
