@@ -18,8 +18,8 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
+            "tileIndex": 46,
+            "tileOffset": 1,
             "usingOffset": true
         },
         {
@@ -60,8 +60,8 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 46,
-            "tileOffset": 1,
+            "tileIndex": 45,
+            "tileOffset": 0,
             "usingOffset": true
         },
         {
@@ -162,8 +162,8 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
+            "tileIndex": 46,
+            "tileOffset": 1,
             "usingOffset": true
         },
         {
@@ -246,8 +246,8 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 46,
-            "tileOffset": 1,
+            "tileIndex": 45,
+            "tileOffset": 0,
             "usingOffset": true
         },
         {
@@ -378,7 +378,7 @@
         },
         {
             "blockType": 3,
-            "tileIndex": 65,
+            "tileIndex": 66,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -455,8 +455,8 @@
             "usingOffset": false
         },
         {
-            "blockType": 3,
-            "tileIndex": 66,
+            "blockType": 0,
+            "tileIndex": 48,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -726,8 +726,8 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 46,
-            "tileOffset": 1,
+            "tileIndex": 45,
+            "tileOffset": 0,
             "usingOffset": true
         },
         {
@@ -768,8 +768,8 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 46,
-            "tileOffset": 1,
+            "tileIndex": 45,
+            "tileOffset": 0,
             "usingOffset": true
         },
         {

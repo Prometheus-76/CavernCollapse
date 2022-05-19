@@ -117,7 +117,7 @@ public class WaveFunctionCollapse : MonoBehaviour
                     int ruleWeight = datasetAnalyser.GetWeightFromRuleset(waveFunctionGrid[x + xOffset, y + yOffset].tileIndex, 7 - neighbourIndex, tileIndex);
                     BlockType ruleType = datasetAnalyser.GetTypeFromRuleset(waveFunctionGrid[x + xOffset, y + yOffset].tileIndex, 7 - neighbourIndex, tileIndex);
 
-                    // Only calculate entropy for a given set of block types
+                    // Only consider entropy of a set of superpositions
                     if (IsBlockInPalette(ruleType))
                     {
                         // Add to the weight if this configuration is supported so far
@@ -149,21 +149,23 @@ public class WaveFunctionCollapse : MonoBehaviour
         {
             for (int x = 0; x < gridSize.x; x++)
             {
+                if (waveFunctionGrid[x, y].canCollapse == false)
+                    continue;
+
                 int tileEntropyTypes = 0;
 
                 // For each superposition
                 for (int superpositionIndex = 0; superpositionIndex < tileCollection.tiles.Length; superpositionIndex++)
                 {
                     // If the superposition has meaningful weight
-                    if (IsBlockInPalette(waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].blockType) && 
-                        waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight > 0)
+                    if (waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight > 0)
                     {
                         tileEntropyTypes++;
                     }
                 }
 
                 // New lowest, non 0 entropy tile
-                if (tileEntropyTypes != 0 && tileEntropyTypes < lowestEntropyValue && waveFunctionGrid[x, y].canCollapse)
+                if (tileEntropyTypes != 0 && tileEntropyTypes < lowestEntropyValue)
                 {
                     lowestEntropyValue = tileEntropyTypes;
                     lowestEntropySpace.x = x;
@@ -188,7 +190,7 @@ public class WaveFunctionCollapse : MonoBehaviour
             BlockType ruleType = waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].blockType;
 
             // If the block type is allowed and the tile weight is meaningful
-            if (IsBlockInPalette(ruleType) && ruleWeight > 0)
+            if (ruleWeight > 0)
             {
                 weightSum += waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight;
             }
@@ -204,7 +206,7 @@ public class WaveFunctionCollapse : MonoBehaviour
             BlockType ruleType = waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].blockType;
 
             // If the block type is allowed and the tile weight is meaningful
-            if (IsBlockInPalette(ruleType) && ruleWeight > 0)
+            if (ruleWeight > 0)
             {
                 weightedRandom -= ruleWeight;
 

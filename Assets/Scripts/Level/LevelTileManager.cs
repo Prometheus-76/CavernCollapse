@@ -22,6 +22,8 @@ public class LevelTileManager : MonoBehaviour
     public Tilemap spikeTilemap;
     public Tilemap decoTilemap;
 
+    public CompositeCollider2D solidCollider;
+
     // Puts a tile in the correct tilemap, given an index and a type
     public void PlaceTileOfType(int x, int y, int tileIndex, BlockType tileType)
     {
@@ -81,6 +83,6 @@ public class LevelTileManager : MonoBehaviour
     // Recalculates all the tilemap colliders and other things
     public void RecalculateAllComponents()
     {
-
+        solidCollider.GenerateGeometry();
     }
 }

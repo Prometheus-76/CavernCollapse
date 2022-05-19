@@ -63,6 +63,7 @@ public class LevelGenerator : MonoBehaviour
         WaveFunctionCollapseGameplay,
         WaveFunctionCollapseDeco,
         PlaceSpawnAndExit,
+        GenerateColliders,
         GenerationComplete
     }
 
@@ -169,6 +170,9 @@ public class LevelGenerator : MonoBehaviour
                 break;
             case GenerationStep.PlaceSpawnAndExit:
                 loadingScreen.SetStepText("Placing doors");
+                break;
+            case GenerationStep.GenerateColliders:
+                loadingScreen.SetStepText("Generating colliders");
                 break;
             case GenerationStep.GenerationComplete:
                 loadingScreen.SetStepText("Entering caverns...");
@@ -323,6 +327,9 @@ public class LevelGenerator : MonoBehaviour
                         break;
                     case GenerationStep.PlaceSpawnAndExit:
                         StartCoroutine(PlaceSpawnAndExit());
+                        break;
+                    case GenerationStep.GenerateColliders:
+                        StartCoroutine(GenerateColliders());
                         break;
                     case GenerationStep.GenerationComplete: 
                         // This should be unreachable
@@ -1240,6 +1247,16 @@ public class LevelGenerator : MonoBehaviour
 
             if (exitPlaced) break;
         }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 14 of level generation
+    // Generates the colliders used by solids, platforms, ladders and spikes
+    IEnumerator GenerateColliders()
+    {
+        levelTileManager.RecalculateAllComponents();
 
         yield return null;
         CompleteStep();

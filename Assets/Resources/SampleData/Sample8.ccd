@@ -6,8 +6,8 @@
     "data": [
         {
             "blockType": 1,
-            "tileIndex": 46,
-            "tileOffset": 1,
+            "tileIndex": 45,
+            "tileOffset": 0,
             "usingOffset": true
         },
         {
@@ -161,20 +161,20 @@
             "usingOffset": false
         },
         {
-            "blockType": 5,
-            "tileIndex": 49,
+            "blockType": 0,
+            "tileIndex": 48,
             "tileOffset": 0,
             "usingOffset": false
         },
         {
-            "blockType": 5,
-            "tileIndex": 49,
+            "blockType": 0,
+            "tileIndex": 48,
             "tileOffset": 0,
             "usingOffset": false
         },
         {
-            "blockType": 5,
-            "tileIndex": 49,
+            "blockType": 0,
+            "tileIndex": 48,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -312,8 +312,8 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 46,
-            "tileOffset": 1,
+            "tileIndex": 45,
+            "tileOffset": 0,
             "usingOffset": true
         },
         {
@@ -521,8 +521,8 @@
             "usingOffset": true
         },
         {
-            "blockType": 5,
-            "tileIndex": 49,
+            "blockType": 0,
+            "tileIndex": 48,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -539,8 +539,8 @@
             "usingOffset": false
         },
         {
-            "blockType": 5,
-            "tileIndex": 49,
+            "blockType": 0,
+            "tileIndex": 48,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -611,8 +611,8 @@
             "usingOffset": false
         },
         {
-            "blockType": 5,
-            "tileIndex": 49,
+            "blockType": 0,
+            "tileIndex": 48,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -660,8 +660,8 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 46,
-            "tileOffset": 1,
+            "tileIndex": 45,
+            "tileOffset": 0,
             "usingOffset": true
         },
         {
@@ -768,8 +768,8 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 46,
-            "tileOffset": 1,
+            "tileIndex": 45,
+            "tileOffset": 0,
             "usingOffset": true
         },
         {
