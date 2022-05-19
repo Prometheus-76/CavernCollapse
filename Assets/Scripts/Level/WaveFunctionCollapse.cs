@@ -80,6 +80,10 @@ public class WaveFunctionCollapse : MonoBehaviour
     // Recalculates the entropy for a given tile
     public void RecalculateEntropy(int x, int y)
     {
+        // Skip if the tile is already collapsed
+        if (waveFunctionGrid[x, y].canCollapse == false)
+            return;
+
         // Reset existing weights
         for (int superpositionIndex = 0; superpositionIndex < waveFunctionGrid[x, y].tileSuperpositions.Length; superpositionIndex++)
         {
@@ -114,7 +118,7 @@ public class WaveFunctionCollapse : MonoBehaviour
                     BlockType ruleType = datasetAnalyser.GetTypeFromRuleset(waveFunctionGrid[x + xOffset, y + yOffset].tileIndex, 7 - neighbourIndex, tileIndex);
 
                     // Only calculate entropy for a given set of block types
-                    //if (IsBlockInPalette(ruleType))
+                    if (IsBlockInPalette(ruleType))
                     {
                         // Add to the weight if this configuration is supported so far
                         if (waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight != -1)

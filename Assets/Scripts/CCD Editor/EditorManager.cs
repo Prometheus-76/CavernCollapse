@@ -848,7 +848,7 @@ public class EditorManager : MonoBehaviour
         editorAudio.PlayOneshot(EditorAudio.EditorSounds.Positive);
 
         // This is a total stopgap right now, but it let me cut down on the time to develop an in-engine tutorial for the editor
-        Application.OpenURL("https://prometheus-76.github.io");
+        Application.OpenURL(Application.dataPath + "/EditorTutorial.pdf");
     }
 
     public void ReturnToMenu()

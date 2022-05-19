@@ -1186,10 +1186,8 @@ MonoBehaviour:
   verticalRoomConnectionsPerFrame: 1
   roomBordersPerFrame: 4
   tilesCollapsedPerFrame: 1
-  stageSize: {x: 5, y: 5}
+  stageSize: {x: 3, y: 4}
   roomSize: {x: 10, y: 10}
-  randomSeed: 1
-  seed: 1037927872
   tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
   gameplayConfiguration: {fileID: 11400000, guid: f8a02774c90ec804297f31bdcd35b1ba, type: 2}
   loadingScreen: {fileID: 1227997537}

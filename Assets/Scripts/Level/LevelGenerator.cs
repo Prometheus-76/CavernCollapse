@@ -848,11 +848,6 @@ public class LevelGenerator : MonoBehaviour
                             if (xOffset == 0 && yOffset == 0)
                                 continue;
 
-                            // Skip the tile if its out of range of the grid
-                            if (positionToCollapse.x + xOffset < 0 || positionToCollapse.x + xOffset >= (stageSize.x * roomSize.x) ||
-                                positionToCollapse.y + yOffset < 0 || positionToCollapse.y + yOffset >= (stageSize.y * roomSize.y))
-                                continue;
-
                             // Update this neighbour tile
                             waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
                         }
@@ -937,11 +932,6 @@ public class LevelGenerator : MonoBehaviour
                         {
                             // Skip the centre tile
                             if (xOffset == 0 && yOffset == 0)
-                                continue;
-
-                            // Skip the tile if its out of range of the grid
-                            if (positionToCollapse.x + xOffset < 0 || positionToCollapse.x + xOffset >= (stageSize.x * roomSize.x) ||
-                                positionToCollapse.y + yOffset < 0 || positionToCollapse.y + yOffset >= (stageSize.y * roomSize.y))
                                 continue;
 
                             // Update this neighbour tile
@@ -1030,11 +1020,6 @@ public class LevelGenerator : MonoBehaviour
                             if (xOffset == 0 && yOffset == 0)
                                 continue;
 
-                            // Skip the tile if its out of range of the grid
-                            if (positionToCollapse.x + xOffset < 0 || positionToCollapse.x + xOffset >= (stageSize.x * roomSize.x) ||
-                                positionToCollapse.y + yOffset < 0 || positionToCollapse.y + yOffset >= (stageSize.y * roomSize.y))
-                                continue;
-
                             // Update this neighbour tile
                             waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
                         }
@@ -1121,11 +1106,6 @@ public class LevelGenerator : MonoBehaviour
                         {
                             // Skip the centre tile
                             if (xOffset == 0 && yOffset == 0)
-                                continue;
-
-                            // Skip the tile if its out of range of the grid
-                            if (positionToCollapse.x + xOffset < 0 || positionToCollapse.x + xOffset >= (stageSize.x * roomSize.x) ||
-                                positionToCollapse.y + yOffset < 0 || positionToCollapse.y + yOffset >= (stageSize.y * roomSize.y))
                                 continue;
 
                             // Update this neighbour tile
