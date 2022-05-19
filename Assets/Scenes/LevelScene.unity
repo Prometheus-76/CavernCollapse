@@ -1185,7 +1185,7 @@ MonoBehaviour:
   roomMapBordersPerFrame: 5
   verticalRoomConnectionsPerFrame: 1
   roomBordersPerFrame: 4
-  tilesCollapsedPerFrame: 1
+  tilesCollapsedPerFrame: 3
   stageSize: {x: 3, y: 4}
   roomSize: {x: 10, y: 10}
   tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}

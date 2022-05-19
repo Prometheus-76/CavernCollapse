@@ -1150,13 +1150,16 @@ public class LevelGenerator : MonoBehaviour
                     spawnPoint.y = y;
 
                     // Trace down until we hit ground
-                    BlockType typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[spawnPoint.x, spawnPoint.y - 1].blockType;
+                    Vector2Int belowPoint = spawnPoint;
+                    belowPoint.y -= 1;
+                    BlockType typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[belowPoint.x, belowPoint.y].blockType;
                     while (typeBelow != BlockType.Solid && typeBelow != BlockType.OneWay)
                     {
-                        spawnPoint.y -= 1;
-                        typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[spawnPoint.x, spawnPoint.y].blockType;
+                        belowPoint.y -= 1;
+                        typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[belowPoint.x, belowPoint.y].blockType;
                     }
 
+                    spawnPoint = belowPoint;
                     spawnPoint.y += 1;
 
                     // Remove anything that might have been in this space resting on the ground
@@ -1204,13 +1207,16 @@ public class LevelGenerator : MonoBehaviour
                     exitPoint.y = y;
 
                     // Trace down until we hit ground
-                    BlockType typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[exitPoint.x, exitPoint.y - 1].blockType;
+                    Vector2Int belowPoint = exitPoint;
+                    belowPoint.y -= 1;
+                    BlockType typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[belowPoint.x, belowPoint.y].blockType;
                     while (typeBelow != BlockType.Solid && typeBelow != BlockType.OneWay)
                     {
-                        exitPoint.y -= 1;
-                        typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[exitPoint.x, exitPoint.y].blockType;
+                        belowPoint.y -= 1;
+                        typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[belowPoint.x, belowPoint.y].blockType;
                     }
 
+                    exitPoint = belowPoint;
                     exitPoint.y += 1;
 
                     // Remove anything that might have been in this space resting on the ground
