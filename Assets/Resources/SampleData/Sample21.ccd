@@ -6,12 +6,6 @@
     "data": [
         {
             "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
             "tileIndex": 34,
             "tileOffset": 0,
             "usingOffset": false
@@ -60,27 +54,9 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 35,
+            "tileIndex": 39,
             "tileOffset": 0,
             "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
         },
         {
             "blockType": 1,
@@ -90,7 +66,25 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 9,
+            "tileIndex": 39,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 39,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 39,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 38,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -103,6 +97,540 @@
         {
             "blockType": 0,
             "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 7,
+            "tileIndex": 53,
+            "tileOffset": 3,
+            "usingOffset": true
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 57,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 7,
+            "tileIndex": 55,
+            "tileOffset": 5,
+            "usingOffset": true
+        },
+        {
+            "blockType": 4,
+            "tileIndex": 61,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 4,
+            "tileIndex": 61,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 7,
+            "tileIndex": 51,
+            "tileOffset": 1,
+            "usingOffset": true
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 8,
+            "tileIndex": 58,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 7,
+            "tileIndex": 52,
+            "tileOffset": 2,
+            "usingOffset": true
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 57,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 38,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 57,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 56,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 5,
+            "tileIndex": 49,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 5,
+            "tileIndex": 49,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 57,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 8,
+            "tileIndex": 60,
+            "tileOffset": 1,
+            "usingOffset": true
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 56,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 38,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 2,
+            "tileIndex": 68,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 6,
+            "tileOffset": 1,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 15,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 30,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 38,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 7,
+            "tileIndex": 50,
+            "tileOffset": 0,
+            "usingOffset": true
+        },
+        {
+            "blockType": 4,
+            "tileIndex": 61,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 4,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 4,
+            "tileIndex": 61,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 3,
+            "tileIndex": 64,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 4,
+            "tileIndex": 61,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 37,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 38,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 5,
+            "tileIndex": 49,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 57,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 57,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 3,
+            "tileIndex": 65,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 47,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 5,
+            "tileIndex": 49,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 37,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 29,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 40,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 5,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 3,
+            "tileIndex": 66,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 2,
+            "tileIndex": 68,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 37,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 57,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 8,
+            "tileIndex": 58,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 4,
+            "tileIndex": 61,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 4,
+            "tileIndex": 61,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 9,
+            "tileIndex": 63,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 7,
+            "tileIndex": 52,
+            "tileOffset": 2,
+            "usingOffset": true
+        },
+        {
+            "blockType": 7,
+            "tileIndex": 55,
+            "tileOffset": 5,
+            "usingOffset": true
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 37,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 6,
+            "tileIndex": 56,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -125,72 +653,6 @@
             "usingOffset": false
         },
         {
-            "blockType": 7,
-            "tileIndex": 51,
-            "tileOffset": 1,
-            "usingOffset": true
-        },
-        {
-            "blockType": 7,
-            "tileIndex": 53,
-            "tileOffset": 3,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 37,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 46,
-            "tileOffset": 1,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 3,
-            "tileIndex": 64,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 9,
-            "tileIndex": 63,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 6,
-            "tileIndex": 57,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
             "blockType": 6,
             "tileIndex": 57,
             "tileOffset": 0,
@@ -211,6 +673,30 @@
         {
             "blockType": 0,
             "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 0,
+            "tileIndex": 48,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 5,
+            "tileIndex": 49,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -222,115 +708,67 @@
         },
         {
             "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 3,
-            "tileIndex": 65,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 6,
-            "tileIndex": 56,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 4,
-            "tileIndex": 62,
+            "tileIndex": 36,
             "tileOffset": 0,
             "usingOffset": false
         },
         {
             "blockType": 1,
-            "tileIndex": 10,
+            "tileIndex": 36,
             "tileOffset": 0,
             "usingOffset": false
         },
         {
             "blockType": 1,
-            "tileIndex": 11,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 2,
-            "tileIndex": 69,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 2,
-            "tileIndex": 69,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 2,
-            "tileIndex": 69,
+            "tileIndex": 36,
             "tileOffset": 0,
             "usingOffset": false
         },
         {
             "blockType": 1,
-            "tileIndex": 8,
+            "tileIndex": 36,
             "tileOffset": 0,
             "usingOffset": false
         },
         {
             "blockType": 1,
-            "tileIndex": 39,
+            "tileIndex": 36,
             "tileOffset": 0,
             "usingOffset": false
         },
         {
             "blockType": 1,
-            "tileIndex": 35,
+            "tileIndex": 36,
             "tileOffset": 0,
             "usingOffset": false
         },
         {
             "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 3,
-            "tileIndex": 65,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 6,
-            "tileIndex": 57,
+            "tileIndex": 36,
             "tileOffset": 0,
             "usingOffset": false
         },
         {
             "blockType": 1,
-            "tileIndex": 10,
+            "tileIndex": 36,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 36,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 36,
+            "tileOffset": 0,
+            "usingOffset": false
+        },
+        {
+            "blockType": 1,
+            "tileIndex": 36,
             "tileOffset": 0,
             "usingOffset": false
         },
@@ -345,444 +783,6 @@
             "tileIndex": 33,
             "tileOffset": 0,
             "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 38,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 7,
-            "tileIndex": 55,
-            "tileOffset": 5,
-            "usingOffset": true
-        },
-        {
-            "blockType": 7,
-            "tileIndex": 50,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 7,
-            "tileIndex": 51,
-            "tileOffset": 1,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 8,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 39,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 3,
-            "tileIndex": 65,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 10,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 33,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 34,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 9,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 2,
-            "tileIndex": 69,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 2,
-            "tileIndex": 70,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 6,
-            "tileIndex": 57,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 5,
-            "tileIndex": 49,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 5,
-            "tileIndex": 49,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 3,
-            "tileIndex": 65,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 8,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 39,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 39,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 9,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 4,
-            "tileIndex": 61,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 7,
-            "tileIndex": 54,
-            "tileOffset": 4,
-            "usingOffset": true
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 6,
-            "tileIndex": 56,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 6,
-            "tileIndex": 57,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 3,
-            "tileIndex": 65,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 5,
-            "tileIndex": 49,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 5,
-            "tileIndex": 49,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 5,
-            "tileIndex": 49,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 5,
-            "tileIndex": 49,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 6,
-            "tileIndex": 57,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 6,
-            "tileIndex": 56,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 6,
-            "tileIndex": 56,
-            "tileOffset": 1,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 0,
-            "tileIndex": 48,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 1,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 36,
-            "tileOffset": 0,
-            "usingOffset": false
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
-        },
-        {
-            "blockType": 1,
-            "tileIndex": 45,
-            "tileOffset": 0,
-            "usingOffset": true
         }
     ]
 }

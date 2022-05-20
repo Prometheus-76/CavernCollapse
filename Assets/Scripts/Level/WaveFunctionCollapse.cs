@@ -101,7 +101,7 @@ public class WaveFunctionCollapse : MonoBehaviour
                     continue;
 
                 neighbourIndex++;
-                
+
                 // Skip the tile if its out of range of the grid
                 if (x + xOffset < 0 || x + xOffset >= gridSize.x || y + yOffset < 0 || y + yOffset >= gridSize.y)
                     continue;

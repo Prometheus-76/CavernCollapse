@@ -59,6 +59,7 @@ public class LevelGenerator : MonoBehaviour
         ConnectVerticalRooms,
         CreateRoomBorders,
         WaveFunctionCollapseWalls,
+        CleanupWalls,
         WaveFunctionCollapsePlatforming,
         CleanupPlatforming,
         WaveFunctionCollapseGameplay,
@@ -162,6 +163,9 @@ public class LevelGenerator : MonoBehaviour
                 break;
             case GenerationStep.WaveFunctionCollapseWalls:
                 loadingScreen.SetStepText("Collapsing cavern walls");
+                break;
+            case GenerationStep.CleanupWalls:
+                loadingScreen.SetStepText("Polishing surfaces");
                 break;
             case GenerationStep.WaveFunctionCollapsePlatforming:
                 loadingScreen.SetStepText("Laying platforms");
@@ -392,6 +396,9 @@ public class LevelGenerator : MonoBehaviour
                         break;
                     case GenerationStep.WaveFunctionCollapseWalls:
                         StartCoroutine(WaveFunctionCollapseWalls());
+                        break;
+                    case GenerationStep.CleanupWalls:
+                        StartCoroutine(CleanupWalls());
                         break;
                     case GenerationStep.WaveFunctionCollapsePlatforming:
                         StartCoroutine(WaveFunctionCollapsePlatforming());
@@ -964,6 +971,14 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 10 of level generation
+    // PLACEHOLDER WALL CLEANUP STEP, UNTIL I CAN FIGURE OUT WHAT TO DO FOR IT
+    IEnumerator CleanupWalls()
+    {
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 11 of level generation
     // Wave function collapse pass for ladders and platforms
     IEnumerator WaveFunctionCollapsePlatforming()
     {
@@ -1049,7 +1064,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
     
-    // Step 11 of level generation
+    // Step 12 of level generation
     // Removes disconnected ladders and platforms, ensures they are capped correctly
     IEnumerator CleanupPlatforming()
     {
@@ -1081,7 +1096,7 @@ public class LevelGenerator : MonoBehaviour
                     }
 
                     // Ensure top ladders are capped correctly
-                    if (blockAbove != BlockType.Ladder && blockBelow == BlockType.Ladder)
+                    if (blockAbove != BlockType.Ladder && blockAbove != BlockType.Solid && blockBelow == BlockType.Ladder)
                     {
                         RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
                         PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 66, BlockType.Ladder);
@@ -1165,7 +1180,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 12 of level generation
+    // Step 13 of level generation
     // Wave function collapse pass for spikes and coins
     IEnumerator WaveFunctionCollapseGameplay()
     {
@@ -1251,7 +1266,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 13 of level generation
+    // Step 14 of level generation
     // Removes floating spikes and unreachable coins
     IEnumerator CleanupGameplay()
     {
@@ -1332,7 +1347,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 14 of level generation
+    // Step 15 of level generation
     // Wave function collapse pass for foliage, vines, signs and torches
     IEnumerator WaveFunctionCollapseDeco()
     {
@@ -1420,7 +1435,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 15 of level generation
+    // Step 16 of level generation
     // Removes disconnected vines and floating signs/foliage/torches
     IEnumerator CleanupDeco()
     {
@@ -1504,7 +1519,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 16 of level generation
+    // Step 17 of level generation
     // Sets the player's spawn and end goal points in the level, and deletes ladders overlapping with the door
     IEnumerator PlaceSpawnAndExit()
     {
@@ -1661,7 +1676,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 17 of level generation
+    // Step 18 of level generation
     // Generates the colliders used by solids, platforms, ladders and spikes
     IEnumerator GenerateColliders()
     {

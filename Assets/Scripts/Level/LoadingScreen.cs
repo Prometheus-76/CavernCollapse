@@ -88,7 +88,7 @@ public class LoadingScreen : MonoBehaviour
         targetPos.y = -1100f;
 
         // Wait a little before animating
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.7f);
 
         // Loop until transition time has passed
         while (transitionTimer <= transitionTime)
