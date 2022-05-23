@@ -137,7 +137,7 @@ public class WaveFunctionCollapse : MonoBehaviour
 
     // Finds the uncollapsed, collapsable tile with the smallest number of remaining possibilities
     // Generally speaking, this one should be collapsed sooner rather than later
-    public Vector2Int GetLowestEntropyTile()
+    public Vector2Int GetLowestEntropyTile(bool allowZero)
     {
         Vector2Int lowestEntropySpace = new Vector2Int(-1, -1);
 
@@ -165,7 +165,7 @@ public class WaveFunctionCollapse : MonoBehaviour
                 }
 
                 // New lowest, non 0 entropy tile
-                if (tileEntropyTypes != 0 && tileEntropyTypes < lowestEntropyValue)
+                if ((tileEntropyTypes != 0 || allowZero) && tileEntropyTypes < lowestEntropyValue)
                 {
                     lowestEntropyValue = tileEntropyTypes;
                     lowestEntropySpace.x = x;

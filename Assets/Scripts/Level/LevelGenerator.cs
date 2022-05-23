@@ -926,7 +926,7 @@ public class LevelGenerator : MonoBehaviour
         Vector2Int positionToCollapse;
         while (true)
         {
-            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile();
+            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile(false);
 
             if (positionToCollapse.x != -1)
             {
@@ -971,9 +971,104 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 10 of level generation
-    // PLACEHOLDER WALL CLEANUP STEP, UNTIL I CAN FIGURE OUT WHAT TO DO FOR IT
+    // Find all uncollapsed spaces and place crates to fill the space, crates also replace some other tiles based on noise lookup as well
     IEnumerator CleanupWalls()
     {
+        // Calculate entropy of entire wave function collapse grid
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                waveFunctionCollapse.RecalculateEntropy(x, y);
+            }
+        }
+
+        int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
+        uncollapsedTiles += (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+
+        int positionsCollapsed = 0;
+        Vector2Int positionToCollapse;
+        while (true)
+        {
+            // Find tiles which have not been collapsed, only 0 entropy tiles will be remaining after the previous step
+            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile(true);
+
+            if (positionToCollapse.x != -1)
+            {
+                // Ensure this space cannot collapse
+                if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y) == false)
+                {
+                    // Force collapse it into a crate
+                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 72, BlockType.Solid);
+
+                    // Recollapse neighbouring walls into crates as well
+                    for (int yOffset = 1; yOffset >= -1; yOffset--)
+                    {
+                        for (int xOffset = -1; xOffset <= 1; xOffset++)
+                        {
+                            // Skip the centre tile
+                            if (xOffset == 0 && yOffset == 0)
+                                continue;
+
+                            Vector2Int neighbourStagePos = GridToStage(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
+                            Vector2Int neighbourRoomPos = GridToRoom(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
+
+                            // Only recollapse walls
+                            if (level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].blockType == BlockType.Solid)
+                            {
+                                // Only recollapse on border
+                                if (level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].tileIndex != 45 &&
+                                    level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].tileIndex != 46)
+                                {
+                                    RemoveTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y);
+                                    PlaceTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y, 72, BlockType.Solid);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                positionsCollapsed++;
+                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                    yield return null;
+            }
+            else
+            {
+                // No positions left to collapse
+                break;
+            }
+        }
+
+        // Add crates to random spaces using perlin noise
+        for (int y = 0; y < stageSize.y * roomSize.y; y++)
+        {
+            for (int x = 0; x < stageSize.x * roomSize.x; x++)
+            {
+                Vector2Int stagePos = GridToStage(x, y);
+                Vector2Int roomPos = GridToRoom(x, y);
+                
+                // Only convert solid walls
+                if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Solid)
+                {
+                    float perlinValue = Mathf.PerlinNoise(x / (Mathf.PI), y / (Mathf.PI));
+
+                    if (perlinValue < 0.15f)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 72, BlockType.Solid);
+                    }
+                }
+
+                positionsCollapsed++;
+                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                    yield return null;
+            }
+        }
+
         yield return null;
         CompleteStep();
     }
@@ -1020,7 +1115,7 @@ public class LevelGenerator : MonoBehaviour
         Vector2Int positionToCollapse;
         while (true)
         {
-            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile();
+            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile(false);
 
             if (positionToCollapse.x != -1)
             {
@@ -1107,6 +1202,64 @@ public class LevelGenerator : MonoBehaviour
                     {
                         RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
                         PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 67, BlockType.Ladder);
+                    }
+
+                    // Remove floating ladders, not connected by the top or bottom
+                    if (blockBelow != BlockType.Ladder && blockBelow != BlockType.Solid && blockBelow != BlockType.OneWay)
+                    {
+                        // First find the bottom of the ladder, and continue if it's not connected
+                        // Move up one space at a time until reaching the top of the ladder
+                        // If the top of the ladder is also not connected, delete the whole ladder
+
+                        Vector2Int nextStageAbove = GridToStage(x, y);
+                        Vector2Int nextRoomAbove = GridToRoom(x, y);
+                        BlockType nextBlockAbove = level[stageAbove.x, stageAbove.y].tiles[roomAbove.x, roomAbove.y].blockType;
+                        bool disconnectedLadder = true;
+
+                        Vector2Int startPoint = new Vector2Int(x, y);
+                        int ladderLengthSoFar = 1;
+
+                        List<Vector2Int> ladderPoints = new List<Vector2Int>();
+                        ladderPoints.Add(new Vector2Int(x, y));
+
+                        while (true)
+                        {
+                            nextStageAbove = GridToStage(startPoint.x, startPoint.y + ladderLengthSoFar);
+                            nextRoomAbove = GridToRoom(startPoint.x, startPoint.y + ladderLengthSoFar);
+                            nextBlockAbove = level[nextStageAbove.x, nextStageAbove.y].tiles[nextRoomAbove.x, nextRoomAbove.y].blockType;
+
+                            ladderLengthSoFar++;
+
+                            if (nextBlockAbove == BlockType.Ladder)
+                            {
+                                // If there is a ladder above, add it to the list
+                                Vector2Int gridPos = StageToGrid(nextStageAbove.x, nextStageAbove.y, nextRoomAbove.x, nextRoomAbove.y);
+                                ladderPoints.Add(gridPos);
+                            }
+                            else if (nextBlockAbove == BlockType.Solid)
+                            {
+                                // If there is a wall above, the ladder is connected
+                                disconnectedLadder = false;
+                                break;
+                            }
+                            else if (nextBlockAbove != BlockType.Solid && nextBlockAbove != BlockType.Ladder)
+                            {
+                                // If there is not a wall or a ladder above, the ladder is disconnected
+                                disconnectedLadder = true;
+                                break;
+                            }
+                        }
+
+                        // If the ladder is disconnected to a surface, delete it
+                        if (disconnectedLadder)
+                        {
+                            for (int i = 0; i < ladderPoints.Count; i++)
+                            {
+                                Vector2Int ladderStagePos = GridToStage(ladderPoints[i].x, ladderPoints[i].y);
+                                Vector2Int ladderRoomPos = GridToRoom(ladderPoints[i].x, ladderPoints[i].y);
+                                RemoveTile(ladderStagePos.x, ladderStagePos.y, ladderRoomPos.x, ladderRoomPos.y);
+                            }
+                        }
                     }
 
                     // Remove single ladders
@@ -1222,7 +1375,7 @@ public class LevelGenerator : MonoBehaviour
         Vector2Int positionToCollapse;
         while (true)
         {
-            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile();
+            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile(false);
 
             if (positionToCollapse.x != -1)
             {
@@ -1316,7 +1469,34 @@ public class LevelGenerator : MonoBehaviour
 
                             if (typeBelow != BlockType.Solid && typeBelow != BlockType.OneWay)
                             {
+                                // Delete the original
                                 RemoveTile(stageX, stageY, roomX, roomY);
+
+                                // Attempt to find position to reconnect spike
+                                Vector2Int currentPos = gridPos;
+                                Vector2Int stageBelowCurrent = GridToStage(currentPos.x, currentPos.y - 1);
+                                Vector2Int roomBelowCurrent = GridToRoom(currentPos.x, currentPos.y - 1);
+                                BlockType typeBelowCurrent = level[stageBelowCurrent.x, stageBelowCurrent.y].tiles[roomBelowCurrent.x, roomBelowCurrent.y].blockType;
+                                
+                                // March down and check below
+                                while (typeBelowCurrent != BlockType.Solid && typeBelowCurrent != BlockType.OneWay)
+                                {
+                                    currentPos.y -= 1;
+                                    stageBelowCurrent = GridToStage(currentPos.x, currentPos.y - 1);
+                                    roomBelowCurrent = GridToRoom(currentPos.x, currentPos.y - 1);
+                                    typeBelowCurrent = level[stageBelowCurrent.x, stageBelowCurrent.y].tiles[roomBelowCurrent.x, roomBelowCurrent.y].blockType;
+                                }
+
+                                // Current pos is now above a oneway or solid
+                                Vector2Int stageAtCurrent = GridToStage(currentPos.x, currentPos.y - 1);
+                                Vector2Int roomAtCurrent = GridToRoom(currentPos.x, currentPos.y - 1);
+                                BlockType typeAtCurrent = level[stageAtCurrent.x, stageAtCurrent.y].tiles[roomAtCurrent.x, roomAtCurrent.y].blockType;
+
+                                // Place the marched spike
+                                if (typeAtCurrent == BlockType.None || typeAtCurrent == BlockType.Coin)
+                                {
+                                    PlaceTile(stageAtCurrent.x, stageAtCurrent.y, roomAtCurrent.x, roomAtCurrent.y, 61, BlockType.Spike);
+                                }
                             }
                         }
                         else if (level[stageX, stageY].tiles[roomX, roomY].tileIndex == 62)
@@ -1330,7 +1510,34 @@ public class LevelGenerator : MonoBehaviour
 
                             if (typeAbove != BlockType.Solid)
                             {
+                                // Delete the original
                                 RemoveTile(stageX, stageY, roomX, roomY);
+
+                                // Attempt to find position to reconnect spike
+                                Vector2Int currentPos = gridPos;
+                                Vector2Int stageAboveCurrent = GridToStage(currentPos.x, currentPos.y + 1);
+                                Vector2Int roomAboveCurrent = GridToRoom(currentPos.x, currentPos.y + 1);
+                                BlockType typeAboveCurrent = level[stageAboveCurrent.x, stageAboveCurrent.y].tiles[roomAboveCurrent.x, roomAboveCurrent.y].blockType;
+
+                                // March up and check above
+                                while (typeAboveCurrent != BlockType.Solid)
+                                {
+                                    currentPos.y += 1;
+                                    stageAboveCurrent = GridToStage(currentPos.x, currentPos.y + 1);
+                                    roomAboveCurrent = GridToRoom(currentPos.x, currentPos.y + 1);
+                                    typeAboveCurrent = level[stageAboveCurrent.x, stageAboveCurrent.y].tiles[roomAboveCurrent.x, roomAboveCurrent.y].blockType;
+                                }
+
+                                // Current pos is now below a oneway or solid
+                                Vector2Int stageAtCurrent = GridToStage(currentPos.x, currentPos.y + 1);
+                                Vector2Int roomAtCurrent = GridToRoom(currentPos.x, currentPos.y + 1);
+                                BlockType typeAtCurrent = level[stageAtCurrent.x, stageAtCurrent.y].tiles[roomAtCurrent.x, roomAtCurrent.y].blockType;
+
+                                // Place the marched spike
+                                if (typeAtCurrent == BlockType.None || typeAtCurrent == BlockType.Coin)
+                                {
+                                    PlaceTile(stageAtCurrent.x, stageAtCurrent.y, roomAtCurrent.x, roomAtCurrent.y, 62, BlockType.Spike);
+                                }
                             }
                         }
 
@@ -1391,7 +1598,7 @@ public class LevelGenerator : MonoBehaviour
         Vector2Int positionToCollapse;
         while (true)
         {
-            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile();
+            positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile(false);
 
             if (positionToCollapse.x != -1)
             {

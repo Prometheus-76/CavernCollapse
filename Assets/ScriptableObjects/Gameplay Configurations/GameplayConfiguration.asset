@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3327c8b0e76c37745a248bb3e16b4493, type: 3}
   m_Name: GameplayConfiguration
   m_EditorClassIdentifier: 
-  dataset: 1
+  dataset: 0
   difficulty: 0
