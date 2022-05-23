@@ -1488,13 +1488,14 @@ public class LevelGenerator : MonoBehaviour
                                 }
 
                                 // Current pos is now above a oneway or solid
-                                Vector2Int stageAtCurrent = GridToStage(currentPos.x, currentPos.y - 1);
-                                Vector2Int roomAtCurrent = GridToRoom(currentPos.x, currentPos.y - 1);
+                                Vector2Int stageAtCurrent = GridToStage(currentPos.x, currentPos.y);
+                                Vector2Int roomAtCurrent = GridToRoom(currentPos.x, currentPos.y);
                                 BlockType typeAtCurrent = level[stageAtCurrent.x, stageAtCurrent.y].tiles[roomAtCurrent.x, roomAtCurrent.y].blockType;
 
                                 // Place the marched spike
                                 if (typeAtCurrent == BlockType.None || typeAtCurrent == BlockType.Coin)
                                 {
+                                    RemoveTile(stageAtCurrent.x, stageAtCurrent.y, roomAtCurrent.x, roomAtCurrent.y);
                                     PlaceTile(stageAtCurrent.x, stageAtCurrent.y, roomAtCurrent.x, roomAtCurrent.y, 61, BlockType.Spike);
                                 }
                             }
@@ -1529,13 +1530,14 @@ public class LevelGenerator : MonoBehaviour
                                 }
 
                                 // Current pos is now below a oneway or solid
-                                Vector2Int stageAtCurrent = GridToStage(currentPos.x, currentPos.y + 1);
-                                Vector2Int roomAtCurrent = GridToRoom(currentPos.x, currentPos.y + 1);
+                                Vector2Int stageAtCurrent = GridToStage(currentPos.x, currentPos.y);
+                                Vector2Int roomAtCurrent = GridToRoom(currentPos.x, currentPos.y);
                                 BlockType typeAtCurrent = level[stageAtCurrent.x, stageAtCurrent.y].tiles[roomAtCurrent.x, roomAtCurrent.y].blockType;
 
                                 // Place the marched spike
                                 if (typeAtCurrent == BlockType.None || typeAtCurrent == BlockType.Coin)
                                 {
+                                    RemoveTile(stageAtCurrent.x, stageAtCurrent.y, roomAtCurrent.x, roomAtCurrent.y);
                                     PlaceTile(stageAtCurrent.x, stageAtCurrent.y, roomAtCurrent.x, roomAtCurrent.y, 62, BlockType.Spike);
                                 }
                             }
