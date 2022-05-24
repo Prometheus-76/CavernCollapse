@@ -147,7 +147,7 @@ public class LevelGenerator : MonoBehaviour
                 loadingScreen.SetStepText("Loading dataset samples");
                 break;
             case GenerationStep.ConstructRuleset:
-                loadingScreen.SetStepText("Constructing wave function");
+                loadingScreen.SetStepText("Constructing placement ruleset");
                 break;
             case GenerationStep.AssembleRoomSequence:
                 loadingScreen.SetStepText("Assembling room sequence");
@@ -156,16 +156,16 @@ public class LevelGenerator : MonoBehaviour
                 loadingScreen.SetStepText("Reserving room paths");
                 break;
             case GenerationStep.CreateMapBorder:
-                loadingScreen.SetStepText("Building map border");
+                loadingScreen.SetStepText("Allocating map border");
                 break;
             case GenerationStep.ConnectVerticalRooms:
                 loadingScreen.SetStepText("Connecting vertical rooms");
                 break;
             case GenerationStep.CreateRoomBorders:
-                loadingScreen.SetStepText("Building room borders");
+                loadingScreen.SetStepText("Allocating room borders");
                 break;
             case GenerationStep.WaveFunctionCollapseWalls:
-                loadingScreen.SetStepText("Collapsing cavern walls");
+                loadingScreen.SetStepText("Building cavern walls");
                 break;
             case GenerationStep.CleanupWalls:
                 loadingScreen.SetStepText("Polishing surfaces");
@@ -177,13 +177,13 @@ public class LevelGenerator : MonoBehaviour
                 loadingScreen.SetStepText("Adjusting ladders");
                 break;
             case GenerationStep.WaveFunctionCollapseGameplay:
-                loadingScreen.SetStepText("Setting up risks and rewards");
+                loadingScreen.SetStepText("Setting up challenges");
                 break;
             case GenerationStep.CleanupGameplay:
                 loadingScreen.SetStepText("Sharpening spikes");
                 break;
             case GenerationStep.WaveFunctionCollapseDeco:
-                loadingScreen.SetStepText("Growing vines and foliage");
+                loadingScreen.SetStepText("Growing foliage");
                 break;
             case GenerationStep.CleanupDeco:
                 loadingScreen.SetStepText("Pruning vegetation");
@@ -192,7 +192,7 @@ public class LevelGenerator : MonoBehaviour
                 loadingScreen.SetStepText("Placing doors");
                 break;
             case GenerationStep.CleanupDoors:
-                loadingScreen.SetStepText("Sweeping up around doors");
+                loadingScreen.SetStepText("Sweeping around doors");
                 break;
             case GenerationStep.GenerateColliders:
                 loadingScreen.SetStepText("Generating colliders");
@@ -1787,45 +1787,36 @@ public class LevelGenerator : MonoBehaviour
     // Sets the player's spawn and exit door points in the level
     IEnumerator PlaceDoors()
     {
+        bool floodfillCompleted = false;
+        ResetFloodFill();
+
         // Set spawn
 
-        // Find highest point in first room of critical path
+        // Find a safe space in the room, above solid ground and not within a platform
         bool spawnPlaced = false;
-        Vector2Int spawnPoint = Vector2Int.zero;
         for (int y = roomSize.y - 1; y >= 0; y--)
         {
-            for (int x = 1; x < roomSize.x - 1; x++)
+            for (int x = 0; x < roomSize.x; x++)
             {
-                // Found the highest point in the critical path of the first room
-                if (level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].reservedTile)
+                // Found a safe space in the first room
+                if (level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].reservedTile && floodfillCompleted == false)
                 {
-                    spawnPoint.x = x;
-                    spawnPoint.y = y;
+                    // Flood fill the map from this point to find all legal positions
+                    Vector2Int gridPos = StageToGrid(criticalPath[0].x, criticalPath[0].y, x, y);
+                    FloodFill(gridPos.x, gridPos.y);
+                    floodfillCompleted = true;
+                }
 
-                    // Trace down until we hit ground
-                    Vector2Int belowPoint = spawnPoint;
-                    belowPoint.y -= 1;
-                    BlockType typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[belowPoint.x, belowPoint.y].blockType;
-                    while (typeBelow != BlockType.Solid)
-                    {
-                        belowPoint.y -= 1;
-                        typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[belowPoint.x, belowPoint.y].blockType;
-                    }
-
-                    // If the door is spawned inside a oneway, push it up above the oneway until it's resting on top
-                    while (level[criticalPath[0].x, criticalPath[0].y].tiles[belowPoint.x, belowPoint.y + 1].blockType == BlockType.OneWay)
-                    {
-                        belowPoint.y += 1;
-                    }
-
-                    spawnPoint = belowPoint;
-                    spawnPoint.y += 1;
-
+                // If this cell is within the safe area of the room, above solid ground and not within a platform
+                if (level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].marked &&
+                    level[criticalPath[0].x, criticalPath[0].y].tiles[x, y - 1].blockType == BlockType.Solid &&
+                    level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].blockType != BlockType.OneWay)
+                {
                     // Remove anything that might have been in this space resting on the ground
-                    RemoveTile(criticalPath[0].x, criticalPath[0].y, spawnPoint.x, spawnPoint.y);
+                    RemoveTile(criticalPath[0].x, criticalPath[0].y, x, y);
 
                     // Place spawn door
-                    spawnPosition = StageToGrid(criticalPath[0].x, criticalPath[0].y, spawnPoint.x, spawnPoint.y);
+                    spawnPosition = StageToGrid(criticalPath[0].x, criticalPath[0].y, x, y);
                     levelTileManager.PlaceSpecialTile(spawnPosition.x, spawnPosition.y, LevelTileManager.SpecialTile.EntryDoor);
 
                     // Set camera starting position
@@ -1843,45 +1834,36 @@ public class LevelGenerator : MonoBehaviour
         stepProgress = 0.5f;
         yield return null;
 
+        floodfillCompleted = false;
+
         // Set exit
 
-        // Find highest point in final room of critical path
+        // Find a safe space in the room, above solid ground and not within a platform
         bool exitPlaced = false;
-        Vector2Int exitPoint = Vector2Int.zero;
+        int criticalPathLastRoom = criticalPath.Count - 1;
         for (int y = roomSize.y - 1; y >= 0; y--)
         {
-            for (int x = 1; x < roomSize.x - 1; x++)
+            for (int x = roomSize.x - 1; x >= 0; x--)
             {
-                // Found the highest point in the critical path of the last room
-                if (level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[x, y].reservedTile)
+                // Found a safe space in the last room
+                if (level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y].reservedTile && floodfillCompleted == false)
                 {
-                    exitPoint.x = x;
-                    exitPoint.y = y;
+                    // Flood fill the map from this point to find all legal positions
+                    Vector2Int gridPos = StageToGrid(criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y, x, y);
+                    FloodFill(gridPos.x, gridPos.y);
+                    floodfillCompleted = true;
+                }
 
-                    // Trace down until we hit ground
-                    Vector2Int belowPoint = exitPoint;
-                    belowPoint.y -= 1;
-                    BlockType typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[belowPoint.x, belowPoint.y].blockType;
-                    while (typeBelow != BlockType.Solid)
-                    {
-                        belowPoint.y -= 1;
-                        typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[belowPoint.x, belowPoint.y].blockType;
-                    }
-
-                    // If the door is spawned inside a oneway, push it up above the oneway until it's resting on top
-                    while (level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[belowPoint.x, belowPoint.y + 1].blockType == BlockType.OneWay)
-                    {
-                        belowPoint.y += 1;
-                    }
-
-                    exitPoint = belowPoint;
-                    exitPoint.y += 1;
-
+                // If this cell is within the safe area of the room, above solid ground and not within a platform
+                if (level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y].marked &&
+                    level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y - 1].blockType == BlockType.Solid &&
+                    level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y].blockType != BlockType.OneWay)
+                {
                     // Remove anything that might have been in this space resting on the ground
-                    RemoveTile(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x, exitPoint.y);
+                    RemoveTile(criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y, x, y);
 
                     // Place exit door
-                    exitPosition = StageToGrid(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x, exitPoint.y);
+                    exitPosition = StageToGrid(criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y, x, y);
                     levelTileManager.PlaceSpecialTile(exitPosition.x, exitPosition.y, LevelTileManager.SpecialTile.ExitDoor);
 
                     exitPlaced = true;
@@ -1902,8 +1884,6 @@ public class LevelGenerator : MonoBehaviour
     // Clears the area around doors and ensures tiles still appear correctly
     IEnumerator CleanupDoors()
     {
-        // Stupid dumb edge cases galore in here, you have been warned
-
         // Cleanup spawn
 
         // For each neighbour of this cell, at level or above
