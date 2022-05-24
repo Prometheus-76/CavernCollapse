@@ -66,7 +66,8 @@ public class LevelGenerator : MonoBehaviour
         CleanupGameplay,
         WaveFunctionCollapseDeco,
         CleanupDeco,
-        PlaceSpawnAndExit,
+        PlaceDoors,
+        CleanupDoors,
         GenerateColliders,
         GenerationComplete
     }
@@ -76,6 +77,8 @@ public class LevelGenerator : MonoBehaviour
     [HideInInspector] public float stepProgress;
     private bool awaitingNewStep;
     private int seed;
+    private Vector2Int spawnPosition;
+    private Vector2Int exitPosition;
 
     [Header("Configuration")]
     [SerializeField, Tooltip("The amount of resetting iterations to do per frame")] private int resetIterationsPerFrame;
@@ -185,8 +188,11 @@ public class LevelGenerator : MonoBehaviour
             case GenerationStep.CleanupDeco:
                 loadingScreen.SetStepText("Pruning vegetation");
                 break;
-            case GenerationStep.PlaceSpawnAndExit:
+            case GenerationStep.PlaceDoors:
                 loadingScreen.SetStepText("Placing doors");
+                break;
+            case GenerationStep.CleanupDoors:
+                loadingScreen.SetStepText("Sweeping up around doors");
                 break;
             case GenerationStep.GenerateColliders:
                 loadingScreen.SetStepText("Generating colliders");
@@ -418,8 +424,11 @@ public class LevelGenerator : MonoBehaviour
                     case GenerationStep.CleanupDeco:
                         StartCoroutine(CleanupDeco());
                         break;
-                    case GenerationStep.PlaceSpawnAndExit:
-                        StartCoroutine(PlaceSpawnAndExit());
+                    case GenerationStep.PlaceDoors:
+                        StartCoroutine(PlaceDoors());
+                        break;
+                    case GenerationStep.CleanupDoors:
+                        StartCoroutine(CleanupDoors());
                         break;
                     case GenerationStep.GenerateColliders:
                         StartCoroutine(GenerateColliders());
@@ -1032,7 +1041,7 @@ public class LevelGenerator : MonoBehaviour
 
                 positionsCollapsed++;
                 stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                if (positionsCollapsed % cleanupIterationsPerFrame == 0)
                     yield return null;
             }
             else
@@ -1064,7 +1073,7 @@ public class LevelGenerator : MonoBehaviour
 
                 positionsCollapsed++;
                 stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                if (positionsCollapsed % cleanupIterationsPerFrame == 0)
                     yield return null;
             }
         }
@@ -1458,6 +1467,26 @@ public class LevelGenerator : MonoBehaviour
                             // Remove a coin if it isn't reachable
                             RemoveTile(stageX, stageY, roomX, roomY);
                         }
+                        else if (level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.Coin)
+                        {
+                            // March downward as far as possible
+                            RemoveTile(stageX, stageY, roomX, roomY);
+                            Vector2Int currentPos = StageToGrid(stageX, stageY, roomX, roomY);
+                            Vector2Int stagePos = GridToStage(currentPos.x, currentPos.y);
+                            Vector2Int roomPos = GridToRoom(currentPos.x, currentPos.y);
+                            
+                            while (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.None)
+                            {
+                                currentPos.y -= 1;
+                                stagePos = GridToStage(currentPos.x, currentPos.y);
+                                roomPos = GridToRoom(currentPos.x, currentPos.y);
+                            }
+
+                            currentPos.y += 1;
+                            stagePos = GridToStage(currentPos.x, currentPos.y);
+                            roomPos = GridToRoom(currentPos.x, currentPos.y);
+                            PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 49, BlockType.Coin);
+                        }
                         else if (level[stageX, stageY].tiles[roomX, roomY].tileIndex == 61)
                         {
                             // Remove up-facing spike if it isn't connected to a wall or platform below
@@ -1667,7 +1696,33 @@ public class LevelGenerator : MonoBehaviour
                     if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Foliage ||
                         level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Torch)
                     {
+                        int tileIndex = level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].tileIndex;
+                        BlockType tileType = level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType;
                         RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+
+                        // March downward as far as possible
+                        Vector2Int currentPos = StageToGrid(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        Vector2Int marchedStagePos = GridToStage(currentPos.x, currentPos.y);
+                        Vector2Int marchedRoomPos = GridToRoom(currentPos.x, currentPos.y);
+
+                        // Go down until a standable surface is reached
+                        while (level[marchedStagePos.x, marchedStagePos.y].tiles[marchedRoomPos.x, marchedRoomPos.y].blockType != BlockType.Solid &&
+                               level[marchedStagePos.x, marchedStagePos.y].tiles[marchedRoomPos.x, marchedRoomPos.y].blockType != BlockType.OneWay)
+                        {
+                            currentPos.y -= 1;
+                            marchedStagePos = GridToStage(currentPos.x, currentPos.y);
+                            marchedRoomPos = GridToRoom(currentPos.x, currentPos.y);
+                        }
+
+                        currentPos.y += 1;
+                        marchedStagePos = GridToStage(currentPos.x, currentPos.y);
+                        marchedRoomPos = GridToRoom(currentPos.x, currentPos.y);
+
+                        // If there is nothing in this place, allow the tile to be placed
+                        if (level[marchedStagePos.x, marchedStagePos.y].tiles[marchedRoomPos.x, marchedRoomPos.y].blockType == BlockType.None)
+                        {
+                            PlaceTile(marchedStagePos.x, marchedStagePos.y, marchedRoomPos.x, marchedRoomPos.y, tileIndex, tileType);
+                        }
                     }
                 }
 
@@ -1729,12 +1784,12 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 17 of level generation
-    // Sets the player's spawn and end goal points in the level, and deletes ladders overlapping with the door
-    IEnumerator PlaceSpawnAndExit()
+    // Sets the player's spawn and exit door points in the level
+    IEnumerator PlaceDoors()
     {
         // Set spawn
 
-        // Find highest point in critical path
+        // Find highest point in first room of critical path
         bool spawnPlaced = false;
         Vector2Int spawnPoint = Vector2Int.zero;
         for (int y = roomSize.y - 1; y >= 0; y--)
@@ -1751,10 +1806,16 @@ public class LevelGenerator : MonoBehaviour
                     Vector2Int belowPoint = spawnPoint;
                     belowPoint.y -= 1;
                     BlockType typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[belowPoint.x, belowPoint.y].blockType;
-                    while (typeBelow != BlockType.Solid && typeBelow != BlockType.OneWay)
+                    while (typeBelow != BlockType.Solid)
                     {
                         belowPoint.y -= 1;
                         typeBelow = level[criticalPath[0].x, criticalPath[0].y].tiles[belowPoint.x, belowPoint.y].blockType;
+                    }
+
+                    // If the door is spawned inside a oneway, push it up above the oneway until it's resting on top
+                    while (level[criticalPath[0].x, criticalPath[0].y].tiles[belowPoint.x, belowPoint.y + 1].blockType == BlockType.OneWay)
+                    {
+                        belowPoint.y += 1;
                     }
 
                     spawnPoint = belowPoint;
@@ -1764,18 +1825,11 @@ public class LevelGenerator : MonoBehaviour
                     RemoveTile(criticalPath[0].x, criticalPath[0].y, spawnPoint.x, spawnPoint.y);
 
                     // Place spawn door
-                    Vector2Int doorPosition = StageToGrid(criticalPath[0].x, criticalPath[0].y, spawnPoint.x, spawnPoint.y);
-                    levelTileManager.PlaceSpecialTile(doorPosition.x, doorPosition.y, LevelTileManager.SpecialTile.EntryDoor);
-
-                    // Ensure both sides of the door are free of spikes
-                    if (level[criticalPath[0].x, criticalPath[0].y].tiles[spawnPoint.x - 1, spawnPoint.y].blockType == BlockType.Spike)
-                        RemoveTile(criticalPath[0].x, criticalPath[0].y, spawnPoint.x - 1, spawnPoint.y);
-
-                    if (level[criticalPath[0].x, criticalPath[0].y].tiles[spawnPoint.x + 1, spawnPoint.y].blockType == BlockType.Spike)
-                        RemoveTile(criticalPath[0].x, criticalPath[0].y, spawnPoint.x + 1, spawnPoint.y);
+                    spawnPosition = StageToGrid(criticalPath[0].x, criticalPath[0].y, spawnPoint.x, spawnPoint.y);
+                    levelTileManager.PlaceSpecialTile(spawnPosition.x, spawnPosition.y, LevelTileManager.SpecialTile.EntryDoor);
 
                     // Set camera starting position
-                    Vector3 spawnPointAsVec3 = new Vector3(doorPosition.x, doorPosition.y, 0f);
+                    Vector3 spawnPointAsVec3 = new Vector3(spawnPosition.x, spawnPosition.y, 0f);
                     cameraController.SetStartPosition(spawnPointAsVec3);
 
                     spawnPlaced = true;
@@ -1786,12 +1840,12 @@ public class LevelGenerator : MonoBehaviour
             if (spawnPlaced) break;
         }
 
-        stepProgress = 0.25f;
+        stepProgress = 0.5f;
         yield return null;
 
         // Set exit
 
-        // Find highest point in critical path
+        // Find highest point in final room of critical path
         bool exitPlaced = false;
         Vector2Int exitPoint = Vector2Int.zero;
         for (int y = roomSize.y - 1; y >= 0; y--)
@@ -1808,10 +1862,16 @@ public class LevelGenerator : MonoBehaviour
                     Vector2Int belowPoint = exitPoint;
                     belowPoint.y -= 1;
                     BlockType typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[belowPoint.x, belowPoint.y].blockType;
-                    while (typeBelow != BlockType.Solid && typeBelow != BlockType.OneWay)
+                    while (typeBelow != BlockType.Solid)
                     {
                         belowPoint.y -= 1;
                         typeBelow = level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[belowPoint.x, belowPoint.y].blockType;
+                    }
+
+                    // If the door is spawned inside a oneway, push it up above the oneway until it's resting on top
+                    while (level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[belowPoint.x, belowPoint.y + 1].blockType == BlockType.OneWay)
+                    {
+                        belowPoint.y += 1;
                     }
 
                     exitPoint = belowPoint;
@@ -1821,15 +1881,8 @@ public class LevelGenerator : MonoBehaviour
                     RemoveTile(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x, exitPoint.y);
 
                     // Place exit door
-                    Vector2Int doorPosition = StageToGrid(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x, exitPoint.y);
-                    levelTileManager.PlaceSpecialTile(doorPosition.x, doorPosition.y, LevelTileManager.SpecialTile.ExitDoor);
-
-                    // Ensure both sides of the door are free of spikes
-                    if (level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[exitPoint.x - 1, exitPoint.y].blockType == BlockType.Spike)
-                        RemoveTile(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x - 1, exitPoint.y);
-
-                    if (level[criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y].tiles[exitPoint.x + 1, exitPoint.y].blockType == BlockType.Spike)
-                        RemoveTile(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x + 1, exitPoint.y);
+                    exitPosition = StageToGrid(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x, exitPoint.y);
+                    levelTileManager.PlaceSpecialTile(exitPosition.x, exitPosition.y, LevelTileManager.SpecialTile.ExitDoor);
 
                     exitPlaced = true;
                     break;
@@ -1839,46 +1892,6 @@ public class LevelGenerator : MonoBehaviour
             if (exitPlaced) break;
         }
 
-        stepProgress = 0.5f;
-
-        // Remove ladder above entry door
-        Vector2Int spawnPointGrid = StageToGrid(criticalPath[0].x, criticalPath[0].y, spawnPoint.x, spawnPoint.y);
-        spawnPointGrid.y += 1;
-
-        Vector2Int spawnPointStage = GridToStage(spawnPointGrid.x, spawnPointGrid.y);
-        Vector2Int spawnPointRoom = GridToRoom(spawnPointGrid.x, spawnPointGrid.y);
-
-        // If there is a ladder here, delete it and move up
-        while (level[spawnPointStage.x, spawnPointStage.y].tiles[spawnPointRoom.x, spawnPointRoom.y].blockType == BlockType.Ladder)
-        {
-            RemoveTile(spawnPointStage.x, spawnPointStage.y, spawnPointRoom.x, spawnPointRoom.y);
-
-            spawnPointGrid.y += 1;
-
-            spawnPointStage = GridToStage(spawnPointGrid.x, spawnPointGrid.y);
-            spawnPointRoom = GridToRoom(spawnPointGrid.x, spawnPointGrid.y);
-        }
-
-        stepProgress = 0.75f;
-
-        // Remove ladder above exit door
-        Vector2Int exitPointGrid = StageToGrid(criticalPath[criticalPath.Count - 1].x, criticalPath[criticalPath.Count - 1].y, exitPoint.x, exitPoint.y);
-        exitPointGrid.y += 1;
-
-        Vector2Int exitPointStage = GridToStage(exitPointGrid.x, exitPointGrid.y);
-        Vector2Int exitPointRoom = GridToRoom(exitPointGrid.x, exitPointGrid.y);
-
-        // If there is a ladder here, delete it and move up
-        while (level[exitPointStage.x, exitPointStage.y].tiles[exitPointRoom.x, exitPointRoom.y].blockType == BlockType.Ladder)
-        {
-            RemoveTile(exitPointStage.x, exitPointStage.y, exitPointRoom.x, exitPointRoom.y);
-
-            exitPointGrid.y += 1;
-
-            exitPointStage = GridToStage(exitPointGrid.x, exitPointGrid.y);
-            exitPointRoom = GridToRoom(exitPointGrid.x, exitPointGrid.y);
-        }
-
         stepProgress = 1f;
 
         yield return null;
@@ -1886,6 +1899,176 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 18 of level generation
+    // Clears the area around doors and ensures tiles still appear correctly
+    IEnumerator CleanupDoors()
+    {
+        // Stupid dumb edge cases galore in here, you have been warned
+
+        // Cleanup spawn
+
+        // For each neighbour of this cell, at level or above
+        for (int y = 1; y >= 0; y--)
+        {
+            for (int x = -1; x <= 1; x++)
+            {
+                if (x == 0 && y == 0)
+                    continue;
+
+                Vector2Int neighbourStagePos = GridToStage(spawnPosition.x + x, spawnPosition.y + y);
+                Vector2Int neighbourRoomPos = GridToRoom(spawnPosition.x + x, spawnPosition.y + y);
+                BlockType neighbourType = level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].blockType;
+
+                if (neighbourType == BlockType.Spike ||
+                    neighbourType == BlockType.Coin ||
+                    neighbourType == BlockType.Foliage ||
+                    neighbourType == BlockType.Torch)
+                {
+                    // Delete neighbouring spikes, coins, foliage, torches to all sides
+                    RemoveTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y);
+                }
+
+                if (x == 0 && y == 1)
+                {
+                    // Directly above the door
+                    
+                    if (neighbourType == BlockType.Ladder)
+                    {
+                        // Delete neighbouring ladders above
+                        RemoveTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y);
+
+                        // Continuously delete ladders above until none remain
+                        int offset = 1;
+                        Vector2Int neighbourAboveStagePos = GridToStage(spawnPosition.x + x, spawnPosition.y + y + offset);
+                        Vector2Int neighbourAboveRoomPos = GridToRoom(spawnPosition.x + x, spawnPosition.y + y + offset);
+                        BlockType neighbourAboveType = level[neighbourAboveStagePos.x, neighbourAboveStagePos.y].tiles[neighbourAboveRoomPos.x, neighbourAboveRoomPos.y].blockType;
+
+                        while (neighbourAboveType == BlockType.Ladder)
+                        {
+                            // Cap the ladder off correctly
+                            RemoveTile(neighbourAboveStagePos.x, neighbourAboveStagePos.y, neighbourAboveRoomPos.x, neighbourAboveRoomPos.y);
+
+                            offset += 1;
+                            neighbourAboveStagePos = GridToStage(spawnPosition.x + x, spawnPosition.y + y + offset);
+                            neighbourAboveRoomPos = GridToRoom(spawnPosition.x + x, spawnPosition.y + y + offset);
+                            neighbourAboveType = level[neighbourAboveStagePos.x, neighbourAboveStagePos.y].tiles[neighbourAboveRoomPos.x, neighbourAboveRoomPos.y].blockType;
+                        }
+                    }
+                    else if (neighbourType == BlockType.Vine)
+                    {
+                        // Correctly cap off vines above
+                        RemoveTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y);
+                        PlaceTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y, 57, BlockType.Vine);
+                    }
+                    else if (neighbourType == BlockType.Sign)
+                    {
+                        // Delete neighbouring signs above
+                        RemoveTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y);
+
+                        // Keep deleting signs above that, until none remain
+                        int offset = 1;
+                        Vector2Int neighbourAboveStagePos = GridToStage(spawnPosition.x + x, spawnPosition.y + y + offset);
+                        Vector2Int neighbourAboveRoomPos = GridToRoom(spawnPosition.x + x, spawnPosition.y + y + offset);
+                        BlockType neighbourAboveType = level[neighbourAboveStagePos.x, neighbourAboveStagePos.y].tiles[neighbourAboveRoomPos.x, neighbourAboveRoomPos.y].blockType;
+
+                        while (neighbourAboveType == BlockType.Sign)
+                        {
+                            RemoveTile(neighbourAboveStagePos.x, neighbourAboveStagePos.y, neighbourAboveRoomPos.x, neighbourAboveRoomPos.y);
+
+                            offset += 1;
+                            neighbourAboveStagePos = GridToStage(spawnPosition.x + x, spawnPosition.y + y + offset);
+                            neighbourAboveRoomPos = GridToRoom(spawnPosition.x + x, spawnPosition.y + y + offset);
+                            neighbourAboveType = level[neighbourAboveStagePos.x, neighbourAboveStagePos.y].tiles[neighbourAboveRoomPos.x, neighbourAboveRoomPos.y].blockType;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Cleanup exit
+
+        // For each neighbour of this cell, at level or above
+        for (int y = 1; y >= 0; y--)
+        {
+            for (int x = -1; x <= 1; x++)
+            {
+                if (x == 0 && y == 0)
+                    continue;
+
+                Vector2Int neighbourStagePos = GridToStage(exitPosition.x + x, exitPosition.y + y);
+                Vector2Int neighbourRoomPos = GridToRoom(exitPosition.x + x, exitPosition.y + y);
+                BlockType neighbourType = level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].blockType;
+
+                if (neighbourType == BlockType.Spike ||
+                    neighbourType == BlockType.Coin ||
+                    neighbourType == BlockType.Foliage ||
+                    neighbourType == BlockType.Torch)
+                {
+                    // Delete neighbouring spikes, coins, foliage, torches to all sides
+                    RemoveTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y);
+                }
+
+                if (x == 0 && y == 1)
+                {
+                    // Directly above the door
+
+                    if (neighbourType == BlockType.Ladder)
+                    {
+                        // Delete neighbouring ladders above
+                        RemoveTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y);
+
+                        // Continuously delete ladders above until none remain
+                        int offset = 1;
+                        Vector2Int neighbourAboveStagePos = GridToStage(exitPosition.x + x, exitPosition.y + y + offset);
+                        Vector2Int neighbourAboveRoomPos = GridToRoom(exitPosition.x + x, exitPosition.y + y + offset);
+                        BlockType neighbourAboveType = level[neighbourAboveStagePos.x, neighbourAboveStagePos.y].tiles[neighbourAboveRoomPos.x, neighbourAboveRoomPos.y].blockType;
+
+                        while (neighbourAboveType == BlockType.Ladder)
+                        {
+                            // Cap the ladder off correctly
+                            RemoveTile(neighbourAboveStagePos.x, neighbourAboveStagePos.y, neighbourAboveRoomPos.x, neighbourAboveRoomPos.y);
+
+                            offset += 1;
+                            neighbourAboveStagePos = GridToStage(exitPosition.x + x, exitPosition.y + y + offset);
+                            neighbourAboveRoomPos = GridToRoom(exitPosition.x + x, exitPosition.y + y + offset);
+                            neighbourAboveType = level[neighbourAboveStagePos.x, neighbourAboveStagePos.y].tiles[neighbourAboveRoomPos.x, neighbourAboveRoomPos.y].blockType;
+                        }
+                    }
+                    else if (neighbourType == BlockType.Vine)
+                    {
+                        // Correctly cap off vines above
+                        RemoveTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y);
+                        PlaceTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y, 57, BlockType.Vine);
+                    }
+                    else if (neighbourType == BlockType.Sign)
+                    {
+                        // Delete neighbouring signs above
+                        RemoveTile(neighbourStagePos.x, neighbourStagePos.y, neighbourRoomPos.x, neighbourRoomPos.y);
+
+                        // Keep deleting signs above that, until none remain
+                        int offset = 1;
+                        Vector2Int neighbourAboveStagePos = GridToStage(exitPosition.x + x, exitPosition.y + y + offset);
+                        Vector2Int neighbourAboveRoomPos = GridToRoom(exitPosition.x + x, exitPosition.y + y + offset);
+                        BlockType neighbourAboveType = level[neighbourAboveStagePos.x, neighbourAboveStagePos.y].tiles[neighbourAboveRoomPos.x, neighbourAboveRoomPos.y].blockType;
+
+                        while (neighbourAboveType == BlockType.Sign)
+                        {
+                            RemoveTile(neighbourAboveStagePos.x, neighbourAboveStagePos.y, neighbourAboveRoomPos.x, neighbourAboveRoomPos.y);
+
+                            offset += 1;
+                            neighbourAboveStagePos = GridToStage(exitPosition.x + x, exitPosition.y + y + offset);
+                            neighbourAboveRoomPos = GridToRoom(exitPosition.x + x, exitPosition.y + y + offset);
+                            neighbourAboveType = level[neighbourAboveStagePos.x, neighbourAboveStagePos.y].tiles[neighbourAboveRoomPos.x, neighbourAboveRoomPos.y].blockType;
+                        }
+                    }
+                }
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 19 of level generation
     // Generates the colliders used by solids, platforms, ladders and spikes
     IEnumerator GenerateColliders()
     {
