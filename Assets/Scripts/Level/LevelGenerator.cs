@@ -1429,7 +1429,7 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 14 of level generation
-    // Removes floating spikes and unreachable coins
+    // Marches floating spikes and coins towards the appropriate surfaces, also removes unreachable and isolate coins 
     IEnumerator CleanupGameplay()
     {
         // Fresh flood fill from somewhere on the critical path
@@ -1573,9 +1573,55 @@ public class LevelGenerator : MonoBehaviour
                         }
 
                         cleanupIterations++;
-                        stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                        stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2f);
                         if (cleanupIterations % cleanupIterationsPerFrame == 0)
                             yield return null;
+                    }
+                }
+            }
+        }
+
+        // Remove solo coins
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        if (level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.Coin)
+                        {
+                            int edgeNeighbours = 0;
+                            for (int yOffset = 1; yOffset >= -1; yOffset--)
+                            {
+                                for (int xOffset = -1; xOffset <= 1; xOffset++)
+                                {
+                                    // Skip centre tile
+                                    if (xOffset == 0 && yOffset == 0)
+                                        continue;
+
+                                    // Skip corner tiles
+                                    if (Mathf.Abs(xOffset) == 1 && Mathf.Abs(yOffset) == 1)
+                                        continue;
+
+                                    Vector2Int neighbourGridPos = StageToGrid(stageX, stageY, roomX, roomY);
+                                    Vector2Int neighbourStagePos = GridToStage(neighbourGridPos.x + xOffset, neighbourGridPos.y + yOffset);
+                                    Vector2Int neighbourRoomPos = GridToRoom(neighbourGridPos.x + xOffset, neighbourGridPos.y + yOffset);
+
+                                    if (level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].blockType == BlockType.Coin)
+                                    {
+                                        edgeNeighbours++;
+                                    }
+                                }
+                            }
+
+                            // If the coin has no neighbours on its edges
+                            if (edgeNeighbours <= 0)
+                            {
+                                RemoveTile(stageX, stageY, roomX, roomY);
+                            }
+                        }
                     }
                 }
             }
