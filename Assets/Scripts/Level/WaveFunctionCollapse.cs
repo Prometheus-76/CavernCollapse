@@ -11,6 +11,7 @@ public class WaveFunctionCollapse : MonoBehaviour
     {
         // All remaining possibilities of this tile space
         public DatasetAnalyser.RuleData[] tileSuperpositions;
+        public int totalSuperpositionWeight; // Cached data to save calculating every time the tile is collapsed
 
         public BlockType blockType;
         public int tileIndex;
@@ -85,6 +86,7 @@ public class WaveFunctionCollapse : MonoBehaviour
             return;
 
         // Reset existing weights
+        waveFunctionGrid[x, y].totalSuperpositionWeight = 0;
         for (int superpositionIndex = 0; superpositionIndex < waveFunctionGrid[x, y].tileSuperpositions.Length; superpositionIndex++)
         {
             waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight = 0;
@@ -122,10 +124,17 @@ public class WaveFunctionCollapse : MonoBehaviour
                     {
                         // Add to the weight if this configuration is supported so far
                         if (waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight != -1)
+                        {
                             waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight += ruleWeight;
+                            waveFunctionGrid[x, y].totalSuperpositionWeight += ruleWeight;
+                        }
 
                         // If this configuration has now been confirmed as illegal, disable it
-                        if (ruleWeight <= 0) waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight = -1;
+                        if (ruleWeight <= 0)
+                        {
+                            waveFunctionGrid[x, y].totalSuperpositionWeight -= waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight;
+                            waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight = -1;
+                        }
 
                         // Set the block type
                         waveFunctionGrid[x, y].tileSuperpositions[tileIndex].blockType = ruleType;
@@ -183,18 +192,7 @@ public class WaveFunctionCollapse : MonoBehaviour
         // Get the block type and tile index from weighted random
 
         // Add all weights together
-        int weightSum = 0;
-        for (int superpositionIndex = 0; superpositionIndex < waveFunctionGrid[x, y].tileSuperpositions.Length; superpositionIndex++)
-        {
-            int ruleWeight = waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight;
-            BlockType ruleType = waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].blockType;
-
-            // If the block type is allowed and the tile weight is meaningful
-            if (ruleWeight > 0)
-            {
-                weightSum += waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight;
-            }
-        }
+        int weightSum = waveFunctionGrid[x, y].totalSuperpositionWeight;
 
         if (weightSum <= 0) return false;
 
