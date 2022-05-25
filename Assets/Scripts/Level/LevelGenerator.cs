@@ -141,61 +141,61 @@ public class LevelGenerator : MonoBehaviour
         switch (currentStep)
         {
             case GenerationStep.ResetStageData:
-                loadingScreen.SetStepText("Resetting stage data");
+                loadingScreen.SetStepText("Resetting stage data...");
                 break;
             case GenerationStep.LoadDataset:
-                loadingScreen.SetStepText("Loading dataset samples");
+                loadingScreen.SetStepText("Loading dataset samples...");
                 break;
             case GenerationStep.ConstructRuleset:
-                loadingScreen.SetStepText("Constructing placement ruleset");
+                loadingScreen.SetStepText("Constructing placement ruleset...");
                 break;
             case GenerationStep.AssembleRoomSequence:
-                loadingScreen.SetStepText("Assembling room sequence");
+                loadingScreen.SetStepText("Assembling room sequence...");
                 break;
             case GenerationStep.ReserveRoomPaths:
-                loadingScreen.SetStepText("Reserving room paths");
+                loadingScreen.SetStepText("Reserving room paths...");
                 break;
             case GenerationStep.CreateMapBorder:
-                loadingScreen.SetStepText("Allocating map border");
+                loadingScreen.SetStepText("Allocating map border...");
                 break;
             case GenerationStep.ConnectVerticalRooms:
-                loadingScreen.SetStepText("Connecting vertical rooms");
+                loadingScreen.SetStepText("Connecting vertical rooms...");
                 break;
             case GenerationStep.CreateRoomBorders:
-                loadingScreen.SetStepText("Allocating room borders");
+                loadingScreen.SetStepText("Allocating room borders...");
                 break;
             case GenerationStep.WaveFunctionCollapseWalls:
-                loadingScreen.SetStepText("Building cavern walls");
+                loadingScreen.SetStepText("Building cavern walls...");
                 break;
             case GenerationStep.CleanupWalls:
-                loadingScreen.SetStepText("Polishing surfaces");
+                loadingScreen.SetStepText("Polishing surfaces...");
                 break;
             case GenerationStep.WaveFunctionCollapsePlatforming:
-                loadingScreen.SetStepText("Laying platforms");
+                loadingScreen.SetStepText("Laying platforms...");
                 break;
             case GenerationStep.CleanupPlatforming:
-                loadingScreen.SetStepText("Adjusting ladders");
+                loadingScreen.SetStepText("Adjusting ladders...");
                 break;
             case GenerationStep.WaveFunctionCollapseGameplay:
-                loadingScreen.SetStepText("Setting up challenges");
+                loadingScreen.SetStepText("Setting up challenges...");
                 break;
             case GenerationStep.CleanupGameplay:
-                loadingScreen.SetStepText("Sharpening spikes");
+                loadingScreen.SetStepText("Sharpening spikes...");
                 break;
             case GenerationStep.WaveFunctionCollapseDeco:
-                loadingScreen.SetStepText("Growing foliage");
+                loadingScreen.SetStepText("Growing foliage...");
                 break;
             case GenerationStep.CleanupDeco:
-                loadingScreen.SetStepText("Pruning vegetation");
+                loadingScreen.SetStepText("Pruning vegetation...");
                 break;
             case GenerationStep.PlaceDoors:
-                loadingScreen.SetStepText("Placing doors");
+                loadingScreen.SetStepText("Placing doors...");
                 break;
             case GenerationStep.CleanupDoors:
-                loadingScreen.SetStepText("Sweeping around doors");
+                loadingScreen.SetStepText("Sweeping around doors...");
                 break;
             case GenerationStep.GenerateColliders:
-                loadingScreen.SetStepText("Generating colliders");
+                loadingScreen.SetStepText("Generating colliders...");
                 break;
             case GenerationStep.GenerationComplete:
                 loadingScreen.SetStepText("Entering caverns...");
