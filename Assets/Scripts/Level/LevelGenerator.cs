@@ -2033,9 +2033,9 @@ public class LevelGenerator : MonoBehaviour
 
         // Find a safe space in the room, above solid ground and not within a platform
         bool spawnPlaced = false;
-        for (int y = roomSize.y - 1; y >= 0; y--)
+        for (int y = roomSize.y - 2; y > 0; y--)
         {
-            for (int x = 0; x < roomSize.x; x++)
+            for (int x = 1; x < roomSize.x - 1; x++)
             {
                 // Found a safe space in the first room
                 if (level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].reservedTile && floodfillCompleted == false)
@@ -2046,10 +2046,12 @@ public class LevelGenerator : MonoBehaviour
                     floodfillCompleted = true;
                 }
 
-                // If this cell is within the safe area of the room, above solid ground and not within a platform
+                // If this cell is within the safe area of the room, above a few tiles of solid ground and not within a platform
                 if (level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].marked &&
                     level[criticalPath[0].x, criticalPath[0].y].tiles[x, y - 1].blockType == BlockType.Solid &&
-                    level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].blockType != BlockType.OneWay)
+                    level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].blockType != BlockType.OneWay &&
+                    (level[criticalPath[0].x, criticalPath[0].y].tiles[x - 1, y - 1].blockType == BlockType.Solid ||
+                    level[criticalPath[0].x, criticalPath[0].y].tiles[x + 1, y - 1].blockType == BlockType.Solid))
                 {
                     // Remove anything that might have been in this space resting on the ground
                     RemoveTile(criticalPath[0].x, criticalPath[0].y, x, y);
@@ -2096,7 +2098,9 @@ public class LevelGenerator : MonoBehaviour
                 // If this cell is within the safe area of the room, above solid ground and not within a platform
                 if (level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y].marked &&
                     level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y - 1].blockType == BlockType.Solid &&
-                    level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y].blockType != BlockType.OneWay)
+                    level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y].blockType != BlockType.OneWay &&
+                    (level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x - 1, y - 1].blockType == BlockType.Solid ||
+                    level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x + 1, y - 1].blockType == BlockType.Solid))
                 {
                     // Remove anything that might have been in this space resting on the ground
                     RemoveTile(criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y, x, y);
