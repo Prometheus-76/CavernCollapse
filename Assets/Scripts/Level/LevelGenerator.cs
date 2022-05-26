@@ -1159,7 +1159,72 @@ public class LevelGenerator : MonoBehaviour
                 }
 
                 spacesEvaluated++;
-                stepProgress = (float)spacesEvaluated / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                stepProgress = (float)spacesEvaluated / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2);
+                if (spacesEvaluated % cleanupIterationsPerFrame == 0)
+                    yield return null;
+            }
+        }
+
+        // When surrounded by crates, convert isolated walls to crates
+        for (int y = 0; y < stageSize.y * roomSize.y; y++)
+        {
+            for (int x = 0; x < stageSize.x * roomSize.x; x++)
+            {
+                Vector2Int stagePos = GridToStage(x, y);
+                Vector2Int roomPos = GridToRoom(x, y);
+
+                // Only convert walls
+                if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Solid)
+                {
+                    bool convertToCrate = true;
+                    int crateNeighbours = 0;
+                    for (int yOffset = -1; yOffset <= 1; yOffset++)
+                    {
+                        for (int xOffset = -1; xOffset <= 1; xOffset++)
+                        {
+                            // Skip centre tile
+                            if (xOffset == 0 && yOffset == 0)
+                                continue;
+
+                            // Skip corners
+                            if (Mathf.Abs(xOffset) == 1 && Mathf.Abs(yOffset) == 1)
+                                continue;
+
+                            // Skip if out of bounds of the map
+                            if (x + xOffset < 0 || x + xOffset >= roomSize.x * stageSize.x || y + yOffset < 0 || y + yOffset >= roomSize.y * stageSize.y)
+                                continue;
+
+                            Vector2Int neighbourStagePos = GridToStage(x + xOffset, y + yOffset);
+                            Vector2Int neighbourRoomPos = GridToRoom(x + xOffset, y + yOffset);
+
+                            // If this is a non-crate wall tile
+                            if (level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].blockType == BlockType.Solid &&
+                                level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].tileIndex != 72)
+                            {
+                                convertToCrate = false;
+                                break;
+                            }
+
+                            // If this is a crate wall tile
+                            if (level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].tileIndex == 72)
+                            {
+                                crateNeighbours += 1;
+                            }
+                        }
+
+                        if (convertToCrate == false) break;
+                    }
+
+                    // Convert the wall to a crate, if there was at least one crate touching it
+                    if (convertToCrate && crateNeighbours > 0)
+                    {
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 72, BlockType.Solid);
+                    }
+                }
+
+                spacesEvaluated++;
+                stepProgress = (float)spacesEvaluated / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2);
                 if (spacesEvaluated % cleanupIterationsPerFrame == 0)
                     yield return null;
             }
