@@ -551,10 +551,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_AssetsPPU: 16
-  m_RefResolutionX: 640
-  m_RefResolutionY: 360
+  m_RefResolutionX: 480
+  m_RefResolutionY: 270
   m_UpscaleRT: 0
-  m_PixelSnapping: 0
+  m_PixelSnapping: 1
   m_CropFrameX: 0
   m_CropFrameY: 0
   m_StretchFill: 1
@@ -602,7 +602,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9d7ca254a70623498f87e2cc9321e6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offset: {x: 0, y: 1, z: -2}
+  offset: {x: 0, y: 2, z: -2}
 --- !u!1 &473332944
 GameObject:
   m_ObjectHideFlags: 0
@@ -982,12 +982,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1227997535}
-  - component: {fileID: 1227997534}
   - component: {fileID: 1227997536}
+  - component: {fileID: 1227997534}
+  - component: {fileID: 1227997540}
+  - component: {fileID: 1227997541}
   - component: {fileID: 1227997537}
   - component: {fileID: 1227997539}
   - component: {fileID: 1227997538}
-  - component: {fileID: 1227997540}
   m_Layer: 0
   m_Name: Level
   m_TagString: Untagged
@@ -1052,14 +1053,15 @@ MonoBehaviour:
   roomBordersPerFrame: 4
   tilesCollapsedPerFrame: 100
   cleanupIterationsPerFrame: 500
-  stageSize: {x: 4, y: 4}
-  roomSize: {x: 12, y: 10}
+  stageSize: {x: 5, y: 8}
+  roomSize: {x: 10, y: 15}
   tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
   gameplayConfiguration: {fileID: 11400000, guid: f8a02774c90ec804297f31bdcd35b1ba, type: 2}
   loadingScreen: {fileID: 1227997537}
   datasetAnalyser: {fileID: 1227997534}
   levelTileManager: {fileID: 1227997539}
   waveFunctionCollapse: {fileID: 1227997540}
+  dijkstraPathfinding: {fileID: 1227997541}
   cameraController: {fileID: 452522665}
 --- !u!114 &1227997537
 MonoBehaviour:
@@ -1128,6 +1130,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
   datasetAnalyser: {fileID: 1227997534}
+--- !u!114 &1227997541
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1227997533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5d35343a107a3744aaf22854e1f7abe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1288394929
 GameObject:
   m_ObjectHideFlags: 0

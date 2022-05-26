@@ -73,6 +73,7 @@ public class LevelGenerator : MonoBehaviour
         PlaceDoors,
         CleanupDoors,
         RedirectSigns,
+        VerifyPaths,
         SubstitutePrefabs,
         GenerateColliders,
         GenerationComplete
@@ -105,6 +106,7 @@ public class LevelGenerator : MonoBehaviour
     public DatasetAnalyser datasetAnalyser;
     public LevelTileManager levelTileManager;
     public WaveFunctionCollapse waveFunctionCollapse;
+    public DijkstraPathfinding dijkstraPathfinding;
     public CameraController cameraController;
 
     #region Private
@@ -134,6 +136,41 @@ public class LevelGenerator : MonoBehaviour
     {
         UpdateLoadingUI();
     }
+    
+    #region Grid/Stage/Room Conversion
+
+    Vector2Int StageToGrid(int stageX, int stageY, int roomX, int roomY)
+    {
+        Vector2Int result = Vector2Int.zero;
+
+        result.x = stageX * roomSize.x + roomX;
+        result.y = stageY * roomSize.y + roomY;
+
+        return result;
+    }
+
+    Vector2Int GridToRoom(int x, int y)
+    {
+        Vector2Int result = Vector2Int.zero;
+
+        result.x = x % roomSize.x;
+        result.y = y % roomSize.y;
+
+        return result;
+    }
+
+    Vector2Int GridToStage(int x, int y)
+    {
+        Vector2Int result = Vector2Int.zero;
+        Vector2Int room = GridToRoom(x, y);
+
+        result.x = (x - room.x) / roomSize.x;
+        result.y = (y - room.y) / roomSize.y;
+
+        return result;
+    }
+
+    #endregion
 
     // Updates the loading screen UI
     void UpdateLoadingUI()
@@ -214,6 +251,9 @@ public class LevelGenerator : MonoBehaviour
                 break;
             case GenerationStep.RedirectSigns:
                 loadingScreen.SetStepText("Adjusting sign posts...");
+                break;
+            case GenerationStep.VerifyPaths:
+                loadingScreen.SetStepText("Verifying paths...");
                 break;
             case GenerationStep.SubstitutePrefabs:
                 loadingScreen.SetStepText("Replacing imposter tiles...");
@@ -314,7 +354,7 @@ public class LevelGenerator : MonoBehaviour
 
     #region Flood Fill
 
-    // Fills a space, given an origin point
+    // Recursively fills a space, while ignoring walls
     void FloodFill(int x, int y)
     {
         // Mark the cell
@@ -383,6 +423,7 @@ public class LevelGenerator : MonoBehaviour
         awaitingNewStep = true;
 
         waveFunctionCollapse.InitialiseWaveFunction(stageSize.x * roomSize.x, stageSize.y * roomSize.y);
+        dijkstraPathfinding.InitialiseDijkstraPath(stageSize.x * roomSize.x, stageSize.y * roomSize.y);
 
         // Run until the generation is completed
         while (currentStep != GenerationStep.GenerationComplete)
@@ -463,6 +504,9 @@ public class LevelGenerator : MonoBehaviour
                         break;
                     case GenerationStep.RedirectSigns:
                         StartCoroutine(RedirectSigns());
+                        break;
+                    case GenerationStep.VerifyPaths:
+                        StartCoroutine(VerifyPaths());
                         break;
                     case GenerationStep.SubstitutePrefabs:
                         StartCoroutine(SubstitutePrefabs());
@@ -2241,6 +2285,110 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 24 of level generation
+    // Ensures all coins and the end goal are not unreachable due to spikes
+    IEnumerator VerifyPaths()
+    {
+        // Weighted Dijkstra implementation
+
+        int cleanupIterations = 0;
+
+        // Start the pathfinding from the spawn point
+        dijkstraPathfinding.SetTarget(spawnPosition.x, spawnPosition.y);
+
+        // Set the tile weights for pathfinding
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        Vector2Int gridPos = StageToGrid(stageX, stageY, roomX, roomY);
+
+                        // Set the weight of the tile according to what type it is
+                        // Solid tiles are marked as non-traversable
+                        // Spikes are very undesirable, but can be traversed
+                        // Everything else can be traversed as standard
+                        switch (level[stageX, stageY].tiles[roomX, roomY].blockType)
+                        {
+                            case BlockType.Solid:
+                                dijkstraPathfinding.SetNodeWeight(gridPos.x, gridPos.y, -1);
+                                break;
+                            case BlockType.Spike:
+                                dijkstraPathfinding.SetNodeWeight(gridPos.x, gridPos.y, 1000);
+                                break;
+                            default:
+                                dijkstraPathfinding.SetNodeWeight(gridPos.x, gridPos.y, 1);
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Build a traversal map using the weights provided 
+        dijkstraPathfinding.BakeFullGraph();
+
+        // Check every coin and ensure it's possible to reach
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        if (level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.Coin)
+                        {
+                            // Get a path to this coin from the origin
+                            Vector2Int gridPos = StageToGrid(stageX, stageY, roomX, roomY);
+                            List<Vector2Int> pathToCoin = dijkstraPathfinding.ShortestPathTo(gridPos.x, gridPos.y);
+
+                            // Iterate through the path
+                            for (int pathStep = 0; pathStep < pathToCoin.Count; pathStep++)
+                            {
+                                Vector2Int pathStagePos = GridToStage(pathToCoin[pathStep].x, pathToCoin[pathStep].y);
+                                Vector2Int pathRoomPos = GridToRoom(pathToCoin[pathStep].x, pathToCoin[pathStep].y);
+
+                                // If there is a spike on the path, then it is most likely unavoidable, so it should be removed
+                                if (level[pathStagePos.x, pathStagePos.y].tiles[pathRoomPos.x, pathRoomPos.y].blockType == BlockType.Spike)
+                                {
+                                    RemoveTile(pathStagePos.x, pathStagePos.y, pathRoomPos.x, pathRoomPos.y);
+                                }
+                            }
+                        }
+
+                        cleanupIterations++;
+                        stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                        if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                            yield return null;
+                    }
+                }
+            }
+        }
+
+        // Get a path to the exit from the origin
+        List<Vector2Int> pathToExit = dijkstraPathfinding.ShortestPathTo(exitPosition.x, exitPosition.y);
+
+        // Iterate through the path
+        for (int pathStep = 0; pathStep < pathToExit.Count; pathStep++)
+        {
+            Vector2Int pathStagePos = GridToStage(pathToExit[pathStep].x, pathToExit[pathStep].y);
+            Vector2Int pathRoomPos = GridToRoom(pathToExit[pathStep].x, pathToExit[pathStep].y);
+
+            // If there is a spike on the path to the exit, then it is most likely unavoidable, so it should be removed
+            if (level[pathStagePos.x, pathStagePos.y].tiles[pathRoomPos.x, pathRoomPos.y].blockType == BlockType.Spike)
+            {
+                RemoveTile(pathStagePos.x, pathStagePos.y, pathRoomPos.x, pathRoomPos.y);
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 25 of level generation
     // Replaces placeholder tiles with prefabs where required, for things like coins
     IEnumerator SubstitutePrefabs()
     {
@@ -2248,7 +2396,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 25 of level generation
+    // Step 26 of level generation
     // Generates the colliders used by solids, platforms, ladders and spikes
     IEnumerator GenerateColliders()
     {
@@ -2256,41 +2404,6 @@ public class LevelGenerator : MonoBehaviour
 
         yield return null;
         CompleteStep();
-    }
-
-    #endregion
-
-    #region Grid/Stage/Room Conversion
-
-    Vector2Int StageToGrid(int stageX, int stageY, int roomX, int roomY)
-    {
-        Vector2Int result = Vector2Int.zero;
-
-        result.x = stageX * roomSize.x + roomX;
-        result.y = stageY * roomSize.y + roomY;
-
-        return result;
-    }
-
-    Vector2Int GridToRoom(int x, int y)
-    {
-        Vector2Int result = Vector2Int.zero;
-
-        result.x = x % roomSize.x;
-        result.y = y % roomSize.y;
-
-        return result;
-    }
-
-    Vector2Int GridToStage(int x, int y)
-    {
-        Vector2Int result = Vector2Int.zero;
-        Vector2Int room = GridToRoom(x, y);
-
-        result.x = (x - room.x) / roomSize.x;
-        result.y = (y - room.y) / roomSize.y;
-
-        return result;
     }
 
     #endregion

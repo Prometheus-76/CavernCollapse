@@ -49,6 +49,7 @@ public class LevelTileManager : MonoBehaviour
         }
     }
 
+    // Removes a tile at this position in all tilemaps
     public void RemoveTile(int x, int y)
     {
         Vector3Int position = Vector3Int.zero;
@@ -63,6 +64,7 @@ public class LevelTileManager : MonoBehaviour
         decoTilemap.SetTile(position, null);
     }
 
+    // Places a special tile (it's actually just a prefab)
     public void PlaceSpecialTile(int x, int y, SpecialTile tileType)
     {
         GameObject instance;
