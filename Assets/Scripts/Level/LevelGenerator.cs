@@ -137,41 +137,6 @@ public class LevelGenerator : MonoBehaviour
         UpdateLoadingUI();
     }
     
-    #region Grid/Stage/Room Conversion
-
-    Vector2Int StageToGrid(int stageX, int stageY, int roomX, int roomY)
-    {
-        Vector2Int result = Vector2Int.zero;
-
-        result.x = stageX * roomSize.x + roomX;
-        result.y = stageY * roomSize.y + roomY;
-
-        return result;
-    }
-
-    Vector2Int GridToRoom(int x, int y)
-    {
-        Vector2Int result = Vector2Int.zero;
-
-        result.x = x % roomSize.x;
-        result.y = y % roomSize.y;
-
-        return result;
-    }
-
-    Vector2Int GridToStage(int x, int y)
-    {
-        Vector2Int result = Vector2Int.zero;
-        Vector2Int room = GridToRoom(x, y);
-
-        result.x = (x - room.x) / roomSize.x;
-        result.y = (y - room.y) / roomSize.y;
-
-        return result;
-    }
-
-    #endregion
-
     // Updates the loading screen UI
     void UpdateLoadingUI()
     {
@@ -267,30 +232,40 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-    // Called whenever a step is completed
-    public void CompleteStep()
-    {
-        // Move to next step
-        int newStep = (int)currentStep + 1;
-        newStep = Mathf.Clamp(newStep, 0, (int)GenerationStep.GenerationComplete);
-        currentStep = (GenerationStep)newStep;
+    #region Grid/Stage/Room Conversion
 
-        // When preparing for the next step
-        if (currentStep != GenerationStep.GenerationComplete)
-        {
-            // Allow next step to occur
-            awaitingNewStep = true;
-            stepProgress = 0f;
-        }
+    Vector2Int StageToGrid(int stageX, int stageY, int roomX, int roomY)
+    {
+        Vector2Int result = Vector2Int.zero;
+
+        result.x = stageX * roomSize.x + roomX;
+        result.y = stageY * roomSize.y + roomY;
+
+        return result;
     }
 
-    // Called when all generation steps are completed
-    void GenerationCompleted()
+    Vector2Int GridToRoom(int x, int y)
     {
-        // Play level music when generation is completed
-        if (MusicPlayer.GetInstance() != null)
-            MusicPlayer.GetInstance().CrossFade(2);
+        Vector2Int result = Vector2Int.zero;
+
+        result.x = x % roomSize.x;
+        result.y = y % roomSize.y;
+
+        return result;
     }
+
+    Vector2Int GridToStage(int x, int y)
+    {
+        Vector2Int result = Vector2Int.zero;
+        Vector2Int room = GridToRoom(x, y);
+
+        result.x = (x - room.x) / roomSize.x;
+        result.y = (y - room.y) / roomSize.y;
+
+        return result;
+    }
+
+    #endregion
 
     #region Initialisation
 
@@ -331,7 +306,7 @@ public class LevelGenerator : MonoBehaviour
     }
 
     #endregion
-
+    
     void PlaceTile(int stageX, int stageY, int roomX, int roomY, int tileIndex, BlockType blockType)
     {        
         level[stageX, stageY].tiles[roomX, roomY].blockType = blockType;
@@ -411,6 +386,31 @@ public class LevelGenerator : MonoBehaviour
     }
 
     #endregion
+
+    // Called whenever a step is completed
+    public void CompleteStep()
+    {
+        // Move to next step
+        int newStep = (int)currentStep + 1;
+        newStep = Mathf.Clamp(newStep, 0, (int)GenerationStep.GenerationComplete);
+        currentStep = (GenerationStep)newStep;
+
+        // When preparing for the next step
+        if (currentStep != GenerationStep.GenerationComplete)
+        {
+            // Allow next step to occur
+            awaitingNewStep = true;
+            stepProgress = 0f;
+        }
+    }
+
+    // Called when all generation steps are completed
+    void GenerationCompleted()
+    {
+        // Play level music when generation is completed
+        if (MusicPlayer.GetInstance() != null)
+            MusicPlayer.GetInstance().CrossFade(2);
+    }
 
     // Responsible for calling coroutines sequentially to generate the level asynchronously
     IEnumerator GenerateLevel()
