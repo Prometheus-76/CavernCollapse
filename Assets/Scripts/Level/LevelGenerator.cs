@@ -2082,9 +2082,9 @@ public class LevelGenerator : MonoBehaviour
         // Find a safe space in the room, above solid ground and not within a platform
         bool exitPlaced = false;
         int criticalPathLastRoom = criticalPath.Count - 1;
-        for (int y = roomSize.y - 1; y >= 0; y--)
+        for (int y = roomSize.y - 1; y > 0; y--)
         {
-            for (int x = roomSize.x - 1; x >= 0; x--)
+            for (int x = roomSize.x - 1; x > 0; x--)
             {
                 // Found a safe space in the last room
                 if (level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y].reservedTile && floodfillCompleted == false)

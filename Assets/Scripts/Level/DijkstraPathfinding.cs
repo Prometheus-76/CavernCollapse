@@ -78,9 +78,6 @@ public class DijkstraPathfinding : MonoBehaviour
         {
             for (int x = 0; x < dijkstraGrid.GetLength(0); x++)
             {
-                // Default weight, should be set externally
-                dijkstraGrid[x, y].weight = -1;
-
                 // Calculated when baking graph
                 dijkstraGrid[x, y].previous = null;
                 dijkstraGrid[x, y].totalWeight = int.MaxValue; // Important that this starts off the highest it can be
