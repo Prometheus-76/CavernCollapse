@@ -140,12 +140,15 @@ public class LevelGenerator : MonoBehaviour
     // Updates the loading screen UI
     void UpdateLoadingUI()
     {
+        // Update loading bar
+        stepProgress = Mathf.Clamp01(stepProgress);
         mainProgress = (float)currentStep / (float)GenerationStep.GenerationComplete;
         mainProgress += (1f / (float)GenerationStep.GenerationComplete) * stepProgress;
 
         loadingScreen.SetMainProgress(mainProgress);
         loadingScreen.SetStepProgress(stepProgress);
 
+        // Update loading step flavour text
         switch (currentStep)
         {
             case GenerationStep.ResetStageData:
@@ -2183,6 +2186,9 @@ public class LevelGenerator : MonoBehaviour
             }
         }
 
+        stepProgress = 0.5f;
+        yield return null;
+
         // Cleanup exit
 
         // For each neighbour of this cell, at level or above
@@ -2263,6 +2269,7 @@ public class LevelGenerator : MonoBehaviour
             }
         }
 
+        stepProgress = 1f;
         yield return null;
         CompleteStep();
     }
