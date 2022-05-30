@@ -998,15 +998,8 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.None);
         waveFunctionCollapse.AddToBlockPalette(BlockType.Solid);
 
-
         // Calculate entropy of entire wave function collapse grid
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
-        {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
-            {
-                waveFunctionCollapse.RecalculateEntropy(x, y);
-            }
-        }
+        waveFunctionCollapse.RecalculateAllEntropy();
 
         int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
 
@@ -1263,13 +1256,7 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Ladder);
 
         // Calculate entropy of entire wave function collapse grid
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
-        {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
-            {
-                waveFunctionCollapse.RecalculateEntropy(x, y);
-            }
-        }
+        waveFunctionCollapse.RecalculateAllEntropy();
 
         int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
 
@@ -1533,13 +1520,7 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Coin);
 
         // Calculate entropy of entire wave function collapse grid
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
-        {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
-            {
-                waveFunctionCollapse.RecalculateEntropy(x, y);
-            }
-        }
+        waveFunctionCollapse.RecalculateAllEntropy();
 
         int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
 
@@ -1841,13 +1822,7 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Torch);
 
         // Calculate entropy of entire wave function collapse grid
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
-        {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
-            {
-                waveFunctionCollapse.RecalculateEntropy(x, y);
-            }
-        }
+        waveFunctionCollapse.RecalculateAllEntropy();
 
         int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
 

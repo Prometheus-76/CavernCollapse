@@ -12,6 +12,7 @@ public class WaveFunctionCollapse : MonoBehaviour
         // All remaining possibilities of this tile space
         public DatasetAnalyser.RuleData[] tileSuperpositions;
         public int totalSuperpositionWeight; // Cached data to save calculating every time the tile is collapsed
+        public int totalSuperpositionTypes; // Cached data to save calculating every time the lowest tile entropy is searched
 
         public BlockType blockType;
         public int tileIndex;
@@ -21,6 +22,9 @@ public class WaveFunctionCollapse : MonoBehaviour
     private WaveFunctionTile[,] waveFunctionGrid;
     private Vector2Int gridSize;
     private BlockTypeFlags blockPalette;
+    private ulong lowestFindIterations = 0;
+    private ulong collapseIterations = 0;
+    private ulong recalculateIterations = 0;
 
     public BlockType GetCollapsedType(int x, int y)
     {
@@ -123,6 +127,8 @@ public class WaveFunctionCollapse : MonoBehaviour
                     // Only consider entropy of a set of superpositions
                     if (IsBlockInPalette(ruleType))
                     {
+                        //bool newSuperpositionAdded = false;
+
                         // Add to the weight if this configuration is supported so far
                         if (waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight != -1)
                         {
@@ -139,8 +145,32 @@ public class WaveFunctionCollapse : MonoBehaviour
 
                         // Set the block type
                         waveFunctionGrid[x, y].tileSuperpositions[tileIndex].blockType = ruleType;
+                        recalculateIterations++;
                     }
                 }
+            }
+        }
+
+        // For each superposition
+        waveFunctionGrid[x, y].totalSuperpositionTypes = 0;
+        for (int superpositionIndex = 0; superpositionIndex < tileCollection.tiles.Length; superpositionIndex++)
+        {
+            // If the superposition has meaningful weight
+            if (waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight > 0)
+            {
+                waveFunctionGrid[x, y].totalSuperpositionTypes++;
+            }
+        }
+    }
+
+    // Recalculates entropy of the entire grid
+    public void RecalculateAllEntropy()
+    {
+        for (int y = 0; y < gridSize.y; y++)
+        {
+            for (int x = 0; x < gridSize.x; x++)
+            {
+                RecalculateEntropy(x, y);
             }
         }
     }
@@ -162,17 +192,9 @@ public class WaveFunctionCollapse : MonoBehaviour
                 if (waveFunctionGrid[x, y].canCollapse == false)
                     continue;
 
-                int tileEntropyTypes = 0;
-
-                // For each superposition
-                for (int superpositionIndex = 0; superpositionIndex < tileCollection.tiles.Length; superpositionIndex++)
-                {
-                    // If the superposition has meaningful weight
-                    if (waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight > 0)
-                    {
-                        tileEntropyTypes++;
-                    }
-                }
+                int tileEntropyTypes = waveFunctionGrid[x, y].totalSuperpositionTypes;
+                
+                lowestFindIterations++;
 
                 // New lowest, non 0 entropy tile
                 if ((tileEntropyTypes != 0 || allowZero) && tileEntropyTypes < lowestEntropyValue)
@@ -180,6 +202,18 @@ public class WaveFunctionCollapse : MonoBehaviour
                     lowestEntropyValue = tileEntropyTypes;
                     lowestEntropySpace.x = x;
                     lowestEntropySpace.y = y;
+
+                    // If this tile has an entropy of 1 and is not allowed to be lower
+                    if (allowZero == false && lowestEntropyValue == 1)
+                    {
+                        return lowestEntropySpace;
+                    }
+
+                    // If this tile has an entropy of 0 and as such, cannot be lower
+                    if (allowZero && lowestEntropyValue == 0)
+                    {
+                        return lowestEntropySpace;
+                    }
                 }
             }
         }
@@ -208,6 +242,7 @@ public class WaveFunctionCollapse : MonoBehaviour
             if (ruleWeight > 0)
             {
                 weightedRandom -= ruleWeight;
+                collapseIterations++;
 
                 // If this superposition is what the random number landed on
                 if (weightedRandom <= 0)
