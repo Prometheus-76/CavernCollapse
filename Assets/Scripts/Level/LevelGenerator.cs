@@ -1036,12 +1036,12 @@ public class LevelGenerator : MonoBehaviour
                             waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
                         }
                     }
-                }
 
-                positionsCollapsed++;
-                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
-                    yield return null;
+                    positionsCollapsed++;
+                    stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                    if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                        yield return null;
+                }
             }
             else
             {
@@ -1293,12 +1293,12 @@ public class LevelGenerator : MonoBehaviour
                             waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
                         }
                     }
-                }
 
-                positionsCollapsed++;
-                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
-                    yield return null;
+                    positionsCollapsed++;
+                    stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                    if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                        yield return null;
+                }
             }
             else
             {
@@ -1557,12 +1557,12 @@ public class LevelGenerator : MonoBehaviour
                             waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
                         }
                     }
-                }
 
-                positionsCollapsed++;
-                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
-                    yield return null;
+                    positionsCollapsed++;
+                    stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                    if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                        yield return null;
+                }
             }
             else
             {
@@ -1859,12 +1859,13 @@ public class LevelGenerator : MonoBehaviour
                             waveFunctionCollapse.RecalculateEntropy(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
                         }
                     }
+
+                    positionsCollapsed++;
+                    stepProgress = (float)positionsCollapsed / uncollapsedTiles;
+                    if (positionsCollapsed % tilesCollapsedPerFrame == 0)
+                        yield return null;
                 }
 
-                positionsCollapsed++;
-                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                if (positionsCollapsed % tilesCollapsedPerFrame == 0)
-                    yield return null;
             }
             else
             {
