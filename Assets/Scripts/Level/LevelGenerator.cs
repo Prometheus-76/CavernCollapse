@@ -998,6 +998,7 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.None);
         waveFunctionCollapse.AddToBlockPalette(BlockType.Solid);
 
+
         // Calculate entropy of entire wave function collapse grid
         for (int y = 0; y < (stageSize.y * roomSize.y); y++)
         {
@@ -2035,7 +2036,7 @@ public class LevelGenerator : MonoBehaviour
         bool spawnPlaced = false;
         for (int y = roomSize.y - 2; y > 0; y--)
         {
-            for (int x = 1; x < roomSize.x - 1; x++)
+            for (int x = 1; x < roomSize.x - 2; x++)
             {
                 // Found a safe space in the first room
                 if (level[criticalPath[0].x, criticalPath[0].y].tiles[x, y].reservedTile && floodfillCompleted == false)
@@ -2084,7 +2085,7 @@ public class LevelGenerator : MonoBehaviour
         int criticalPathLastRoom = criticalPath.Count - 1;
         for (int y = roomSize.y - 1; y > 0; y--)
         {
-            for (int x = roomSize.x - 1; x > 0; x--)
+            for (int x = roomSize.x - 2; x > 0; x--)
             {
                 // Found a safe space in the last room
                 if (level[criticalPath[criticalPathLastRoom].x, criticalPath[criticalPathLastRoom].y].tiles[x, y].reservedTile && floodfillCompleted == false)

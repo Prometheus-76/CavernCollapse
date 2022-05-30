@@ -7,7 +7,7 @@ public class WaveFunctionCollapse : MonoBehaviour
     public TileCollection tileCollection;
     public DatasetAnalyser datasetAnalyser;
 
-    private struct WaveFunctionTile
+    public struct WaveFunctionTile
     {
         // All remaining possibilities of this tile space
         public DatasetAnalyser.RuleData[] tileSuperpositions;
@@ -36,6 +36,7 @@ public class WaveFunctionCollapse : MonoBehaviour
     public void InitialiseWaveFunction(int xSize, int ySize)
     {
         waveFunctionGrid = new WaveFunctionTile[xSize, ySize];
+
         gridSize.x = xSize;
         gridSize.y = ySize;
 
