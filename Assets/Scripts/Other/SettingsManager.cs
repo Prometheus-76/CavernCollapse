@@ -9,7 +9,6 @@ public class SettingsManager : MonoBehaviour
 {
     [Header("Settings")]
     public GameSettings gameSettings;
-    public GameObject postProcessing;
     public AudioMixer audioMixer;
     public bool loadSettingsOnStart;
 
@@ -31,9 +30,6 @@ public class SettingsManager : MonoBehaviour
         float scaledSound = (gameSettings.soundVolume > 0) ? Mathf.Log10(Mathf.Clamp(gameSettings.soundVolume / 10f, 0.001f, 1f)) * 20f : -80f;
         audioMixer.SetFloat("SoundVolume", scaledSound);
 
-        // Post processing
-        postProcessing.SetActive(gameSettings.usingPostProcessing);
-
         // FPS Limit
         Application.targetFrameRate = gameSettings.targetFPS;
     }
@@ -42,13 +38,11 @@ public class SettingsManager : MonoBehaviour
     {
         gameSettings.musicVolume = PlayerPrefs.GetInt("MusicVolume", 8);
         gameSettings.soundVolume = PlayerPrefs.GetInt("SoundVolume", 8);
-        gameSettings.usingPostProcessing = PlayerPrefs.GetInt("UsingPostProcessing", 1) == 1;
     }
 
     public void SaveSettings()
     {
         PlayerPrefs.SetInt("MusicVolume", gameSettings.musicVolume);
         PlayerPrefs.SetInt("SoundVolume", gameSettings.soundVolume);
-        PlayerPrefs.SetInt("UsingPostProcessing", (gameSettings.usingPostProcessing ? 1 : 0));
     }
 }

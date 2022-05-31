@@ -38,7 +38,6 @@ public class MenuManager : MonoBehaviour
     [Header("Gameplay")]
     public GameplayConfiguration gameplayConfiguration;
     private int datasetStyle;
-    private int difficulty;
 
     void Start()
     {
@@ -49,7 +48,6 @@ public class MenuManager : MonoBehaviour
 
         // Default gameplay config
         datasetStyle = 0;
-        difficulty = 0;
         UpdateGameplayConfiguration();
     }
 
@@ -148,21 +146,10 @@ public class MenuManager : MonoBehaviour
         settingsManager.SaveSettings();
     }
 
-    public void TogglePostProcessing()
-    {
-        gameSettings.usingPostProcessing = !gameSettings.usingPostProcessing;
-
-        menuAudio.PlaySound(MenuAudio.MenuSounds.Toggle);
-        UpdateSettingsUI();
-        settingsManager.ApplySettings();
-        settingsManager.SaveSettings();
-    }
-
     void UpdateSettingsUI()
     {
         musicButton.SetDefaultText("music volume: " + gameSettings.musicVolume.ToString());
         soundButton.SetDefaultText("sound volume: " + gameSettings.soundVolume.ToString());
-        postProcessButton.SetDefaultText("visual effects: " + (gameSettings.usingPostProcessing ? "on" : "off"));
     }
 
     #endregion
@@ -180,21 +167,10 @@ public class MenuManager : MonoBehaviour
         UpdateGameplayConfiguration();
     }
 
-    // Cycles through difficulty options
-    public void IncrementDifficulty()
-    {
-        difficulty += 1;
-        difficulty %= (int)GameplayConfiguration.DifficultyOptions.Expert + 1;
-
-        menuAudio.PlaySound(MenuAudio.MenuSounds.Toggle);
-        UpdateGameplayConfiguration();
-    }
-
     // Updates gameplay config ScriptableObject
     void UpdateGameplayConfiguration()
     {
         gameplayConfiguration.dataset = datasetStyle;
-        gameplayConfiguration.difficulty = (GameplayConfiguration.DifficultyOptions)difficulty;
 
         UpdatePlayMenuUI();
     }
@@ -203,7 +179,6 @@ public class MenuManager : MonoBehaviour
     void UpdatePlayMenuUI()
     {
         styleButton.SetDefaultText("style: " + (gameplayConfiguration.dataset == 0 ? "default" : "custom " + gameplayConfiguration.dataset.ToString()));
-        difficultyButton.SetDefaultText("difficulty: " + gameplayConfiguration.difficulty.ToString().ToLower());
     }
 
     #endregion

@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   musicVolume: 8
   soundVolume: 8
-  targetFPS: 144
-  usingPostProcessing: 1
+  targetFPS: -1

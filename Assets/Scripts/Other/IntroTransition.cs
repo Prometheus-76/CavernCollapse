@@ -9,7 +9,6 @@ using UnityEngine.Rendering;
 public class IntroTransition : MonoBehaviour
 {
     public float transitionTime;
-    public Volume postProcessing;
     public Image panelImage;
 
     private static IntroTransition instance;
@@ -24,7 +23,6 @@ public class IntroTransition : MonoBehaviour
             instance = this;
 
             transitionProgress = 0f;
-            postProcessing.weight = 0f;
             Color newPanelColour = panelImage.color;
             newPanelColour.a = 1f;
             panelImage.color = newPanelColour;
@@ -51,8 +49,6 @@ public class IntroTransition : MonoBehaviour
                 newPanelColour.a = 1f - (transitionProgress * transitionProgress);
                 panelImage.color = newPanelColour;
             }
-
-            postProcessing.weight = transitionProgress * transitionProgress;
         }
     }
 }

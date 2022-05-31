@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 // Generates the data of the level and coordinates all the steps required for the process
@@ -74,6 +75,7 @@ public class LevelGenerator : MonoBehaviour
         CleanupDoors,
         RedirectSigns,
         VerifyPaths,
+        FillEmptyAreas,
         SubstitutePrefabs,
         GenerateColliders,
         GenerationComplete
@@ -86,16 +88,10 @@ public class LevelGenerator : MonoBehaviour
     private int seed;
     private Vector2Int spawnPosition;
     private Vector2Int exitPosition;
+    private Stopwatch stopwatch;
 
     [Header("Configuration")]
-    [SerializeField, Tooltip("The amount of resetting iterations to do per frame")] private int resetIterationsPerFrame;
-    [SerializeField, Tooltip("The amount of floors of rooms to create per frame")] private int roomSequenceFloorsPerFrame;
-    [SerializeField, Tooltip("The amount of rooms to reserve a path through per frame")] private int pathReservationRoomsPerFrame;
-    [SerializeField, Tooltip("The amount of rooms to set up the map borders within per frame")] private int roomMapBordersPerFrame;
-    [SerializeField, Tooltip("The amount of rooms to connect vertically per frame")] private int verticalRoomConnectionsPerFrame;
-    [SerializeField, Tooltip("The amount of room borders to set up per frame")] private int roomBordersPerFrame;
-    [SerializeField, Tooltip("The amount of tiles to collapse per frame")] private int tilesCollapsedPerFrame;
-    [SerializeField, Tooltip("The amount of cleanup iterations to do per frame")] private int cleanupIterationsPerFrame;
+    [SerializeField, Tooltip("The target length of each frame during generation")] private float maxTimePerFrame;
     [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
     [SerializeField, Tooltip("The dimensions of each room (in tiles)")] private Vector2Int roomSize;
 
@@ -122,6 +118,7 @@ public class LevelGenerator : MonoBehaviour
     void Awake()
     {
         criticalPath = new List<Vector2Int>();
+        stopwatch = new Stopwatch();
 
         // Allocate and initialise the level, all rooms and all default tiles within those rooms
         InitialiseLevel();
@@ -223,6 +220,9 @@ public class LevelGenerator : MonoBehaviour
             case GenerationStep.VerifyPaths:
                 loadingScreen.SetStepText("Verifying paths...");
                 break;
+            case GenerationStep.FillEmptyAreas:
+                loadingScreen.SetStepText("Pumping oxygen into caverns...");
+                break;
             case GenerationStep.SubstitutePrefabs:
                 loadingScreen.SetStepText("Replacing imposter tiles...");
                 break;
@@ -310,6 +310,7 @@ public class LevelGenerator : MonoBehaviour
 
     #endregion
     
+    // Places a tile in the scene, and within all grids that track tiles
     void PlaceTile(int stageX, int stageY, int roomX, int roomY, int tileIndex, BlockType blockType)
     {        
         level[stageX, stageY].tiles[roomX, roomY].blockType = blockType;
@@ -320,6 +321,7 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.SetTile(gridPosition.x, gridPosition.y, blockType, tileIndex);
     }
 
+    // Removes a tile from all tilemaps at this position, and resets tile within all grid that track tiles
     void RemoveTile(int stageX, int stageY, int roomX, int roomY)
     {
         level[stageX, stageY].tiles[roomX, roomY].blockType = BlockType.None;
@@ -422,6 +424,10 @@ public class LevelGenerator : MonoBehaviour
         seed = Random.Range(int.MinValue, int.MaxValue);
         Random.InitState(seed);
 
+        // Start the stop watch
+        stopwatch.Reset();
+        stopwatch.Start();
+
         currentStep = (GenerationStep)0;
         awaitingNewStep = true;
 
@@ -511,6 +517,9 @@ public class LevelGenerator : MonoBehaviour
                     case GenerationStep.VerifyPaths:
                         StartCoroutine(VerifyPaths());
                         break;
+                    case GenerationStep.FillEmptyAreas:
+                        StartCoroutine(FillEmptyAreas());
+                        break;
                     case GenerationStep.SubstitutePrefabs:
                         StartCoroutine(SubstitutePrefabs());
                         break;
@@ -557,8 +566,11 @@ public class LevelGenerator : MonoBehaviour
 
                         iterationsCompleted++;
                         stepProgress = (float)iterationsCompleted / (stageSize.y * stageSize.x * roomSize.y * roomSize.x);
-                        if (iterationsCompleted % resetIterationsPerFrame == 0)
+                        if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                        {
+                            stopwatch.Restart();
                             yield return null;
+                        }
                     }
                 }
 
@@ -663,8 +675,11 @@ public class LevelGenerator : MonoBehaviour
 
                 levelsCreated++;
                 stepProgress = (float)levelsCreated / stageSize.y;
-                if (levelsCreated % roomSequenceFloorsPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
             else
             {
@@ -687,6 +702,7 @@ public class LevelGenerator : MonoBehaviour
     IEnumerator ReserveRoomPaths()
     {
         int roomPathsCreated = 0;
+
         Vector2Int lastTile = Vector2Int.zero;
         int targetX = -1;
 
@@ -774,8 +790,11 @@ public class LevelGenerator : MonoBehaviour
             // Continue on the next frame
             roomPathsCreated++;
             stepProgress = (float)roomPathsCreated / criticalPath.Count;
-            if (roomPathsCreated % pathReservationRoomsPerFrame == 0)
+            if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+            {
+                stopwatch.Restart();
                 yield return null;
+            }
         }
 
         yield return null;
@@ -818,8 +837,11 @@ public class LevelGenerator : MonoBehaviour
 
                 roomMapBordersCreated++;
                 stepProgress = (float)roomMapBordersCreated / (stageSize.x * stageSize.y);
-                if (roomMapBordersCreated % roomMapBordersPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
         }
 
@@ -884,6 +906,12 @@ public class LevelGenerator : MonoBehaviour
                 level[criticalPath[r].x, criticalPath[r].y].verticalAccessMin = level[criticalPath[r].x, criticalPath[r].y + 1].verticalAccessMin;
                 level[criticalPath[r].x, criticalPath[r].y].verticalAccessMax = level[criticalPath[r].x, criticalPath[r].y + 1].verticalAccessMax;
             }
+
+            if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+            {
+                stopwatch.Restart();
+                yield return null;
+            }
         }
 
         // Cut holes between dropdown and landing rooms
@@ -927,8 +955,11 @@ public class LevelGenerator : MonoBehaviour
 
             roomCutoutsCompleted++;
             stepProgress = (float)roomCutoutsCompleted / criticalPath.Count;
-            if (roomCutoutsCompleted % verticalRoomConnectionsPerFrame == 0)
+            if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+            {
+                stopwatch.Restart();
                 yield return null;
+            }
         }
 
         yield return null;
@@ -967,8 +998,11 @@ public class LevelGenerator : MonoBehaviour
                 // Update progress
                 roomBordersCreated++;
                 stepProgress = (float)roomBordersCreated / (stageSize.x * stageSize.y);
-                if (roomBordersCreated % roomBordersPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
         }
 
@@ -980,6 +1014,8 @@ public class LevelGenerator : MonoBehaviour
     // Wave function collapse pass for walls and air
     IEnumerator WaveFunctionCollapseWalls()
     {
+        int positionsCollapsed = 0;
+        
         // Set up grid for wave function collapse
         for (int stageY = 0; stageY < stageSize.y; stageY++)
         {
@@ -991,6 +1027,12 @@ public class LevelGenerator : MonoBehaviour
                     {
                         if (level[stageX, stageY].tiles[roomX, roomY].reservedTile)
                             PlaceTile(stageX, stageY, roomX, roomY, 48, BlockType.None);
+
+                        if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                        {
+                            stopwatch.Restart();
+                            yield return null;
+                        }
                     }
                 }
             }
@@ -1002,12 +1044,33 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Solid);
 
         // Calculate entropy of entire wave function collapse grid
-        waveFunctionCollapse.RecalculateAllEntropy();
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                waveFunctionCollapse.RecalculateEntropy(x, y);
+
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
+                    yield return null;
+                }
+            }
+        }
 
         int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
 
-        int positionsCollapsed = 0;
         Vector2Int positionToCollapse;
+
+        #region Cache
+
+        BlockType collapsedType = BlockType.None;
+        int collapsedTileIndex = 0;
+        Vector2Int stagePos = Vector2Int.zero;
+        Vector2Int roomPos = Vector2Int.zero;
+
+        #endregion
+
         while (true)
         {
             positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile(false);
@@ -1017,10 +1080,10 @@ public class LevelGenerator : MonoBehaviour
                 // Collapse this position
                 if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
                 {
-                    BlockType collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
-                    int collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
-                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
-                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
+                    collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
                     PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
 
                     // Recalculate neighbours
@@ -1039,14 +1102,18 @@ public class LevelGenerator : MonoBehaviour
 
                     positionsCollapsed++;
                     stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                    if (positionsCollapsed % tilesCollapsedPerFrame == 0)
-                        yield return null;
                 }
             }
             else
             {
                 // No positions left to collapse
                 break;
+            }
+
+            if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+            {
+                stopwatch.Restart();
+                yield return null;
             }
         }
 
@@ -1058,18 +1125,34 @@ public class LevelGenerator : MonoBehaviour
     // Find all uncollapsed spaces and place crates to fill the space
     IEnumerator CleanupWalls()
     {
+        int cleanupIterations = 0;
+        
         // Calculate entropy of entire wave function collapse grid
         for (int y = 0; y < (stageSize.y * roomSize.y); y++)
         {
             for (int x = 0; x < (stageSize.x * roomSize.x); x++)
             {
                 waveFunctionCollapse.RecalculateEntropy(x, y);
+
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
+                    yield return null;
+                }
             }
         }
 
         int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
 
-        int positionsCollapsed = 0;
+        #region Cache
+
+        Vector2Int stagePos;
+        Vector2Int roomPos;
+        Vector2Int neighbourStagePos;
+        Vector2Int neighbourRoomPos;
+
+        #endregion
+
         Vector2Int positionToCollapse;
         while (true)
         {
@@ -1082,8 +1165,8 @@ public class LevelGenerator : MonoBehaviour
                 if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y) == false)
                 {
                     // Force collapse it into a crate
-                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
-                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
                     PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, 72, BlockType.Solid);
 
                     // Recollapse neighbouring walls into crates as well
@@ -1095,8 +1178,8 @@ public class LevelGenerator : MonoBehaviour
                             if (xOffset == 0 && yOffset == 0)
                                 continue;
 
-                            Vector2Int neighbourStagePos = GridToStage(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
-                            Vector2Int neighbourRoomPos = GridToRoom(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
+                            neighbourStagePos = GridToStage(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
+                            neighbourRoomPos = GridToRoom(positionToCollapse.x + xOffset, positionToCollapse.y + yOffset);
 
                             // Only recollapse walls
                             if (level[neighbourStagePos.x, neighbourStagePos.y].tiles[neighbourRoomPos.x, neighbourRoomPos.y].blockType == BlockType.Solid)
@@ -1113,10 +1196,13 @@ public class LevelGenerator : MonoBehaviour
                     }
                 }
 
-                positionsCollapsed++;
-                stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                if (positionsCollapsed % cleanupIterationsPerFrame == 0)
+                cleanupIterations++;
+                stepProgress = (float)cleanupIterations / uncollapsedTiles;
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
             else
             {
@@ -1157,8 +1243,11 @@ public class LevelGenerator : MonoBehaviour
 
                 spacesEvaluated++;
                 stepProgress = (float)spacesEvaluated / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2);
-                if (spacesEvaluated % cleanupIterationsPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
         }
 
@@ -1222,8 +1311,11 @@ public class LevelGenerator : MonoBehaviour
 
                 spacesEvaluated++;
                 stepProgress = (float)spacesEvaluated / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2);
-                if (spacesEvaluated % cleanupIterationsPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
         }
 
@@ -1235,6 +1327,8 @@ public class LevelGenerator : MonoBehaviour
     // Wave function collapse pass for ladders and platforms
     IEnumerator WaveFunctionCollapsePlatforming()
     {
+        int positionsCollapsed = 0;
+        
         // Set up grid for wave function collapse
         for (int stageY = 0; stageY < stageSize.y; stageY++)
         {
@@ -1247,6 +1341,12 @@ public class LevelGenerator : MonoBehaviour
                         // Remove all air
                         if (level[stageX, stageY].tiles[roomX, roomY].blockType == BlockType.None)
                             RemoveTile(stageX, stageY, roomX, roomY);
+
+                        if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                        {
+                            stopwatch.Restart();
+                            yield return null;
+                        }
                     }
                 }
             }
@@ -1259,12 +1359,33 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Ladder);
 
         // Calculate entropy of entire wave function collapse grid
-        waveFunctionCollapse.RecalculateAllEntropy();
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                waveFunctionCollapse.RecalculateEntropy(x, y);
+
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
+                    yield return null;
+                }
+            }
+        }
 
         int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
 
-        int positionsCollapsed = 0;
         Vector2Int positionToCollapse;
+
+        #region Cache
+
+        BlockType collapsedType = BlockType.None;
+        int collapsedTileIndex = 0;
+        Vector2Int stagePos = Vector2Int.zero;
+        Vector2Int roomPos = Vector2Int.zero;
+
+        #endregion
+
         while (true)
         {
             positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile(false);
@@ -1274,10 +1395,10 @@ public class LevelGenerator : MonoBehaviour
                 // Collapse this position
                 if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
                 {
-                    BlockType collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
-                    int collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
-                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
-                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
+                    collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
                     PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
 
                     // Recalculate neighbours
@@ -1296,14 +1417,18 @@ public class LevelGenerator : MonoBehaviour
 
                     positionsCollapsed++;
                     stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                    if (positionsCollapsed % tilesCollapsedPerFrame == 0)
-                        yield return null;
                 }
             }
             else
             {
                 // No positions left to collapse
                 break;
+            }
+
+            if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+            {
+                stopwatch.Restart();
+                yield return null;
             }
         }
 
@@ -1423,8 +1548,11 @@ public class LevelGenerator : MonoBehaviour
 
                 cleanupIterations++;
                 stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
-                if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
         }
 
@@ -1486,8 +1614,11 @@ public class LevelGenerator : MonoBehaviour
 
                 cleanupIterations++;
                 stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
-                if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
         }
 
@@ -1499,6 +1630,8 @@ public class LevelGenerator : MonoBehaviour
     // Wave function collapse pass for spikes and coins
     IEnumerator WaveFunctionCollapseGameplay()
     {
+        int positionsCollapsed = 0;
+        
         // Set up grid for wave function collapse
         for (int stageY = 0; stageY < stageSize.y; stageY++)
         {
@@ -1523,12 +1656,33 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Coin);
 
         // Calculate entropy of entire wave function collapse grid
-        waveFunctionCollapse.RecalculateAllEntropy();
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                waveFunctionCollapse.RecalculateEntropy(x, y);
+
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
+                    yield return null;
+                }
+            }
+        }
 
         int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
 
-        int positionsCollapsed = 0;
         Vector2Int positionToCollapse;
+
+        #region Cache
+
+        BlockType collapsedType = BlockType.None;
+        int collapsedTileIndex = 0;
+        Vector2Int stagePos = Vector2Int.zero;
+        Vector2Int roomPos = Vector2Int.zero;
+
+        #endregion
+
         while (true)
         {
             positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile(false);
@@ -1538,10 +1692,10 @@ public class LevelGenerator : MonoBehaviour
                 // Collapse this position
                 if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
                 {
-                    BlockType collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
-                    int collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
-                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
-                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
+                    collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
                     PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
 
                     // Recalculate neighbours
@@ -1560,14 +1714,18 @@ public class LevelGenerator : MonoBehaviour
 
                     positionsCollapsed++;
                     stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                    if (positionsCollapsed % tilesCollapsedPerFrame == 0)
-                        yield return null;
                 }
             }
             else
             {
                 // No positions left to collapse
                 break;
+            }
+
+            if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+            {
+                stopwatch.Restart();
+                yield return null;
             }
         }
 
@@ -1579,8 +1737,9 @@ public class LevelGenerator : MonoBehaviour
     // Marches floating spikes and coins towards the appropriate surfaces
     IEnumerator ReconnectGameplay()
     {
-        // Check every tile in the level
         int cleanupIterations = 0;
+
+        // Check every tile in the level
         for (int stageY = 0; stageY < stageSize.y; stageY++)
         {
             for (int stageX = 0; stageX < stageSize.x; stageX++)
@@ -1696,8 +1855,11 @@ public class LevelGenerator : MonoBehaviour
 
                         cleanupIterations++;
                         stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
-                        if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                        if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                        {
+                            stopwatch.Restart();
                             yield return null;
+                        }
                     }
                 }
             }
@@ -1784,8 +1946,11 @@ public class LevelGenerator : MonoBehaviour
 
                         cleanupIterations++;
                         stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
-                        if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                        if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                        {
+                            stopwatch.Restart();
                             yield return null;
+                        }
                     }
                 }
             }
@@ -1799,6 +1964,8 @@ public class LevelGenerator : MonoBehaviour
     // Wave function collapse pass for foliage, vines, signs and torches
     IEnumerator WaveFunctionCollapseDeco()
     {
+        int positionsCollapsed = 0;
+        
         // Set up grid for wave function collapse
         for (int stageY = 0; stageY < stageSize.y; stageY++)
         {
@@ -1825,12 +1992,33 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Torch);
 
         // Calculate entropy of entire wave function collapse grid
-        waveFunctionCollapse.RecalculateAllEntropy();
+        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        {
+            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            {
+                waveFunctionCollapse.RecalculateEntropy(x, y);
+
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
+                    yield return null;
+                }
+            }
+        }
 
         int uncollapsedTiles = waveFunctionCollapse.GetUncollapsedCount();
 
-        int positionsCollapsed = 0;
         Vector2Int positionToCollapse;
+
+        #region Cache
+
+        BlockType collapsedType = BlockType.None;
+        int collapsedTileIndex = 0;
+        Vector2Int stagePos = Vector2Int.zero;
+        Vector2Int roomPos = Vector2Int.zero;
+
+        #endregion
+
         while (true)
         {
             positionToCollapse = waveFunctionCollapse.GetLowestEntropyTile(false);
@@ -1840,10 +2028,10 @@ public class LevelGenerator : MonoBehaviour
                 // Collapse this position
                 if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
                 {
-                    BlockType collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
-                    int collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
-                    Vector2Int stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
-                    Vector2Int roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
+                    collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
+                    collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
+                    roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
                     PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
 
                     // Recalculate neighbours
@@ -1862,15 +2050,18 @@ public class LevelGenerator : MonoBehaviour
 
                     positionsCollapsed++;
                     stepProgress = (float)positionsCollapsed / uncollapsedTiles;
-                    if (positionsCollapsed % tilesCollapsedPerFrame == 0)
-                        yield return null;
                 }
-
             }
             else
             {
                 // No positions left to collapse
                 break;
+            }
+
+            if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+            {
+                stopwatch.Restart();
+                yield return null;
             }
         }
 
@@ -1945,8 +2136,11 @@ public class LevelGenerator : MonoBehaviour
 
                 cleanupIterations++;
                 stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
-                if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
         }
 
@@ -1955,7 +2149,7 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 20 of level generation
-    // Removes floating vines and disconnected signs
+    // Removes floating vines and disconnected signs, adds air everywhere else
     IEnumerator CleanupDeco()
     {
         int cleanupIterations = 0;
@@ -1993,8 +2187,11 @@ public class LevelGenerator : MonoBehaviour
 
                 cleanupIterations++;
                 stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
-                if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
         }
 
@@ -2328,8 +2525,11 @@ public class LevelGenerator : MonoBehaviour
 
                 cleanupIterations++;
                 stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
-                if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
                     yield return null;
+                }
             }
         }
 
@@ -2341,9 +2541,9 @@ public class LevelGenerator : MonoBehaviour
     // Ensures all coins and the end goal are not unreachable due to spikes
     IEnumerator VerifyPaths()
     {
-        // Weighted Dijkstra implementation
-
         int cleanupIterations = 0;
+
+        // Weighted Dijkstra implementation
 
         // Start the pathfinding from the spawn point
         dijkstraPathfinding.SetTarget(spawnPosition.x, spawnPosition.y);
@@ -2374,6 +2574,12 @@ public class LevelGenerator : MonoBehaviour
                             default:
                                 dijkstraPathfinding.SetNodeWeight(gridPos.x, gridPos.y, 1);
                                 break;
+                        }
+
+                        if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                        {
+                            stopwatch.Restart();
+                            yield return null;
                         }
                     }
                 }
@@ -2414,8 +2620,11 @@ public class LevelGenerator : MonoBehaviour
 
                         cleanupIterations++;
                         stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
-                        if (cleanupIterations % cleanupIterationsPerFrame == 0)
+                        if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                        {
+                            stopwatch.Restart();
                             yield return null;
+                        }
                     }
                 }
             }
@@ -2442,6 +2651,42 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 25 of level generation
+    // Fills the empty spaces of the map with air tiles, this might be useful at some point
+    IEnumerator FillEmptyAreas()
+    {
+        int cleanupIterations = 0;
+
+        for (int stageY = 0; stageY < stageSize.y; stageY++)
+        {
+            for (int stageX = 0; stageX < stageSize.x; stageX++)
+            {
+                for (int roomY = 0; roomY < roomSize.y; roomY++)
+                {
+                    for (int roomX = 0; roomX < roomSize.x; roomX++)
+                    {
+                        if (level[stageX, stageY].tiles[roomX, roomY].tileIndex == -1)
+                        {
+                            PlaceTile(stageX, stageY, roomX, roomY, 48, BlockType.None);
+                        }
+
+                        cleanupIterations++;
+                        stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+
+                        if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                        {
+                            stopwatch.Restart();
+                            yield return null;
+                        }
+                    }
+                }
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 26 of level generation
     // Replaces placeholder tiles with prefabs where required, for things like coins
     IEnumerator SubstitutePrefabs()
     {
@@ -2449,7 +2694,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 26 of level generation
+    // Step 27 of level generation
     // Generates the colliders used by solids, platforms, ladders and spikes
     IEnumerator GenerateColliders()
     {

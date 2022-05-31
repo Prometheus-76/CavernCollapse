@@ -5,6 +5,10 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     public Vector3 offset;
+    public float followStrength;
+    public float horizontalRestZone;
+    public Transform targetTransform;
+
     private Transform camTransform;
 
     // Start is called before the first frame update
@@ -21,6 +25,11 @@ public class CameraController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        // Follow the player smoothly, and allow some movement on the x without immediately following
+        Vector3 fromPosition = camTransform.position;
+        Vector3 toPosition = targetTransform.position + offset;
+        toPosition.x = Mathf.Clamp(fromPosition.x, targetTransform.position.x - horizontalRestZone, targetTransform.position.x + horizontalRestZone);
+        Vector3 newPosition = Vector3.Lerp(fromPosition, toPosition, followStrength * Time.deltaTime);
+        camTransform.position = newPosition;
     }
 }

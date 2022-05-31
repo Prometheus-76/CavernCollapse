@@ -17,14 +17,12 @@ public class WaveFunctionCollapse : MonoBehaviour
         public BlockType blockType;
         public int tileIndex;
         public bool canCollapse;
+        public Vector2Int gridPosition;
     }
 
     private WaveFunctionTile[,] waveFunctionGrid;
     private Vector2Int gridSize;
     private BlockTypeFlags blockPalette;
-    private ulong lowestFindIterations = 0;
-    private ulong collapseIterations = 0;
-    private ulong recalculateIterations = 0;
 
     public BlockType GetCollapsedType(int x, int y)
     {
@@ -51,6 +49,7 @@ public class WaveFunctionCollapse : MonoBehaviour
             {
                 waveFunctionGrid[x, y] = new WaveFunctionTile();
                 waveFunctionGrid[x, y].tileSuperpositions = new DatasetAnalyser.RuleData[tileCollection.tiles.Length];
+                waveFunctionGrid[x, y].gridPosition = new Vector2Int(x, y);
                 ResetTile(x, y);
             }
         }
@@ -97,6 +96,14 @@ public class WaveFunctionCollapse : MonoBehaviour
             waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight = 0;
         }
 
+        #region Cache
+
+        int ruleWeight = 0;
+        BlockType ruleType = BlockType.None;
+        Vector2Int neighbourPosition = -Vector2Int.one;
+
+        #endregion
+
         // For each neighbour (left->right, top->bottom)
         int neighbourIndex = -1;
         for (int yOffset = 1; yOffset >= -1; yOffset--)
@@ -108,44 +115,42 @@ public class WaveFunctionCollapse : MonoBehaviour
                     continue;
 
                 neighbourIndex++;
+                neighbourPosition.x = x + xOffset;
+                neighbourPosition.y = y + yOffset;
 
                 // Skip the tile if its out of range of the grid
-                if (x + xOffset < 0 || x + xOffset >= gridSize.x || y + yOffset < 0 || y + yOffset >= gridSize.y)
+                if (neighbourPosition.x < 0 || neighbourPosition.x >= gridSize.x || neighbourPosition.y < 0 || neighbourPosition.y >= gridSize.y)
                     continue;
 
                 // Skip uncollapsed neighbours, as they don't have any valid information
-                if (waveFunctionGrid[x + xOffset, y + yOffset].canCollapse)
+                if (waveFunctionGrid[neighbourPosition.x, neighbourPosition.y].canCollapse)
                     continue;
 
                 // For every tile superposition for this neighbour
                 for (int tileIndex = 0; tileIndex < tileCollection.tiles.Length; tileIndex++)
                 {
                     // Get the rule data from the perspective of the neighbour tile, inward to the centre tile
-                    int ruleWeight = datasetAnalyser.GetWeightFromRuleset(waveFunctionGrid[x + xOffset, y + yOffset].tileIndex, 7 - neighbourIndex, tileIndex);
-                    BlockType ruleType = datasetAnalyser.GetTypeFromRuleset(waveFunctionGrid[x + xOffset, y + yOffset].tileIndex, 7 - neighbourIndex, tileIndex);
+                    ruleWeight = datasetAnalyser.GetWeightFromRuleset(waveFunctionGrid[neighbourPosition.x, neighbourPosition.y].tileIndex, 7 - neighbourIndex, tileIndex);
+                    ruleType = datasetAnalyser.GetTypeFromRuleset(waveFunctionGrid[neighbourPosition.x, neighbourPosition.y].tileIndex, 7 - neighbourIndex, tileIndex);
 
                     // Only consider entropy of a set of superpositions
                     if (IsBlockInPalette(ruleType))
                     {
-                        //bool newSuperpositionAdded = false;
-
                         // Add to the weight if this configuration is supported so far
-                        if (waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight != -1)
+                        if (waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight != -1 && ruleWeight > 0)
                         {
                             waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight += ruleWeight;
                             waveFunctionGrid[x, y].totalSuperpositionWeight += ruleWeight;
                         }
-
-                        // If this configuration has now been confirmed as illegal, disable it
-                        if (ruleWeight <= 0)
+                        else
                         {
+                            // If this configuration has now been confirmed as illegal, disable it
                             waveFunctionGrid[x, y].totalSuperpositionWeight -= waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight;
                             waveFunctionGrid[x, y].tileSuperpositions[tileIndex].tileWeight = -1;
                         }
 
                         // Set the block type
                         waveFunctionGrid[x, y].tileSuperpositions[tileIndex].blockType = ruleType;
-                        recalculateIterations++;
                     }
                 }
             }
@@ -163,18 +168,6 @@ public class WaveFunctionCollapse : MonoBehaviour
         }
     }
 
-    // Recalculates entropy of the entire grid
-    public void RecalculateAllEntropy()
-    {
-        for (int y = 0; y < gridSize.y; y++)
-        {
-            for (int x = 0; x < gridSize.x; x++)
-            {
-                RecalculateEntropy(x, y);
-            }
-        }
-    }
-
     // Finds the uncollapsed, collapsable tile with the smallest number of remaining possibilities
     // Generally speaking, this one should be collapsed sooner rather than later
     public Vector2Int GetLowestEntropyTile(bool allowZero)
@@ -184,6 +177,12 @@ public class WaveFunctionCollapse : MonoBehaviour
         // Important note, the value tracked by this is the number of different superpositions, NOT the sum of superposition weights
         int lowestEntropyValue = int.MaxValue;
 
+        #region Cache
+
+        int tileEntropyTypes;
+
+        #endregion
+
         // For each tile in the level grid
         for (int y = 0; y < gridSize.y; y++)
         {
@@ -192,26 +191,23 @@ public class WaveFunctionCollapse : MonoBehaviour
                 if (waveFunctionGrid[x, y].canCollapse == false)
                     continue;
 
-                int tileEntropyTypes = waveFunctionGrid[x, y].totalSuperpositionTypes;
-                
-                lowestFindIterations++;
+                tileEntropyTypes = waveFunctionGrid[x, y].totalSuperpositionTypes;
 
                 // New lowest, non 0 entropy tile
-                if ((tileEntropyTypes != 0 || allowZero) && tileEntropyTypes < lowestEntropyValue)
+                if (tileEntropyTypes < lowestEntropyValue && (tileEntropyTypes != 0 || allowZero))
                 {
                     lowestEntropyValue = tileEntropyTypes;
                     lowestEntropySpace.x = x;
                     lowestEntropySpace.y = y;
 
-                    // If this tile has an entropy of 1 and is not allowed to be lower
                     if (allowZero == false && lowestEntropyValue == 1)
                     {
+                        // If this tile has an entropy of 1 and is not allowed to be lower
                         return lowestEntropySpace;
                     }
-
-                    // If this tile has an entropy of 0 and as such, cannot be lower
-                    if (allowZero && lowestEntropyValue == 0)
+                    else if (allowZero && lowestEntropyValue == 0)
                     {
+                        // If this tile has an entropy of 0 and as such, cannot be lower
                         return lowestEntropySpace;
                     }
                 }
@@ -231,18 +227,24 @@ public class WaveFunctionCollapse : MonoBehaviour
 
         if (weightSum <= 0) return false;
 
+        #region Cache
+
+        int ruleWeight = 0;
+        BlockType ruleType = BlockType.None;
+
+        #endregion
+
         // Iterative subtraction to find weighted random
         int weightedRandom = Random.Range(0, weightSum + 1);
         for (int superpositionIndex = 0; superpositionIndex < waveFunctionGrid[x, y].tileSuperpositions.Length; superpositionIndex++)
         {
-            int ruleWeight = waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight;
-            BlockType ruleType = waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].blockType;
+            ruleWeight = waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].tileWeight;
+            ruleType = waveFunctionGrid[x, y].tileSuperpositions[superpositionIndex].blockType;
 
             // If the block type is allowed and the tile weight is meaningful
             if (ruleWeight > 0)
             {
                 weightedRandom -= ruleWeight;
-                collapseIterations++;
 
                 // If this superposition is what the random number landed on
                 if (weightedRandom <= 0)
