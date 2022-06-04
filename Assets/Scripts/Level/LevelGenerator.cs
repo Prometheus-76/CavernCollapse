@@ -52,6 +52,7 @@ public class LevelGenerator : MonoBehaviour
     enum GenerationStep
     {
         ResetStageData,
+        CreateStageName,
         LoadDataset,
         ConstructRuleset,
         AssembleRoomSequence,
@@ -76,6 +77,7 @@ public class LevelGenerator : MonoBehaviour
         RedirectSigns,
         VerifyPaths,
         FillEmptyAreas,
+        ConfigureStage,
         SubstitutePrefabs,
         GenerateColliders,
         GenerationComplete
@@ -90,10 +92,14 @@ public class LevelGenerator : MonoBehaviour
     private Vector2Int exitPosition;
     private Stopwatch stopwatch;
 
+    private int totalCoins;
+
     [Header("Configuration")]
     [SerializeField, Tooltip("The target length of each frame during generation")] private float maxTimePerFrame;
     [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
     [SerializeField, Tooltip("The dimensions of each room (in tiles)")] private Vector2Int roomSize;
+    [SerializeField, Tooltip("The potential adjectives used in the first word of the level name")] private string[] firstWords;
+    [SerializeField, Tooltip("The potential nouns used in the second word of the level name")] private string[] secondWords;
 
     [Header("Components")]
     public TileCollection tileCollection;
@@ -104,6 +110,8 @@ public class LevelGenerator : MonoBehaviour
     public WaveFunctionCollapse waveFunctionCollapse;
     public DijkstraPathfinding dijkstraPathfinding;
     public CameraController cameraController;
+    public GameplayUI gameplayUI;
+    public LevelManager levelManager;
 
     #region Private
 
@@ -143,13 +151,15 @@ public class LevelGenerator : MonoBehaviour
         mainProgress += (1f / (float)GenerationStep.GenerationComplete) * stepProgress;
 
         loadingScreen.SetMainProgress(mainProgress);
-        loadingScreen.SetStepProgress(stepProgress);
 
         // Update loading step flavour text
         switch (currentStep)
         {
             case GenerationStep.ResetStageData:
                 loadingScreen.SetStepText("Resetting stage data...");
+                break;
+            case GenerationStep.CreateStageName:
+                loadingScreen.SetStepText("Creating stage name...");
                 break;
             case GenerationStep.LoadDataset:
                 loadingScreen.SetStepText("Loading dataset samples...");
@@ -220,11 +230,14 @@ public class LevelGenerator : MonoBehaviour
             case GenerationStep.VerifyPaths:
                 loadingScreen.SetStepText("Verifying paths...");
                 break;
-            case GenerationStep.FillEmptyAreas:
-                loadingScreen.SetStepText("Pumping oxygen into caverns...");
+            case GenerationStep.ConfigureStage:
+                loadingScreen.SetStepText("Counting coins...");
                 break;
             case GenerationStep.SubstitutePrefabs:
                 loadingScreen.SetStepText("Replacing imposter tiles...");
+                break;
+            case GenerationStep.FillEmptyAreas:
+                loadingScreen.SetStepText("Pumping oxygen into caverns...");
                 break;
             case GenerationStep.GenerateColliders:
                 loadingScreen.SetStepText("Generating colliders...");
@@ -415,6 +428,8 @@ public class LevelGenerator : MonoBehaviour
         // Play level music when generation is completed
         if (MusicPlayer.GetInstance() != null)
             MusicPlayer.GetInstance().CrossFade(2);
+
+        levelManager.StageBegin(3, totalCoins);
     }
 
     // Responsible for calling coroutines sequentially to generate the level asynchronously
@@ -447,6 +462,9 @@ public class LevelGenerator : MonoBehaviour
                 {
                     case GenerationStep.ResetStageData:
                         StartCoroutine(ResetStageData());
+                        break;
+                    case GenerationStep.CreateStageName:
+                        StartCoroutine(CreateStageName());
                         break;
                     case GenerationStep.LoadDataset:
                         StartCoroutine(datasetAnalyser.LoadDataset(gameplayConfiguration.dataset));
@@ -517,11 +535,14 @@ public class LevelGenerator : MonoBehaviour
                     case GenerationStep.VerifyPaths:
                         StartCoroutine(VerifyPaths());
                         break;
-                    case GenerationStep.FillEmptyAreas:
-                        StartCoroutine(FillEmptyAreas());
+                    case GenerationStep.ConfigureStage:
+                        StartCoroutine(ConfigureStage());
                         break;
                     case GenerationStep.SubstitutePrefabs:
                         StartCoroutine(SubstitutePrefabs());
+                        break;
+                    case GenerationStep.FillEmptyAreas:
+                        StartCoroutine(FillEmptyAreas());
                         break;
                     case GenerationStep.GenerateColliders:
                         StartCoroutine(GenerateColliders());
@@ -578,14 +599,34 @@ public class LevelGenerator : MonoBehaviour
         }
         
         criticalPath.Clear();
+        totalCoins = 0;
+
         yield return null;
         CompleteStep();
     }
 
-    // Step 2 is done in DatasetAnalyser class
-    // Step 3 is done in DatasetAnalyser class
+    // Step 2 of level generation
+    // Creates a name for the level using the existing list of adjectives and nouns
+    IEnumerator CreateStageName()
+    {
+        int firstWordChoice = Random.Range(0, firstWords.Length);
+        int secondWordChoice = Random.Range(0, secondWords.Length);
 
-    // Step 4 of level generation
+        string levelName = "";
+        levelName += firstWords[firstWordChoice];
+        levelName += " ";
+        levelName += secondWords[secondWordChoice];
+
+        gameplayUI.currentStageName = levelName;
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 3 is done in DatasetAnalyser class
+    // Step 4 is done in DatasetAnalyser class
+
+    // Step 5 of level generation
     // Moves from the top of the stage to the bottom, placing rooms to the left and right as it goes down
     IEnumerator AssembleRoomSequence()
     {
@@ -697,7 +738,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 5 of level generation
+    // Step 6 of level generation
     // Builds a path through the room using a biased drunk walking algorithm
     IEnumerator ReserveRoomPaths()
     {
@@ -801,7 +842,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 6 of level generation
+    // Step 7 of level generation
     // Builds a border of inner walls and blank spaces around the map to be grown inward by wave function collapse
     IEnumerator CreateMapBorder()
     {
@@ -849,7 +890,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 7 of level generation
+    // Step 8 of level generation
     // Creates an aligned vertical access point between dropdown and landing rooms, marking it as critical path
     IEnumerator ConnectVerticalRooms()
     {
@@ -966,7 +1007,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 8 of level generation
+    // Step 9 of level generation
     // Places border tiles along the bottom of *every* room (not only on critical path), except for places that contact the vertical access points
     IEnumerator CreateRoomBorders()
     {
@@ -1010,7 +1051,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 9 of level generation
+    // Step 10 of level generation
     // Wave function collapse pass for walls and air
     IEnumerator WaveFunctionCollapseWalls()
     {
@@ -1121,7 +1162,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 10 of level generation
+    // Step 11 of level generation
     // Find all uncollapsed spaces and place crates to fill the space
     IEnumerator CleanupWalls()
     {
@@ -1215,7 +1256,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 11 of level generation
+    // Step 12 of level generation
     // Places a bunch of bonus crates throughout the level to break up the wall structure
     IEnumerator PlaceBonusCrates()
     {
@@ -1323,7 +1364,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 12 of level generation
+    // Step 13 of level generation
     // Wave function collapse pass for ladders and platforms
     IEnumerator WaveFunctionCollapsePlatforming()
     {
@@ -1436,7 +1477,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
     
-    // Step 13 of level generation
+    // Step 14 of level generation
     // Removes disconnected ladders and ensures they are capped correctly
     IEnumerator CleanupLadders()
     {
@@ -1560,7 +1601,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 14 of level generation
+    // Step 15 of level generation
     // Ensures platforms are capped correctly, and deletes isolated ones
     IEnumerator CleanupPlatforms()
     {
@@ -1626,7 +1667,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 15 of level generation
+    // Step 16 of level generation
     // Wave function collapse pass for spikes and coins
     IEnumerator WaveFunctionCollapseGameplay()
     {
@@ -1733,7 +1774,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 16 of level generation
+    // Step 17 of level generation
     // Marches floating spikes and coins towards the appropriate surfaces
     IEnumerator ReconnectGameplay()
     {
@@ -1869,7 +1910,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 17 of level generation
+    // Step 18 of level generation
     // Removes isolated and unreachable coins
     IEnumerator CleanupCoins()
     {
@@ -1960,7 +2001,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 18 of level generation
+    // Step 19 of level generation
     // Wave function collapse pass for foliage, vines, signs and torches
     IEnumerator WaveFunctionCollapseDeco()
     {
@@ -2069,7 +2110,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 19 of level generation
+    // Step 20 of level generation
     // Marches floating torches/foliage towards the nearest surface, and attempts to reconnect it
     IEnumerator ReconnectDeco()
     {
@@ -2148,7 +2189,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 20 of level generation
+    // Step 21 of level generation
     // Removes floating vines and disconnected signs, adds air everywhere else
     IEnumerator CleanupDeco()
     {
@@ -2199,7 +2240,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 21 of level generation
+    // Step 22 of level generation
     // Sets the player's spawn and exit door points in the level
     IEnumerator PlaceDoors()
     {
@@ -2300,7 +2341,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 22 of level generation
+    // Step 23 of level generation
     // Clears the area around doors and ensures tiles still appear correctly
     IEnumerator CleanupDoors()
     {
@@ -2472,7 +2513,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 23 of level generation
+    // Step 24 of level generation
     // Iterates through all sign arrows in the level and ensures the direction they are pointing aligns with the critical path of the stage
     IEnumerator RedirectSigns()
     {
@@ -2537,7 +2578,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 24 of level generation
+    // Step 25 of level generation
     // Ensures all coins and the end goal are not unreachable due to spikes
     IEnumerator VerifyPaths()
     {
@@ -2650,7 +2691,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 25 of level generation
+    // Step 26 of level generation
     // Fills the empty spaces of the map with air tiles, this might be useful at some point
     IEnumerator FillEmptyAreas()
     {
@@ -2686,7 +2727,27 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 26 of level generation
+    // Step 27 of level generation
+    // Counts the coins and other stats of the level for configuration
+    IEnumerator ConfigureStage()
+    {
+        for (int y = 0; y < stageSize.y * roomSize.y; y++)
+        {
+            for (int x = 0; x < stageSize.x * roomSize.x; x++)
+            {
+                Vector2Int stagePos = GridToStage(x, y);
+                Vector2Int roomPos = GridToRoom(x, y);
+
+                if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Coin) 
+                    totalCoins += 1;
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 28 of level generation
     // Replaces placeholder tiles with prefabs where required, for things like coins
     IEnumerator SubstitutePrefabs()
     {
@@ -2694,7 +2755,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 27 of level generation
+    // Step 29 of level generation
     // Generates the colliders used by solids, platforms, ladders and spikes
     IEnumerator GenerateColliders()
     {

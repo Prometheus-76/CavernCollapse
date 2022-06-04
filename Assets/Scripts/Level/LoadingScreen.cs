@@ -15,23 +15,18 @@ public class LoadingScreen : MonoBehaviour
     public Image bottomBarImage;
     public TextMeshProUGUI progressText;
     public TextMeshProUGUI stepFlavourText;
-    public TextMeshProUGUI elapsedTimeText;
     public RectTransform topPanel;
     public RectTransform bottomPanel;
     public GameObject loadingScreen;
 
     private float mainProgress;
-    private float stepProgress;
-    private float elapsedTime;
     private bool hasStartedTransition;
-    private string stepDescription;
+    private string stepDescription = "";
 
     // Start is called before the first frame update
     void Start()
     {
         mainProgress = 0f;
-        stepProgress = 0f;
-        elapsedTime = 0f;
         hasStartedTransition = false;
         loadingScreen.SetActive(true);
     }
@@ -43,8 +38,7 @@ public class LoadingScreen : MonoBehaviour
 
         if (mainProgress < 1f)
         {
-            progressText.text = "Generating Cavern   [ " + (mainProgress * 100f).ToString("F0") + "% ]";
-            elapsedTime += Time.deltaTime;
+            progressText.text = "Generating Cavern   [ " + (mainProgress * 100f).ToString("F1") + "% ]";
         }
         else
         {
@@ -52,7 +46,6 @@ public class LoadingScreen : MonoBehaviour
         }
 
         stepFlavourText.text = "> " + stepDescription.ToLower();
-        elapsedTimeText.text = "> " + elapsedTime.ToString("F2") + "s";
 
         // Play animation when generation has completed
         if (mainProgress >= 1f && hasStartedTransition == false) StartCoroutine(SeparatePanels());
@@ -61,11 +54,6 @@ public class LoadingScreen : MonoBehaviour
     public void SetMainProgress(float progress)
     {
         mainProgress = Mathf.Clamp01(progress);
-    }
-
-    public void SetStepProgress(float progress)
-    {
-        stepProgress = Mathf.Clamp01(progress);
     }
 
     public void SetStepText(string stepText)

@@ -37,6 +37,7 @@ public class MenuManager : MonoBehaviour
 
     [Header("Gameplay")]
     public GameplayConfiguration gameplayConfiguration;
+    public AttemptStats currentAttempt;
     private int datasetStyle;
 
     void Start()
@@ -117,6 +118,7 @@ public class MenuManager : MonoBehaviour
 
     public void LoadGame()
     {
+        currentAttempt.FreshStart();
         SceneManager.LoadScene(2);
     }
 

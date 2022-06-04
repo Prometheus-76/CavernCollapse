@@ -5129,6 +5129,7 @@ MonoBehaviour:
   buttonAudioSource: {fileID: 521889136}
   menuCamera: {fileID: 176220480}
   gameplayConfiguration: {fileID: 11400000, guid: f8a02774c90ec804297f31bdcd35b1ba, type: 2}
+  currentAttempt: {fileID: 11400000, guid: 4362856ebe645d845893971388556b43, type: 2}
 --- !u!4 &1377044283
 Transform:
   m_ObjectHideFlags: 0
