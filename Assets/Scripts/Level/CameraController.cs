@@ -28,7 +28,7 @@ public class CameraController : MonoBehaviour
         // Follow the player smoothly, and allow some movement on the x without immediately following
         Vector3 fromPosition = camTransform.position;
         Vector3 toPosition = targetTransform.position + offset;
-        toPosition.x = Mathf.Clamp(fromPosition.x, targetTransform.position.x - horizontalRestZone, targetTransform.position.x + horizontalRestZone);
+        toPosition.x = Mathf.Clamp(fromPosition.x, toPosition.x - horizontalRestZone, toPosition.x + horizontalRestZone);
         Vector3 newPosition = Vector3.Lerp(fromPosition, toPosition, followStrength * Time.deltaTime);
         camTransform.position = newPosition;
     }
