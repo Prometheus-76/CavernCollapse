@@ -72,7 +72,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_Sprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
-  m_Color: {r: 0, g: 0.39811707, b: 1, a: 1}
+  m_Color: {r: 0.9528302, g: 0.5438323, b: 0.55192566, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -156,7 +156,7 @@ EdgeCollider2D:
   m_GameObject: {fileID: 8221834107138435572}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 5bf3dec05652e5b4183e9e29940e35d4, type: 2}
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
@@ -187,8 +187,8 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDrag: 0
   m_AngularDrag: 0
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
+  m_GravityScale: 0
+  m_Material: {fileID: 6200000, guid: 5bf3dec05652e5b4183e9e29940e35d4, type: 2}
   m_Interpolate: 1
   m_SleepingMode: 1
   m_CollisionDetection: 1
@@ -205,4 +205,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d6dc29231d961547af7d83bcf96679a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  acceleration: 10
+  deceleration: 15
+  airMultiplier: 0.4
+  runSpeed: 7
+  minHeight: 1
+  maxHeight: 2.5
+  gravityStrength: 50
+  playerRigidbody: {fileID: 8221834107138435573}
+  playerCollider: {fileID: 3091641312388821669}
   cameraTarget: {fileID: 8221834107076095284}

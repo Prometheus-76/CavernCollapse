@@ -123,6 +123,36 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &30463188
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 30463189}
+  m_Layer: 0
+  m_Name: Coins
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &30463189
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 30463188}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1564344537}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &56096956
 GameObject:
   m_ObjectHideFlags: 0
@@ -1142,8 +1172,8 @@ MonoBehaviour:
   m_AssetsPPU: 16
   m_RefResolutionX: 640
   m_RefResolutionY: 360
-  m_UpscaleRT: 1
-  m_PixelSnapping: 1
+  m_UpscaleRT: 0
+  m_PixelSnapping: 0
   m_CropFrameX: 0
   m_CropFrameY: 0
   m_StretchFill: 1
@@ -1804,6 +1834,36 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 694274875}
   m_CullTransparentMesh: 1
+--- !u!1 &702071644
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 702071645}
+  m_Layer: 0
+  m_Name: Doors
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &702071645
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 702071644}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1564344537}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &749956581
 GameObject:
   m_ObjectHideFlags: 0
@@ -2402,7 +2462,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stepProgress: 0
   maxTimePerFrame: 0.02
-  stageSize: {x: 5, y: 10}
+  stageSize: {x: 3, y: 4}
   roomSize: {x: 15, y: 12}
   nameAdjectives:
   - Mossy
@@ -2489,17 +2549,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f0295c2d8154d44e8629814f402f101, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
   objectParent: {fileID: 1564344537}
+  coinParent: {fileID: 30463189}
+  doorParent: {fileID: 702071645}
   playerPrefab: {fileID: 8221834107138435572, guid: cb3f6aaff786b744792b27effb7613bb, type: 3}
+  coinPrefab: {fileID: 976031940217776500, guid: cda829612039f8a4dbcb5a0c4934acd9, type: 3}
   entryDoor: {fileID: 2134015056369228760, guid: 4c42c37ab79ef2d49b6d528b7fffe2cd, type: 3}
   exitDoor: {fileID: 8500493417399330243, guid: 50cedfbe709416447b80bc9fe2cf4783, type: 3}
+  tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
+  solidCollider: {fileID: 1796991269}
   solidTilemap: {fileID: 1796991273}
   platformTilemap: {fileID: 1288394936}
   ladderTilemap: {fileID: 1782034446}
   spikeTilemap: {fileID: 243668099}
   decoTilemap: {fileID: 76303750}
-  solidCollider: {fileID: 1796991269}
 --- !u!114 &1227997540
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2575,10 +2638,10 @@ PlatformEffector2D:
   m_RotationalOffset: 0
   m_UseOneWay: 1
   m_UseOneWayGrouping: 1
-  m_SurfaceArc: 180
+  m_SurfaceArc: 160
   m_UseSideFriction: 0
   m_UseSideBounce: 0
-  m_SideArc: 1
+  m_SideArc: 0
 --- !u!19719996 &1288394934
 TilemapCollider2D:
   m_ObjectHideFlags: 0
@@ -2820,7 +2883,9 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 30463189}
+  - {fileID: 702071645}
   m_Father: {fileID: 1227997535}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

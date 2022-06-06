@@ -2774,6 +2774,31 @@ public class LevelGenerator : MonoBehaviour
     // Replaces placeholder tiles with prefabs where required, for things like coins
     IEnumerator SubstitutePrefabs()
     {
+        for (int y = 0; y < stageSize.y * roomSize.y; y++)
+        {
+            for (int x = 0; x < stageSize.x * roomSize.x; x++)
+            {
+                Vector2Int stagePos = GridToStage(x, y);
+                Vector2Int roomPos = GridToRoom(x, y);
+
+                // Replace the placeholder tile with the prefab
+                switch (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType)
+                {
+                    case BlockType.Coin:
+                        RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y);
+                        levelTileManager.PlaceSpecialTile(x, y, LevelTileManager.SpecialTile.Coin);
+                        break;
+                }
+
+                // Break for a new frame if required
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
+                    yield return null;
+                }
+            }
+        }
+
         yield return null;
         CompleteStep();
     }

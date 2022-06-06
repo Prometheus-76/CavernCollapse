@@ -9,24 +9,30 @@ public class LevelTileManager : MonoBehaviour
     public enum SpecialTile
     {
         Player,
+        Coin,
         EntryDoor,
         ExitDoor
     }
 
-    public TileCollection tileCollection;
-
+    [Header("Hierarchy")]
     public Transform objectParent;
+    public Transform coinParent;
+    public Transform doorParent;
+
+    [Header("Prefabs")]
     public GameObject playerPrefab;
+    public GameObject coinPrefab;
     public GameObject entryDoor;
     public GameObject exitDoor;
 
+    [Header("Tiles")]
+    public TileCollection tileCollection;
+    public CompositeCollider2D solidCollider;
     public Tilemap solidTilemap;
     public Tilemap platformTilemap;
     public Tilemap ladderTilemap;
     public Tilemap spikeTilemap;
     public Tilemap decoTilemap;
-
-    public CompositeCollider2D solidCollider;
 
     // Puts a tile in the correct tilemap, given an index and a type
     public void PlaceTileOfType(int x, int y, int tileIndex, BlockType tileType)
@@ -79,12 +85,16 @@ public class LevelTileManager : MonoBehaviour
                 instance = Instantiate<GameObject>(playerPrefab, objectParent);
                 instance.transform.position = new Vector3(x, y, 0f);
                 break;
+            case SpecialTile.Coin:
+                instance = Instantiate<GameObject>(coinPrefab, coinParent);
+                instance.transform.position = new Vector3(x, y, 0f);
+                break;
             case SpecialTile.EntryDoor:
-                instance = Instantiate<GameObject>(entryDoor, objectParent);
+                instance = Instantiate<GameObject>(entryDoor, doorParent);
                 instance.transform.position = new Vector3(x, y, 0f);
                 break;
             case SpecialTile.ExitDoor:
-                instance = Instantiate<GameObject>(exitDoor, objectParent);
+                instance = Instantiate<GameObject>(exitDoor, doorParent);
                 instance.transform.position = new Vector3(x, y, 0f);
                 break;
         }
