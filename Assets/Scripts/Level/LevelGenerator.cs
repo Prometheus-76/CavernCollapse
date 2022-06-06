@@ -77,9 +77,10 @@ public class LevelGenerator : MonoBehaviour
         RedirectSigns,
         VerifyPaths,
         FillEmptyAreas,
-        ConfigureStage,
+        AnalyseStage,
         SubstitutePrefabs,
         GenerateColliders,
+        FinalStageSetup,
         GenerationComplete
     }
 
@@ -230,7 +231,7 @@ public class LevelGenerator : MonoBehaviour
             case GenerationStep.VerifyPaths:
                 loadingScreen.SetStepText("Verifying paths...");
                 break;
-            case GenerationStep.ConfigureStage:
+            case GenerationStep.AnalyseStage:
                 loadingScreen.SetStepText("Counting coins...");
                 break;
             case GenerationStep.SubstitutePrefabs:
@@ -240,7 +241,10 @@ public class LevelGenerator : MonoBehaviour
                 loadingScreen.SetStepText("Pumping oxygen into caverns...");
                 break;
             case GenerationStep.GenerateColliders:
-                loadingScreen.SetStepText("Generating colliders...");
+                loadingScreen.SetStepText("Reinforcing walls...");
+                break;
+            case GenerationStep.FinalStageSetup:
+                loadingScreen.SetStepText("Opening doors...");
                 break;
             case GenerationStep.GenerationComplete:
                 loadingScreen.SetStepText("Entering caverns...");
@@ -467,10 +471,10 @@ public class LevelGenerator : MonoBehaviour
                         StartCoroutine(CreateStageName());
                         break;
                     case GenerationStep.LoadDataset:
-                        StartCoroutine(datasetAnalyser.LoadDataset(gameplayConfiguration.dataset));
+                        StartCoroutine(datasetAnalyser.LoadDataset(gameplayConfiguration.dataset, maxTimePerFrame));
                         break;
                     case GenerationStep.ConstructRuleset:
-                        StartCoroutine(datasetAnalyser.ConstructRuleset());
+                        StartCoroutine(datasetAnalyser.ConstructRuleset(maxTimePerFrame));
                         break;
                     case GenerationStep.AssembleRoomSequence:
                         StartCoroutine(AssembleRoomSequence());
@@ -535,8 +539,8 @@ public class LevelGenerator : MonoBehaviour
                     case GenerationStep.VerifyPaths:
                         StartCoroutine(VerifyPaths());
                         break;
-                    case GenerationStep.ConfigureStage:
-                        StartCoroutine(ConfigureStage());
+                    case GenerationStep.AnalyseStage:
+                        StartCoroutine(AnalyseStage());
                         break;
                     case GenerationStep.SubstitutePrefabs:
                         StartCoroutine(SubstitutePrefabs());
@@ -546,6 +550,9 @@ public class LevelGenerator : MonoBehaviour
                         break;
                     case GenerationStep.GenerateColliders:
                         StartCoroutine(GenerateColliders());
+                        break;
+                    case GenerationStep.FinalStageSetup:
+                        StartCoroutine(FinalStageSetup());
                         break;
                 }
             }
@@ -2278,10 +2285,6 @@ public class LevelGenerator : MonoBehaviour
                     spawnPosition = StageToGrid(criticalPath[0].x, criticalPath[0].y, x, y);
                     levelTileManager.PlaceSpecialTile(spawnPosition.x, spawnPosition.y, LevelTileManager.SpecialTile.EntryDoor);
 
-                    // Set camera starting position
-                    Vector3 spawnPointAsVec3 = new Vector3(spawnPosition.x, spawnPosition.y, 0f);
-                    cameraController.SetStartPosition(spawnPointAsVec3);
-
                     spawnPlaced = true;
                     break;
                 }
@@ -2729,8 +2732,9 @@ public class LevelGenerator : MonoBehaviour
 
     // Step 27 of level generation
     // Counts the coins and other stats of the level for configuration
-    IEnumerator ConfigureStage()
+    IEnumerator AnalyseStage()
     {
+        // Count coins in stage
         for (int y = 0; y < stageSize.y * roomSize.y; y++)
         {
             for (int x = 0; x < stageSize.x * roomSize.x; x++)
@@ -2760,6 +2764,21 @@ public class LevelGenerator : MonoBehaviour
     IEnumerator GenerateColliders()
     {
         levelTileManager.RecalculateAllComponents();
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 30 of level generation
+    // Final setup before moving into gameplay, spawns the player, sets camera position, etc
+    IEnumerator FinalStageSetup()
+    {
+        // Spawn the player
+        levelTileManager.PlaceSpecialTile(spawnPosition.x, spawnPosition.y, LevelTileManager.SpecialTile.Player);
+
+        // Set the start position of the camera
+        Vector3 spawnPositionVec3 = new Vector3(spawnPosition.x, spawnPosition.y, 0f);
+        cameraController.SetStartPosition(spawnPositionVec3);
 
         yield return null;
         CompleteStep();

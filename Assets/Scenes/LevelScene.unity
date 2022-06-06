@@ -209,7 +209,7 @@ GameObject:
   - component: {fileID: 76303748}
   - component: {fileID: 76303750}
   - component: {fileID: 76303749}
-  m_Layer: 6
+  m_Layer: 11
   m_Name: Deco
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1194,7 +1194,6 @@ MonoBehaviour:
   offset: {x: 5, y: 1, z: -2}
   followStrength: 5
   horizontalRestZone: 2
-  targetTransform: {fileID: 754483681}
 --- !u!1 &465397874
 GameObject:
   m_ObjectHideFlags: 0
@@ -1938,36 +1937,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 749956581}
   m_CullTransparentMesh: 1
---- !u!1 &754483680
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 754483681}
-  m_Layer: 0
-  m_Name: CameraTarget
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &754483681
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 754483680}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 37.5, y: 60, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &825019329
 GameObject:
   m_ObjectHideFlags: 0
@@ -2265,8 +2234,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f609d6608780064088e1f389b354201, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  filesPerFrame: 1
-  rulesPerFrame: 500
   tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
   gameplayConfiguration: {fileID: 11400000, guid: f8a02774c90ec804297f31bdcd35b1ba, type: 2}
   levelGenerator: {fileID: 1227997536}
@@ -2284,7 +2251,7 @@ Transform:
   - {fileID: 825019330}
   - {fileID: 1564344537}
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1227997536
 MonoBehaviour:
@@ -2384,6 +2351,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
+  objectParent: {fileID: 1564344537}
+  playerPrefab: {fileID: 8221834107138435572, guid: cb3f6aaff786b744792b27effb7613bb, type: 3}
   entryDoor: {fileID: 2134015056369228760, guid: 4c42c37ab79ef2d49b6d528b7fffe2cd, type: 3}
   exitDoor: {fileID: 8500493417399330243, guid: 50cedfbe709416447b80bc9fe2cf4783, type: 3}
   solidTilemap: {fileID: 1796991273}
@@ -2748,7 +2717,7 @@ Transform:
   - {fileID: 534583242}
   - {fileID: 1697298784}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1576899062
 MonoBehaviour:

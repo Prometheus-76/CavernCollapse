@@ -7,7 +7,7 @@ public class CameraController : MonoBehaviour
     public Vector3 offset;
     public float followStrength;
     public float horizontalRestZone;
-    public Transform targetTransform;
+    private Transform targetTransform;
 
     private Transform camTransform;
 
@@ -22,14 +22,22 @@ public class CameraController : MonoBehaviour
         camTransform.position = startPos + offset;
     }
 
+    public void SetTarget(Transform target)
+    {
+        targetTransform = target;
+    }
+
     // Update is called once per frame
     void Update()
     {
-        // Follow the player smoothly, and allow some movement on the x without immediately following
-        Vector3 fromPosition = camTransform.position;
-        Vector3 toPosition = targetTransform.position + offset;
-        toPosition.x = Mathf.Clamp(fromPosition.x, toPosition.x - horizontalRestZone, toPosition.x + horizontalRestZone);
-        Vector3 newPosition = Vector3.Lerp(fromPosition, toPosition, followStrength * Time.deltaTime);
-        camTransform.position = newPosition;
+        if (targetTransform != null)
+        {
+            // Follow the player smoothly, and allow some movement on the x without immediately following
+            Vector3 fromPosition = camTransform.position;
+            Vector3 toPosition = targetTransform.position + offset;
+            toPosition.x = Mathf.Clamp(fromPosition.x, toPosition.x - horizontalRestZone, toPosition.x + horizontalRestZone);
+            Vector3 newPosition = Vector3.Lerp(fromPosition, toPosition, followStrength * Time.deltaTime);
+            camTransform.position = newPosition;
+        }
     }
 }

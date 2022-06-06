@@ -8,11 +8,15 @@ public class LevelTileManager : MonoBehaviour
 {
     public enum SpecialTile
     {
+        Player,
         EntryDoor,
         ExitDoor
     }
 
     public TileCollection tileCollection;
+
+    public Transform objectParent;
+    public GameObject playerPrefab;
     public GameObject entryDoor;
     public GameObject exitDoor;
 
@@ -71,12 +75,16 @@ public class LevelTileManager : MonoBehaviour
 
         switch (tileType)
         {
+            case SpecialTile.Player:
+                instance = Instantiate<GameObject>(playerPrefab, objectParent);
+                instance.transform.position = new Vector3(x, y, 0f);
+                break;
             case SpecialTile.EntryDoor:
-                instance = Instantiate<GameObject>(entryDoor, transform);
+                instance = Instantiate<GameObject>(entryDoor, objectParent);
                 instance.transform.position = new Vector3(x, y, 0f);
                 break;
             case SpecialTile.ExitDoor:
-                instance = Instantiate<GameObject>(exitDoor, transform);
+                instance = Instantiate<GameObject>(exitDoor, objectParent);
                 instance.transform.position = new Vector3(x, y, 0f);
                 break;
         }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Diagnostics;
 
 // Loads in all samples within a dataset and constructs a ruleset for them, which can be queried by external script
 public class DatasetAnalyser : MonoBehaviour
@@ -12,10 +13,6 @@ public class DatasetAnalyser : MonoBehaviour
         public BlockType blockType;
     }
 
-    [Header("Configuration")]
-    public int filesPerFrame;
-    public int rulesPerFrame;
-
     [Header("Components")]
     public TileCollection tileCollection;
     public GameplayConfiguration gameplayConfiguration;
@@ -23,17 +20,18 @@ public class DatasetAnalyser : MonoBehaviour
 
     private SerialisedSample[] datasetSamples;
     private RuleData[,,] constructedRuleset; // Centre tile, neighbour space, neighbour tile
+    private Stopwatch stopwatch;
 
     // Start is called before the first frame update
     void Awake()
     {
         // Allocate ruleset memory
         constructedRuleset = new RuleData[tileCollection.tiles.Length, 8, tileCollection.tiles.Length];
+        stopwatch = new Stopwatch();
     }
 
-    // Step 2 of level generation
     // Loads in all samples from a dataset and stores within the datasetSamples array
-    public IEnumerator LoadDataset(int datasetIndex)
+    public IEnumerator LoadDataset(int datasetIndex, float maxTimePerFrame)
     {
         // How many samples are in this dataset?
         int sampleCount;
@@ -72,19 +70,20 @@ public class DatasetAnalyser : MonoBehaviour
             datasetSamples[sampleIndex - 1] = new SerialisedSample(JsonUtility.FromJson<SerialisedSample>(fileData));
 
             // Proceed to the next frame
-            processedSamples++;
             levelGenerator.stepProgress = (float)processedSamples / sampleCount;
-            if (processedSamples % filesPerFrame == 0)
+            if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+            {
+                stopwatch.Restart();
                 yield return null;
+            }
         }
 
         yield return null;
         levelGenerator.CompleteStep();
     }
 
-    // Step 3 of level generation
     // Analyses all tiles within the dataset samples and constructs a ruleset that can describe them all
-    public IEnumerator ConstructRuleset()
+    public IEnumerator ConstructRuleset(float maxTimePerFrame)
     {
         #region Reset Ruleset Data
 
@@ -173,10 +172,12 @@ public class DatasetAnalyser : MonoBehaviour
 
                         neighbourIndex++;
 
-                        tileRulesProcessed++;
                         levelGenerator.stepProgress = (float)tileRulesProcessed / totalRuleCount;
-                        if (tileRulesProcessed % rulesPerFrame == 0)
+                        if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                        {
+                            stopwatch.Restart();
                             yield return null;
+                        }
                     }
                 }
 
