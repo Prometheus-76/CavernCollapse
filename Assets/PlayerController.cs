@@ -4,10 +4,21 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public Vector2 movementInput;
-    public bool jumpHeld;
-    public bool jumpQueued;
+    public float acceleration;
+    public float deceleration;
+    public float runSpeed;
 
+    public float minHeight;
+    public float maxHeight;
+
+    public float gravityStrength;
+
+    private Vector2 movementInput;
+    private bool jumpHeld;
+    private bool jumpQueued;
+
+    public Rigidbody2D playerRigidbody;
+    public EdgeCollider2D playerCollider;
     public Transform cameraTarget;
 
     private CameraController cameraController;
@@ -42,7 +53,12 @@ public class PlayerController : MonoBehaviour
     // FixedUpdate is called once per physics iteration
     void FixedUpdate()
     {
-        
+        #region Horizontal Movement
+
+        // How fast the player should be moving after fully accelerating
+        float targetVelocity = movementInput.x * runSpeed;
+
+        #endregion
     }
 
     #region Input System

@@ -2412,9 +2412,9 @@ MonoBehaviour:
   - Luminous
   - Eroded
   - Echoing
-  - Dark
+  - Derelict
   - Somber
-  - Crystal
+  - Crystalline
   - Overgrown
   - Abyssal
   - Enigmatic
@@ -2423,7 +2423,7 @@ MonoBehaviour:
   - Ominous
   - Desolate
   - Shattered
-  - Broken
+  - Dilapidated
   - Dormant
   nameNouns:
   - Grotto
