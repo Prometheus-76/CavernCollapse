@@ -100,8 +100,8 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField, Tooltip("The target length of each frame during generation")] private float maxTimePerFrame;
     [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
     [SerializeField, Tooltip("The dimensions of each room (in tiles)")] private Vector2Int roomSize;
-    [SerializeField, Tooltip("The potential adjectives used in the first word of the level name")] private string[] firstWords;
-    [SerializeField, Tooltip("The potential nouns used in the second word of the level name")] private string[] secondWords;
+    [SerializeField, Tooltip("The potential adjectives used in the first word of the level name")] private string[] nameAdjectives;
+    [SerializeField, Tooltip("The potential nouns used in the second word of the level name")] private string[] nameNouns;
 
     [Header("Components")]
     public TileCollection tileCollection;
@@ -621,13 +621,13 @@ public class LevelGenerator : MonoBehaviour
     // Creates a name for the level using the existing list of adjectives and nouns
     IEnumerator CreateStageName()
     {
-        int firstWordChoice = Random.Range(0, firstWords.Length);
-        int secondWordChoice = Random.Range(0, secondWords.Length);
+        int firstWordChoice = Random.Range(0, nameAdjectives.Length);
+        int secondWordChoice = Random.Range(0, nameNouns.Length);
 
         string levelName = "";
-        levelName += firstWords[firstWordChoice];
+        levelName += nameAdjectives[firstWordChoice];
         levelName += " ";
-        levelName += secondWords[secondWordChoice];
+        levelName += nameNouns[secondWordChoice];
 
         gameplayUI.currentStageName = levelName;
 
