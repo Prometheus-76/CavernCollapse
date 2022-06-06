@@ -15,11 +15,13 @@ public class LoadingScreen : MonoBehaviour
     public Image bottomBarImage;
     public TextMeshProUGUI progressText;
     public TextMeshProUGUI stepFlavourText;
+    public TextMeshProUGUI tileCountText;
     public RectTransform topPanel;
     public RectTransform bottomPanel;
     public GameObject loadingScreen;
 
     private float mainProgress;
+    private int tileCount;
     private bool hasStartedTransition;
     private string stepDescription = "";
 
@@ -46,6 +48,7 @@ public class LoadingScreen : MonoBehaviour
         }
 
         stepFlavourText.text = "> " + stepDescription.ToLower();
+        tileCountText.text = "> " + tileCount.ToString("N0") + " tiles placed";
 
         // Play animation when generation has completed
         if (mainProgress >= 1f && hasStartedTransition == false) StartCoroutine(SeparatePanels());
@@ -59,6 +62,11 @@ public class LoadingScreen : MonoBehaviour
     public void SetStepText(string stepText)
     {
         stepDescription = stepText;
+    }
+
+    public void SetTileCount(int tileCount)
+    {
+        this.tileCount = tileCount;
     }
 
     // Separates the UI panels on the loading screen when the main generation progress reaches 100%

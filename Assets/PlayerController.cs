@@ -6,7 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     public Vector2 movementInput;
     public bool jumpHeld;
-    public bool jumpTriggered;
+    public bool jumpQueued;
 
     public Transform cameraTarget;
 
@@ -34,7 +34,7 @@ public class PlayerController : MonoBehaviour
 
         // Jumping
         jumpHeld = inputMaster.Player.Jump.ReadValue<float>() != 0f;
-        jumpTriggered = inputMaster.Player.Jump.triggered;
+        jumpQueued = inputMaster.Player.Jump.triggered ? true : jumpQueued; // True on the Update frame the button is pressed, false when triggered in FixedUpdate
 
         #endregion
     }

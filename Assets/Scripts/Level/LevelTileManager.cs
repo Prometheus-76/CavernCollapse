@@ -69,7 +69,7 @@ public class LevelTileManager : MonoBehaviour
     }
 
     // Places a special tile (it's actually just a prefab)
-    public void PlaceSpecialTile(int x, int y, SpecialTile tileType)
+    public void PlaceSpecialTile(float x, float y, SpecialTile tileType)
     {
         GameObject instance;
 

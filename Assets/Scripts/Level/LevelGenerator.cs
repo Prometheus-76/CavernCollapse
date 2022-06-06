@@ -89,6 +89,7 @@ public class LevelGenerator : MonoBehaviour
     [HideInInspector] public float stepProgress;
     private bool awaitingNewStep;
     private int seed;
+    private int tileCount;
     private Vector2Int spawnPosition;
     private Vector2Int exitPosition;
     private Stopwatch stopwatch;
@@ -152,6 +153,7 @@ public class LevelGenerator : MonoBehaviour
         mainProgress += (1f / (float)GenerationStep.GenerationComplete) * stepProgress;
 
         loadingScreen.SetMainProgress(mainProgress);
+        loadingScreen.SetTileCount(tileCount);
 
         // Update loading step flavour text
         switch (currentStep)
@@ -336,6 +338,8 @@ public class LevelGenerator : MonoBehaviour
         Vector2Int gridPosition = StageToGrid(stageX, stageY, roomX, roomY);
         levelTileManager.PlaceTileOfType(gridPosition.x, gridPosition.y, tileIndex, blockType);
         waveFunctionCollapse.SetTile(gridPosition.x, gridPosition.y, blockType, tileIndex);
+
+        tileCount++;
     }
 
     // Removes a tile from all tilemaps at this position, and resets tile within all grid that track tiles
@@ -607,6 +611,7 @@ public class LevelGenerator : MonoBehaviour
         
         criticalPath.Clear();
         totalCoins = 0;
+        tileCount = 0;
 
         yield return null;
         CompleteStep();
@@ -1246,16 +1251,17 @@ public class LevelGenerator : MonoBehaviour
 
                 cleanupIterations++;
                 stepProgress = (float)cleanupIterations / uncollapsedTiles;
-                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
-                {
-                    stopwatch.Restart();
-                    yield return null;
-                }
             }
             else
             {
                 // No positions left to collapse
                 break;
+            }
+
+            if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+            {
+                stopwatch.Restart();
+                yield return null;
             }
         }
 
@@ -2213,6 +2219,19 @@ public class LevelGenerator : MonoBehaviour
                 Vector2Int stagePos = GridToStage(x, y);
                 Vector2Int roomPos = GridToRoom(x, y);
 
+                // Ensure vines are capped correctly
+                if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType != BlockType.Vine)
+                {
+                    if (previousTile == BlockType.Vine)
+                    {
+                        Vector2Int aboveStagePos = GridToStage(x, y + 1);
+                        Vector2Int aboveRoomPos = GridToRoom(x, y + 1);
+
+                        RemoveTile(aboveStagePos.x, aboveStagePos.y, aboveRoomPos.x, aboveRoomPos.y);
+                        PlaceTile(aboveStagePos.x, aboveStagePos.y, aboveRoomPos.x, aboveRoomPos.y, 57, BlockType.Vine);
+                    }
+                }
+
                 // Delete floating vines
                 if (previousTile != BlockType.Solid && previousTile != BlockType.Vine)
                 {
@@ -2774,7 +2793,7 @@ public class LevelGenerator : MonoBehaviour
     IEnumerator FinalStageSetup()
     {
         // Spawn the player
-        levelTileManager.PlaceSpecialTile(spawnPosition.x, spawnPosition.y, LevelTileManager.SpecialTile.Player);
+        levelTileManager.PlaceSpecialTile(spawnPosition.x, spawnPosition.y - 0.5f, LevelTileManager.SpecialTile.Player);
 
         // Set the start position of the camera
         Vector3 spawnPositionVec3 = new Vector3(spawnPosition.x, spawnPosition.y, 0f);
