@@ -4,37 +4,50 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Horizontal Movement")]
     public float acceleration;
     public float deceleration;
     public float airMultiplier;
     public float runSpeed;
 
+    [Header("Jumping")]
     public float minJumpHeight;
     public float maxJumpHeight;
 
+    [Header("Dashing")]
+    public float dashForce;
+    public float dashSuspenseDuration;
+
+    [Header("Falling")]
     public float gravityStrength;
     public float terminalVelocity;
+    public float wallSlideVelocity;
 
-    // Config
+    [Header("Configuration")]
     public LayerMask groundLayers;
+    public LayerMask solidLayer;
     public LayerMask platformLayer;
     public Vector2 playerSize;
     
     // Timers
     private float groundCheckTimer;
+    private float dashSuspenseTimer;
     
     // States
     private bool isGrounded;
     private bool isStandingOnPlatform;
     private bool extendingJump;
+    private int wallContactState;
+    private bool dashAvailable;
 
     // Inputs
     private Vector2 movementInput;
     private bool jumpHeld;
     private bool jumpQueued;
     private bool dashQueued;
+    private bool facingRight;
 
-    // Components
+    [Header("Components")]
     public Transform playerTransform;
     public Rigidbody2D playerRigidbody;
     public EdgeCollider2D playerCollider;
@@ -54,6 +67,11 @@ public class PlayerController : MonoBehaviour
         cameraController.SetTarget(cameraTarget);
 
         fallthroughPlatforms = GameObject.FindWithTag("Platforms").GetComponent<FallthroughPlatform>();
+
+        // Starting state
+        facingRight = true;
+        wallContactState = 0;
+        dashAvailable = true;
 
         #region Set Collider Shape
 
@@ -85,6 +103,8 @@ public class PlayerController : MonoBehaviour
         // WASD movement
         movementInput.x = inputMaster.Player.Horizontal.ReadValue<float>();
         movementInput.y = inputMaster.Player.Vertical.ReadValue<float>();
+        if (movementInput.x < 0f) facingRight = false;
+        if (movementInput.x > 0f) facingRight = true;
 
         // Jumping
         jumpHeld = inputMaster.Player.Jump.ReadValue<float>() != 0f;
@@ -143,6 +163,40 @@ public class PlayerController : MonoBehaviour
 
         #endregion
 
+        #region Wall Sliding
+
+        wallContactState = 0;
+
+        // If falling and off the ground
+        if (isGrounded == false && playerRigidbody.velocity.y < 0f)
+        {
+            // Half-way up the player, just inside the left edge
+            Vector2 leftOrigin = Vector2.zero;
+            leftOrigin.x = playerTransform.position.x - (playerSize.x / 2f) + 0.01f;
+            leftOrigin.y = playerTransform.position.y + (playerSize.y / 2f);
+
+            // Half-way up the player, just inside the right edge
+            Vector2 rightOrigin = Vector2.zero;
+            rightOrigin.x = playerTransform.position.x + (playerSize.x / 2f) - 0.01f;
+            rightOrigin.y = playerTransform.position.y + (playerSize.y / 2f);
+
+            float rayLength = 0.1f;
+
+            if (Physics2D.Raycast(leftOrigin, Vector2.left, rayLength + 0.01f, solidLayer))
+            {
+                // Wall to the left of the player
+                wallContactState = -1;
+            }
+
+            if (Physics2D.Raycast(rightOrigin, Vector2.right, rayLength + 0.01f, solidLayer))
+            {
+                // Wall to the right of the player
+                wallContactState = 1;
+            }
+        }
+
+        #endregion
+
         #region Platform Interaction
 
         // If the player presses down + jump when on a platform
@@ -167,6 +221,7 @@ public class PlayerController : MonoBehaviour
         // How fast the player should be moving after fully accelerating
         Vector3 targetVelocity = movementInput.x * Vector3.right * runSpeed;
 
+        // How fast the player is currently moving horizontally
         Vector3 linearVelocity = playerRigidbody.velocity.x * Vector3.right;
 
         // Default values in case there is no movement input (fixes divide by zero)
@@ -185,11 +240,46 @@ public class PlayerController : MonoBehaviour
         // This should result in the most responsive turning while preserving deceleration and game feel
         Vector3 decelerationForce = (targetVelocity.normalized * projection) - linearVelocity;
 
-        // Calculate movement (acceleration + deceleration) force based on grounded state and 
+        // Calculate movement (acceleration + deceleration) force based on grounded state
         Vector3 movementForce = Vector3.zero;
         movementForce += accelerationForce * (isGrounded ? acceleration : acceleration * airMultiplier);
         movementForce += decelerationForce * (isGrounded ? deceleration : deceleration * airMultiplier);
+
+        // When dashing, ignore normal movement forces
+        if (dashSuspenseTimer > 0f) movementForce = Vector3.zero;
+
+        // Apply horizontal movement forces (acceleration/deceleration)
         playerRigidbody.AddForce(movementForce, ForceMode2D.Force);
+
+        #endregion
+
+        #region Dashing
+
+        // Restore dash when grounded
+        if (isGrounded) dashAvailable = true;
+
+        // Decrease dash suspense timer
+        if (dashSuspenseTimer > 0f)
+        {
+            dashSuspenseTimer -= Time.fixedDeltaTime;
+            if (dashSuspenseTimer < 0f) dashSuspenseTimer = 0f;
+        }
+
+        // Dash when the input is pressed
+        if (dashQueued && dashAvailable)
+        {
+            // Which direction should the player dash?
+            Vector2 dashDirection = movementInput;
+
+            // If the player is not holding any movement direction, dash in the direction we're currently facing
+            if (movementInput == Vector2.zero) dashDirection.x = facingRight ? 1f : -1f;
+
+            // Start the dash timer
+            dashSuspenseTimer = dashSuspenseDuration;
+
+            // Apply the dash force
+            Dash(dashDirection);
+        }
 
         #endregion
 
@@ -206,10 +296,10 @@ public class PlayerController : MonoBehaviour
 
         #endregion
 
-        #region Gravity + Air Resistance
+        #region Gravity + Terminal Velocity
 
         // Only apply when off ground
-        if (isGrounded == false)
+        if (isGrounded == false && dashSuspenseTimer <= 0f)
         {
             // When the player is extending a jump, keep their gravity lowered so they can reach the max height
             float currentGravity = gravityStrength;
@@ -218,8 +308,11 @@ public class PlayerController : MonoBehaviour
             // When to apply air resistance
             if (playerRigidbody.velocity.y < 0f)
             {
-                // Coefficient of drag is equal to 2x gravity divded by terminal velocity squared
-                float dragCoefficient = (2f * currentGravity) / (terminalVelocity * terminalVelocity);
+                // Fall at terminal velocity or wall sliding speed based on wall contact
+                float fallSpeed = (wallContactState != 0) ? wallSlideVelocity : terminalVelocity;
+
+                // Coefficient of drag is equal to 2x gravity divded by falling speed squared
+                float dragCoefficient = (2f * currentGravity) / (fallSpeed * fallSpeed);
 
                 // Calculate resistance counter-force from drag coefficient and current velocity
                 float airResistance = (dragCoefficient / 2f) * (playerRigidbody.velocity.y * playerRigidbody.velocity.y);
@@ -239,6 +332,7 @@ public class PlayerController : MonoBehaviour
         dashQueued = false;
     }
 
+    // Do a normal jump
     void Jump()
     {
         if (playerRigidbody.velocity.y < 0f)
@@ -258,6 +352,21 @@ public class PlayerController : MonoBehaviour
         groundCheckTimer = 0.1f;
         isGrounded = false;
         isStandingOnPlatform = false;
+    }
+
+    // Dash in a given direction
+    void Dash(Vector2 direction)
+    {
+        dashAvailable = false;
+
+        // Nullify previous velocity
+        playerRigidbody.AddForce(-playerRigidbody.velocity, ForceMode2D.Impulse);
+
+        // Apply dashing force
+        playerRigidbody.AddForce(direction.normalized * dashForce, ForceMode2D.Impulse);
+
+        // Stop player from holding jump and dashing to make super jump upwards
+        extendingJump = false;
     }
 
     #region Input System

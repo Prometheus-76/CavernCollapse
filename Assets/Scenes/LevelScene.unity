@@ -2462,7 +2462,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stepProgress: 0
   maxTimePerFrame: 0.02
-  stageSize: {x: 4, y: 6}
+  stageSize: {x: 5, y: 10}
   roomSize: {x: 15, y: 12}
   nameAdjectives:
   - Mossy
