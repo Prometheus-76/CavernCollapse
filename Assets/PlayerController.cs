@@ -13,21 +13,28 @@ public class PlayerController : MonoBehaviour
     public float maxJumpHeight;
 
     public float gravityStrength;
+    public float terminalVelocity;
 
+    // Config
     public LayerMask groundLayers;
     public LayerMask platformLayer;
-    public float playerWidth;
-
+    public Vector2 playerSize;
+    
+    // Timers
     private float groundCheckTimer;
+    
+    // States
     private bool isGrounded;
     private bool isStandingOnPlatform;
     private bool extendingJump;
 
+    // Inputs
     private Vector2 movementInput;
     private bool jumpHeld;
     private bool jumpQueued;
     private bool dashQueued;
 
+    // Components
     public Transform playerTransform;
     public Rigidbody2D playerRigidbody;
     public EdgeCollider2D playerCollider;
@@ -47,6 +54,27 @@ public class PlayerController : MonoBehaviour
         cameraController.SetTarget(cameraTarget);
 
         fallthroughPlatforms = GameObject.FindWithTag("Platforms").GetComponent<FallthroughPlatform>();
+
+        #region Set Collider Shape
+
+        // I'm using an edge collider for this because it stops the player getting caught on intersection between tiles
+
+        playerCollider.points[0].x = -playerSize.x / 2f;
+        playerCollider.points[0].y = 0f;
+
+        playerCollider.points[1].x = -playerSize.x / 2f;
+        playerCollider.points[1].y = playerSize.y;
+
+        playerCollider.points[2].x = playerSize.x / 2f;
+        playerCollider.points[2].y = playerSize.y;
+
+        playerCollider.points[3].x = playerSize.x / 2f;
+        playerCollider.points[3].y = 0f;
+
+        playerCollider.points[4].x = -playerSize.x / 2f;
+        playerCollider.points[4].y = 0f;
+
+        #endregion
     }
 
     // Update is called once per frame
@@ -79,21 +107,22 @@ public class PlayerController : MonoBehaviour
             int groundHits = 0;
             int platformHits = 0;
             Vector2 rayOrigin = Vector2.zero;
+            rayOrigin.y = playerTransform.position.y + 0.01f;
             float rayLength = 0.1f;
         
             // Raycast down from the bottom edge of the player hitbox
             for (int rayNumber = 0; rayNumber <= 8; rayNumber++)
             {
-                rayOrigin.x = playerTransform.position.x - (playerWidth / 2f) + (playerWidth * (rayNumber / 8f));
-                rayOrigin.y = playerTransform.position.y + 0.1f;
+                // Move along the bottom of the player from left to right
+                rayOrigin.x = playerTransform.position.x - (playerSize.x / 2f) + (playerSize.x * (rayNumber / 8f));
 
-                if (Physics2D.Raycast(rayOrigin, Vector2.down, rayLength + 0.1f, groundLayers))
+                if (Physics2D.Raycast(rayOrigin, Vector2.down, rayLength + 0.01f, groundLayers))
                 {
                     // Ground layer hit by this ray
                     groundHits++;
 
                     // Check if the thing that was hit is a platform
-                    if (Physics2D.Raycast(rayOrigin, Vector2.down, rayLength + 0.1f, platformLayer))
+                    if (Physics2D.Raycast(rayOrigin, Vector2.down, rayLength + 0.01f, platformLayer))
                     {
                         platformHits++;
                     }
@@ -170,26 +199,42 @@ public class PlayerController : MonoBehaviour
         if (jumpHeld == false || isGrounded || playerRigidbody.velocity.y < 0f) extendingJump = false;
 
         // Start new jump
-        if (jumpQueued)
+        if (jumpQueued && isGrounded)
         {
             Jump();
         }
 
         #endregion
 
-        #region Gravity
+        #region Gravity + Air Resistance
 
+        // Only apply when off ground
         if (isGrounded == false)
         {
             // When the player is extending a jump, keep their gravity lowered so they can reach the max height
             float currentGravity = gravityStrength;
             currentGravity *= (extendingJump) ? (minJumpHeight / maxJumpHeight) : 1f;
 
+            // When to apply air resistance
+            if (playerRigidbody.velocity.y < 0f)
+            {
+                // Coefficient of drag is equal to 2x gravity divded by terminal velocity squared
+                float dragCoefficient = (2f * currentGravity) / (terminalVelocity * terminalVelocity);
+
+                // Calculate resistance counter-force from drag coefficient and current velocity
+                float airResistance = (dragCoefficient / 2f) * (playerRigidbody.velocity.y * playerRigidbody.velocity.y);
+
+                // Apply air resistance force
+                playerRigidbody.AddForce(Vector3.up * airResistance, ForceMode2D.Force);
+            }
+
+            // Apply gravity force
             playerRigidbody.AddForce(Vector3.down * currentGravity, ForceMode2D.Force);
         }
 
         #endregion
 
+        // Reset queued inputs
         jumpQueued = false;
         dashQueued = false;
     }

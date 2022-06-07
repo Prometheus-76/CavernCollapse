@@ -2462,7 +2462,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stepProgress: 0
   maxTimePerFrame: 0.02
-  stageSize: {x: 3, y: 4}
+  stageSize: {x: 4, y: 6}
   roomSize: {x: 15, y: 12}
   nameAdjectives:
   - Mossy
@@ -2662,7 +2662,7 @@ MonoBehaviour:
   defaultWithoutPlayer:
     serializedVersion: 2
     m_Bits: 4087
-  toggleOffDuration: 0.2
+  toggleOffDuration: 0.15
 --- !u!19719996 &1288394934
 TilemapCollider2D:
   m_ObjectHideFlags: 0

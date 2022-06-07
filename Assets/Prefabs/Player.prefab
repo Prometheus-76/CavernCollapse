@@ -206,19 +206,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   acceleration: 10
-  deceleration: 15
+  deceleration: 20
   airMultiplier: 0.4
   runSpeed: 7
   minJumpHeight: 1
   maxJumpHeight: 2.5
-  gravityStrength: 50
+  gravityStrength: 40
+  terminalVelocity: 20
   groundLayers:
     serializedVersion: 2
     m_Bits: 192
   platformLayer:
     serializedVersion: 2
     m_Bits: 128
-  playerWidth: 0.5
+  playerSize: {x: 0.5, y: 0.5}
   playerTransform: {fileID: 8221834107138435568}
   playerRigidbody: {fileID: 8221834107138435573}
   playerCollider: {fileID: 3091641312388821669}
