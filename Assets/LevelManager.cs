@@ -42,6 +42,7 @@ public class LevelManager : MonoBehaviour
         remainingTime = collapseTime;
 
         currentStageNumber = currentAttempt.stagesCleared + 1;
+        currentAttempt.NewStage();
         levelGenerated = true;
     }
 
@@ -52,5 +53,11 @@ public class LevelManager : MonoBehaviour
 
         if (currentHealth >= startingHealth) currentAttempt.flawlessStages += 1;
         if (coinsCollected >= totalCoins) currentAttempt.fullCoinStages += 1;
+    }
+
+    public void CollectCoin()
+    {
+        // Add the coin to the collected count
+        currentAttempt.coinsCollectedStage++;
     }
 }

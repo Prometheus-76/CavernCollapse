@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CurrentAttempt
   m_EditorClassIdentifier: 
   currentHealth: 3
-  coinsCollectedStage: 0
+  coinsCollectedStage: 8
   stagesCleared: 0
   coinsCollectedTotal: 0
   flawlessStages: 0

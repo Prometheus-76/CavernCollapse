@@ -118,7 +118,7 @@ public class MenuManager : MonoBehaviour
 
     public void LoadGame()
     {
-        currentAttempt.FreshStart();
+        currentAttempt.NewAttempt();
         SceneManager.LoadScene(2);
     }
 

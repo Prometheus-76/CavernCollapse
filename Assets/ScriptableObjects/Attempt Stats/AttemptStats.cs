@@ -16,7 +16,7 @@ public class AttemptStats : ScriptableObject
     public int fullCoinStages = 0;
     public int currentScore = 0;
 
-    public void FreshStart()
+    public void NewAttempt()
     {
         currentHealth = 3;
         coinsCollectedStage = 0;
@@ -26,5 +26,10 @@ public class AttemptStats : ScriptableObject
         flawlessStages = 0;
         fullCoinStages = 0;
         currentScore = 0;
+    }
+
+    public void NewStage()
+    {
+        coinsCollectedStage = 0;
     }
 }

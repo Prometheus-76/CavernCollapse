@@ -2412,7 +2412,7 @@ GameObject:
   - component: {fileID: 1227997538}
   m_Layer: 0
   m_Name: Level
-  m_TagString: Untagged
+  m_TagString: Level
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2462,7 +2462,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stepProgress: 0
   maxTimePerFrame: 0.02
-  stageSize: {x: 5, y: 10}
+  stageSize: {x: 2, y: 2}
   roomSize: {x: 15, y: 12}
   nameAdjectives:
   - Mossy
