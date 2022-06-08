@@ -21,12 +21,18 @@ public class PlayerController : MonoBehaviour
     [Header("Falling")]
     public float gravityStrength;
     public float terminalVelocity;
-    public float wallSlideVelocity;
+
+    [Header("Sprites")]
+    public Sprite walkSprite;
+    public Sprite jumpSprite;
+    public Sprite fallSprite;
+    public Sprite blinkSprite;
 
     [Header("Configuration")]
     public LayerMask groundLayers;
-    public LayerMask solidLayer;
     public LayerMask platformLayer;
+    public LayerMask spikeLayer;
+    public AttemptStats currentAttempt;
     public Vector2 playerSize;
     
     // Timers
@@ -37,7 +43,6 @@ public class PlayerController : MonoBehaviour
     private bool isGrounded;
     private bool isStandingOnPlatform;
     private bool extendingJump;
-    private int wallContactState;
     private bool dashAvailable;
 
     // Inputs
@@ -46,11 +51,13 @@ public class PlayerController : MonoBehaviour
     private bool jumpQueued;
     private bool dashQueued;
     private bool facingRight;
+    private Vector3 respawnCheckpoint;
 
     [Header("Components")]
     public Transform playerTransform;
     public Rigidbody2D playerRigidbody;
     public EdgeCollider2D playerCollider;
+    public SpriteRenderer playerSprite;
     public Transform cameraTarget;
 
     private CameraController cameraController;
@@ -70,7 +77,6 @@ public class PlayerController : MonoBehaviour
 
         // Starting state
         facingRight = true;
-        wallContactState = 0;
         dashAvailable = true;
 
         #region Set Collider Shape
@@ -114,11 +120,52 @@ public class PlayerController : MonoBehaviour
         dashQueued = inputMaster.Player.Dash.triggered ? true : dashQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
 
         #endregion
+
+        #region Animations
+
+        // Face the direction of our last movement input
+        playerSprite.flipX = (facingRight == false);
+
+        // Determine which sprite to show
+        if (dashSuspenseTimer > 0f) playerSprite.sprite = blinkSprite;
+        else if (playerRigidbody.velocity.y > 0.1f) playerSprite.sprite = jumpSprite;
+        else if (playerRigidbody.velocity.y < -2f) playerSprite.sprite = fallSprite;
+        else playerSprite.sprite = walkSprite;
+
+        #endregion
     }
 
     // FixedUpdate is called once per physics iteration
     void FixedUpdate()
     {
+        #region Taking Damage
+
+        // If the player is currently alive
+        if (currentAttempt.currentHealth > 0)
+        {
+            Vector2 boxCentre = playerTransform.position;
+            boxCentre.y += playerSize.y / 2f;
+
+            // If the player is touching a spike
+            if (Physics2D.OverlapBox(boxCentre, playerSize * 0.9f, 0f, spikeLayer))
+            {
+                currentAttempt.currentHealth -= 1;
+
+                if (currentAttempt.currentHealth <= 0)
+                {
+                    // Player is dead
+                    GameOver();
+                }
+                else
+                {
+                    // Player lost a heart
+                    Respawn();
+                }
+            }
+        }
+
+        #endregion
+
         #region Ground Detection
 
         if (groundCheckTimer <= 0f)
@@ -153,46 +200,24 @@ public class PlayerController : MonoBehaviour
             isGrounded = (groundHits > 1);
             isStandingOnPlatform = (platformHits > 0);
             groundCheckTimer = 0f;
+
+            // If the player is in a safe space, save the position as a respawn point
+            Vector3 boxCentre = playerTransform.position + (Vector3.up * (playerSize.y / 2f));
+            Vector2 boxSize = playerSize;
+            boxSize.x += 2f;
+
+            // If the player is fully on the ground and there are no spikes nearby
+            if (groundHits >= 9 && Physics2D.OverlapBox(boxCentre, boxSize, 0f, spikeLayer) == false)
+            {
+                respawnCheckpoint = playerTransform.position;
+            }
+
         }
         else
         {
             // Continue timer
             groundCheckTimer -= Time.fixedDeltaTime;
             if (groundCheckTimer < 0f) groundCheckTimer = 0f;
-        }
-
-        #endregion
-
-        #region Wall Sliding
-
-        wallContactState = 0;
-
-        // If falling and off the ground
-        if (isGrounded == false && playerRigidbody.velocity.y < 0f)
-        {
-            // Half-way up the player, just inside the left edge
-            Vector2 leftOrigin = Vector2.zero;
-            leftOrigin.x = playerTransform.position.x - (playerSize.x / 2f) + 0.01f;
-            leftOrigin.y = playerTransform.position.y + (playerSize.y / 2f);
-
-            // Half-way up the player, just inside the right edge
-            Vector2 rightOrigin = Vector2.zero;
-            rightOrigin.x = playerTransform.position.x + (playerSize.x / 2f) - 0.01f;
-            rightOrigin.y = playerTransform.position.y + (playerSize.y / 2f);
-
-            float rayLength = 0.1f;
-
-            if (Physics2D.Raycast(leftOrigin, Vector2.left, rayLength + 0.01f, solidLayer))
-            {
-                // Wall to the left of the player
-                wallContactState = -1;
-            }
-
-            if (Physics2D.Raycast(rightOrigin, Vector2.right, rayLength + 0.01f, solidLayer))
-            {
-                // Wall to the right of the player
-                wallContactState = 1;
-            }
         }
 
         #endregion
@@ -308,11 +333,8 @@ public class PlayerController : MonoBehaviour
             // When to apply air resistance
             if (playerRigidbody.velocity.y < 0f)
             {
-                // Fall at terminal velocity or wall sliding speed based on wall contact
-                float fallSpeed = (wallContactState != 0) ? wallSlideVelocity : terminalVelocity;
-
                 // Coefficient of drag is equal to 2x gravity divded by falling speed squared
-                float dragCoefficient = (2f * currentGravity) / (fallSpeed * fallSpeed);
+                float dragCoefficient = (2f * currentGravity) / (terminalVelocity * terminalVelocity);
 
                 // Calculate resistance counter-force from drag coefficient and current velocity
                 float airResistance = (dragCoefficient / 2f) * (playerRigidbody.velocity.y * playerRigidbody.velocity.y);
@@ -367,6 +389,18 @@ public class PlayerController : MonoBehaviour
 
         // Stop player from holding jump and dashing to make super jump upwards
         extendingJump = false;
+    }
+
+    void GameOver()
+    {
+        Debug.Log("Game Over!");
+    }
+
+    void Respawn()
+    {
+        // Go back to the last safe position with no velocity
+        playerTransform.position = respawnCheckpoint;
+        playerRigidbody.AddForce(-playerRigidbody.velocity, ForceMode2D.Impulse);
     }
 
     #region Input System

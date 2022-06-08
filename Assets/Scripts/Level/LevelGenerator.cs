@@ -114,6 +114,8 @@ public class LevelGenerator : MonoBehaviour
     public CameraController cameraController;
     public GameplayUI gameplayUI;
     public LevelManager levelManager;
+    public ParticleSystem ambientParticles;
+    public Transform stageMask;
 
     #region Private
 
@@ -2814,7 +2816,7 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 30 of level generation
-    // Final setup before moving into gameplay, spawns the player, sets camera position, etc
+    // Final setup before moving into gameplay, spawns the player, sets camera position, masks particles, etc
     IEnumerator FinalStageSetup()
     {
         // Spawn the player
@@ -2823,6 +2825,30 @@ public class LevelGenerator : MonoBehaviour
         // Set the start position of the camera
         Vector3 spawnPositionVec3 = new Vector3(spawnPosition.x, spawnPosition.y, 0f);
         cameraController.SetStartPosition(spawnPositionVec3);
+
+        // Configure ambient particle system
+        ParticleSystem.ShapeModule shape = ambientParticles.shape;
+        ParticleSystem.MainModule main = ambientParticles.main;
+        ParticleSystem.EmissionModule emission = ambientParticles.emission;
+
+        // Set the bounding mask of the stage for particles and other effects
+        Vector3 particlesBoundingPos = Vector3.zero;
+        particlesBoundingPos.x = ((roomSize.x * stageSize.x) / 2f) - 0.5f;
+        particlesBoundingPos.y = ((roomSize.y * stageSize.y) / 2f) - 0.5f;
+
+        Vector3 particlesBoundingScale = Vector3.one;
+        particlesBoundingScale.x = (roomSize.x * stageSize.x);
+        particlesBoundingScale.y = (roomSize.y * stageSize.y);
+
+        // Set the size of the particle system to fit the stage
+        stageMask.localPosition = particlesBoundingPos;
+        stageMask.localScale = particlesBoundingScale;
+        shape.position = particlesBoundingPos;
+        shape.scale = particlesBoundingScale;
+
+        // Set the density of the particle system based on the stage volume
+        main.maxParticles = Mathf.CeilToInt((stageSize.x * stageSize.y * roomSize.x * roomSize.y) / 8f);
+        emission.rateOverTime = Mathf.CeilToInt(main.maxParticles / 8f);
 
         yield return null;
         CompleteStep();

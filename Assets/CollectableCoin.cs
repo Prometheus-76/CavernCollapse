@@ -50,7 +50,7 @@ public class CollectableCoin : MonoBehaviour
                     if (playerTransform == null) playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
 
                     // Check there is no wall separating the coin from the player
-                    if (Physics2D.Linecast(coinTransform.position, playerTransform.position, solidLayer) == false)
+                    if (Physics2D.Linecast(coinTransform.position, playerTransform.position + (Vector3.up * 0.2f), solidLayer) == false)
                     {
                         isAttracted = true;
                     }
