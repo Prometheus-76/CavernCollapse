@@ -344,6 +344,7 @@ MonoBehaviour:
   maxJumpHeight: 2.5
   dashForce: 15
   dashSuspenseDuration: 0.15
+  dashCooldown: 0.3
   gravityStrength: 50
   terminalVelocity: 30
   walkSprite: {fileID: 247834126454874297, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
@@ -366,6 +367,7 @@ MonoBehaviour:
   playerCollider: {fileID: 3091641312388821669}
   playerSprite: {fileID: 4324473466806582936}
   cameraTarget: {fileID: 8221834107076095284}
+  playerTrail: {fileID: 62749924385300367}
 --- !u!330 &-7248388658191451664
 ParticleSystemForceField:
   m_ObjectHideFlags: 0
@@ -543,7 +545,7 @@ ParticleSystemForceField:
     m_GravityCurve:
       serializedVersion: 2
       minMaxState: 0
-      scalar: -0.05
+      scalar: -0.1
       minScalar: 1
       maxCurve:
         serializedVersion: 2

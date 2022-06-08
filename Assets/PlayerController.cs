@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     [Header("Dashing")]
     public float dashForce;
     public float dashSuspenseDuration;
+    public float dashCooldown;
 
     [Header("Falling")]
     public float gravityStrength;
@@ -38,6 +39,7 @@ public class PlayerController : MonoBehaviour
     // Timers
     private float groundCheckTimer;
     private float dashSuspenseTimer;
+    private float dashCooldownTimer;
     
     // States
     private bool isGrounded;
@@ -59,6 +61,7 @@ public class PlayerController : MonoBehaviour
     public EdgeCollider2D playerCollider;
     public SpriteRenderer playerSprite;
     public Transform cameraTarget;
+    public TrailRenderer playerTrail;
 
     private CameraController cameraController;
     private FallthroughPlatform fallthroughPlatforms;
@@ -281,13 +284,20 @@ public class PlayerController : MonoBehaviour
         #region Dashing
 
         // Restore dash when grounded
-        if (isGrounded) dashAvailable = true;
+        if (isGrounded && dashCooldownTimer <= 0f) dashAvailable = true;
 
         // Decrease dash suspense timer
         if (dashSuspenseTimer > 0f)
         {
             dashSuspenseTimer -= Time.fixedDeltaTime;
             if (dashSuspenseTimer < 0f) dashSuspenseTimer = 0f;
+        }
+
+        // Decrease dash cooldown timer
+        if (dashCooldownTimer > 0f)
+        {
+            dashCooldownTimer -= Time.fixedDeltaTime;
+            if (dashCooldownTimer < 0f) dashCooldownTimer = 0f;
         }
 
         // Dash when the input is pressed
@@ -380,6 +390,7 @@ public class PlayerController : MonoBehaviour
     void Dash(Vector2 direction)
     {
         dashAvailable = false;
+        dashCooldownTimer = dashCooldown;
 
         // Nullify previous velocity
         playerRigidbody.AddForce(-playerRigidbody.velocity, ForceMode2D.Impulse);
@@ -401,6 +412,8 @@ public class PlayerController : MonoBehaviour
         // Go back to the last safe position with no velocity
         playerTransform.position = respawnCheckpoint;
         playerRigidbody.AddForce(-playerRigidbody.velocity, ForceMode2D.Impulse);
+
+        playerTrail.Clear();
     }
 
     #region Input System
