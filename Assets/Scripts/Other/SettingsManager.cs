@@ -29,9 +29,6 @@ public class SettingsManager : MonoBehaviour
 
         float scaledSound = (gameSettings.soundVolume > 0) ? Mathf.Log10(Mathf.Clamp(gameSettings.soundVolume / 10f, 0.001f, 1f)) * 20f : -80f;
         audioMixer.SetFloat("SoundVolume", scaledSound);
-
-        // FPS Limit
-        Application.targetFrameRate = gameSettings.targetFPS;
     }
 
     public void LoadSettings()

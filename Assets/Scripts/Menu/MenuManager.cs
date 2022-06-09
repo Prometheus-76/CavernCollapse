@@ -18,7 +18,6 @@ public class MenuManager : MonoBehaviour
     // Options menu
     public MenuButton musicButton;
     public MenuButton soundButton;
-    public MenuButton postProcessButton;
 
     // Play menu
     public MenuButton styleButton;
@@ -39,6 +38,7 @@ public class MenuManager : MonoBehaviour
     public GameplayConfiguration gameplayConfiguration;
     public AttemptStats currentAttempt;
     private int datasetStyle;
+    private int difficulty;
 
     void Start()
     {
@@ -49,6 +49,7 @@ public class MenuManager : MonoBehaviour
 
         // Default gameplay config
         datasetStyle = 0;
+        difficulty = 0;
         UpdateGameplayConfiguration();
     }
 
@@ -169,10 +170,21 @@ public class MenuManager : MonoBehaviour
         UpdateGameplayConfiguration();
     }
 
+    // Cycles through difficulty options
+    public void IncrementDifficulty()
+    {
+        difficulty += 1;
+        difficulty %= 3;
+
+        menuAudio.PlaySound(MenuAudio.MenuSounds.Toggle);
+        UpdateGameplayConfiguration();
+    }
+
     // Updates gameplay config ScriptableObject
     void UpdateGameplayConfiguration()
     {
         gameplayConfiguration.dataset = datasetStyle;
+        gameplayConfiguration.difficulty = (GameplayConfiguration.DifficultyOptions)difficulty;
 
         UpdatePlayMenuUI();
     }
@@ -181,6 +193,7 @@ public class MenuManager : MonoBehaviour
     void UpdatePlayMenuUI()
     {
         styleButton.SetDefaultText("style: " + (gameplayConfiguration.dataset == 0 ? "default" : "custom " + gameplayConfiguration.dataset.ToString()));
+        difficultyButton.SetDefaultText("difficulty: " + gameplayConfiguration.difficulty.ToString());
     }
 
     #endregion
