@@ -18,7 +18,7 @@ public class AttemptStats : ScriptableObject
 
     public void NewAttempt()
     {
-        currentHealth = 3;
+        currentHealth = 4;
         coinsCollectedStage = 0;
 
         stagesCleared = 0;

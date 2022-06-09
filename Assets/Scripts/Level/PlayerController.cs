@@ -183,7 +183,7 @@ public class PlayerController : MonoBehaviour
                 if (currentAttempt.currentHealth <= 0)
                 {
                     // Player is dead
-                    GameOver();
+                    Die();
                 }
                 else
                 {
@@ -554,11 +554,13 @@ public class PlayerController : MonoBehaviour
         isStandingOnPlatform = false;
     }
 
-    void GameOver()
+    // When the player is out of lives
+    void Die()
     {
         Debug.Log("Game Over!");
     }
 
+    // When the player has extra lives to try again
     void Respawn()
     {
         // Go back to the last safe position with no velocity

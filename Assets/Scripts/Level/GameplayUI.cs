@@ -28,13 +28,13 @@ public class GameplayUI : MonoBehaviour
     void Update()
     {
         // Show heart sprites
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
         {
             heartSprites[i].enabled = (i < currentAttempt.currentHealth);
         }
 
         // Update stage details
-        stageNumberText.text = "Stage " + (currentAttempt.stagesCleared + 1);
+        stageNumberText.text = "Stage " + (currentAttempt.stagesCleared + 1) + " of 5";
         stageNameText.text = currentStageName;
 
         // Update coin counter

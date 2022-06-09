@@ -457,7 +457,7 @@ public class LevelGenerator : MonoBehaviour
         if (MusicPlayer.GetInstance() != null)
             MusicPlayer.GetInstance().CrossFade(2);
 
-        levelManager.StageBegin(3, totalCoins);
+        levelManager.StageBegin(4, totalCoins);
     }
 
     // Responsible for calling coroutines sequentially to generate the level asynchronously
