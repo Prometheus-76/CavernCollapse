@@ -318,6 +318,7 @@ public class PlayerController : MonoBehaviour
                 // Apply a small bump up force when reaching the top of the ladder
                 playerRigidbody.AddForce(Vector2.up * ladderBounceForce, ForceMode2D.Impulse);
                 isConnectedToLadder = false;
+                climbHeldAndValid = false;
             }
 
             // Disconnect when pressing down and no ladder below
@@ -327,6 +328,7 @@ public class PlayerController : MonoBehaviour
             {
                 // Disconnect the player from this ladder
                 isConnectedToLadder = false;
+                climbHeldAndValid = false;
             }
 
             // Disconnect when not holding the climb button
