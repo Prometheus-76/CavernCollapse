@@ -217,7 +217,7 @@
                     "interactions": ""
                 },
                 {
-                    "name": "LadderConnect",
+                    "name": "Climb",
                     "type": "Button",
                     "id": "804069d4-d144-4910-86e4-8ca5a8a198d7",
                     "expectedControlType": "Button",
@@ -493,33 +493,44 @@
                 {
                     "name": "",
                     "id": "15c0dd2a-1a10-4310-9f78-df44db3f98cb",
-                    "path": "<Gamepad>/dpad/up",
+                    "path": "<Gamepad>/leftTrigger",
                     "interactions": "",
                     "processors": "",
                     "groups": "Controller",
-                    "action": "LadderConnect",
+                    "action": "Climb",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
                     "id": "ce4b8f49-4a16-4ce6-b7ae-71809893c487",
-                    "path": "<Keyboard>/w",
+                    "path": "<Keyboard>/z",
                     "interactions": "",
                     "processors": "",
                     "groups": "KBM",
-                    "action": "LadderConnect",
+                    "action": "Climb",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
                     "id": "e8123d92-ba83-4166-acab-cca484314b5e",
-                    "path": "<Keyboard>/upArrow",
+                    "path": "<Keyboard>/f",
                     "interactions": "",
                     "processors": "",
                     "groups": "KBM",
-                    "action": "LadderConnect",
+                    "action": "Climb",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b433e4af-3adf-4561-8567-4f869419227e",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Controller",
+                    "action": "Climb",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

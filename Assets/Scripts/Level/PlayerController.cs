@@ -62,7 +62,8 @@ public class PlayerController : MonoBehaviour
     private bool jumpQueued;
     private bool dashQueued;
     private bool facingRight;
-    private bool climbQueued;
+    private bool climbHeldAndValid;
+    private float lastClimbValue;
 
     [Header("Components")]
     public Transform playerTransform;
@@ -132,7 +133,9 @@ public class PlayerController : MonoBehaviour
         dashQueued = inputMaster.Player.Dash.triggered ? true : dashQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
 
         // Climbing
-        climbQueued = inputMaster.Player.LadderConnect.triggered ? true : climbQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
+        climbHeldAndValid = (lastClimbValue <= 0.3f && inputMaster.Player.Climb.ReadValue<float>() > 0.3f) ? true : climbHeldAndValid; // True on the Update frame the button is pressed, false when released or after dashing/jumping from a ladder
+        if (inputMaster.Player.Climb.ReadValue<float>() <= 0.3f) climbHeldAndValid = false; // False if released
+        lastClimbValue = inputMaster.Player.Climb.ReadValue<float>();
 
         #endregion
 
@@ -259,7 +262,7 @@ public class PlayerController : MonoBehaviour
 
         #region Ladder Interaction
 
-        if (isConnectedToLadder == false && climbQueued && movementInput.x == 0f && dashSuspenseTimer <= 0f)
+        if (isConnectedToLadder == false && climbHeldAndValid && dashSuspenseTimer <= 0f)
         {
             // Connect the player to a new ladder
 
@@ -325,6 +328,9 @@ public class PlayerController : MonoBehaviour
                 // Disconnect the player from this ladder
                 isConnectedToLadder = false;
             }
+
+            // Disconnect when not holding the climb button
+            if (climbHeldAndValid == false) isConnectedToLadder = false;
 
             #endregion
         }
@@ -450,7 +456,6 @@ public class PlayerController : MonoBehaviour
         // Reset queued inputs
         jumpQueued = false;
         dashQueued = false;
-        climbQueued = false;
     }
 
     // Do a normal jump
@@ -475,6 +480,7 @@ public class PlayerController : MonoBehaviour
         isStandingOnPlatform = false;
 
         // Disconnect from any ladder we were attached to
+        if (isConnectedToLadder) climbHeldAndValid = false;
         isConnectedToLadder = false;
     }
 
@@ -494,6 +500,7 @@ public class PlayerController : MonoBehaviour
         extendingJump = false;
 
         // Disconnect from any ladder we were attached to
+        if (isConnectedToLadder) climbHeldAndValid = false;
         isConnectedToLadder = false;
     }
 
