@@ -548,6 +548,85 @@ public class @InputMaster : IInputActionCollection, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Gameplay"",
+            ""id"": ""564b1f5f-f94f-4591-b559-d6ce41a687dd"",
+            ""actions"": [
+                {
+                    ""name"": ""ReturnToMenu"",
+                    ""type"": ""Button"",
+                    ""id"": ""9391c6f6-c262-43c4-a26e-4c3dae7ea5d0"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""Interact"",
+                    ""type"": ""Button"",
+                    ""id"": ""c520a1c8-13c8-420f-8097-8099c5011681"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""9860196e-a091-40a8-8aee-877166bca142"",
+                    ""path"": ""<Gamepad>/start"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Controller"",
+                    ""action"": ""ReturnToMenu"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c588a530-f961-445d-87ba-ac90a521b1df"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""KBM"",
+                    ""action"": ""ReturnToMenu"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3129aa0b-a562-499a-8f3c-942cd49020b5"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""KBM"",
+                    ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8e2c0519-8409-4c85-81a3-7904e1a01819"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Controller"",
+                    ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2217914f-dd86-4c17-b73f-951ef322f952"",
+                    ""path"": ""<Gamepad>/rightShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Controller"",
+                    ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -598,6 +677,10 @@ public class @InputMaster : IInputActionCollection, IDisposable
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_Dash = m_Player.FindAction("Dash", throwIfNotFound: true);
         m_Player_Climb = m_Player.FindAction("Climb", throwIfNotFound: true);
+        // Gameplay
+        m_Gameplay = asset.FindActionMap("Gameplay", throwIfNotFound: true);
+        m_Gameplay_ReturnToMenu = m_Gameplay.FindAction("ReturnToMenu", throwIfNotFound: true);
+        m_Gameplay_Interact = m_Gameplay.FindAction("Interact", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -805,6 +888,47 @@ public class @InputMaster : IInputActionCollection, IDisposable
         }
     }
     public PlayerActions @Player => new PlayerActions(this);
+
+    // Gameplay
+    private readonly InputActionMap m_Gameplay;
+    private IGameplayActions m_GameplayActionsCallbackInterface;
+    private readonly InputAction m_Gameplay_ReturnToMenu;
+    private readonly InputAction m_Gameplay_Interact;
+    public struct GameplayActions
+    {
+        private @InputMaster m_Wrapper;
+        public GameplayActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        public InputAction @ReturnToMenu => m_Wrapper.m_Gameplay_ReturnToMenu;
+        public InputAction @Interact => m_Wrapper.m_Gameplay_Interact;
+        public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(GameplayActions set) { return set.Get(); }
+        public void SetCallbacks(IGameplayActions instance)
+        {
+            if (m_Wrapper.m_GameplayActionsCallbackInterface != null)
+            {
+                @ReturnToMenu.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnReturnToMenu;
+                @ReturnToMenu.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnReturnToMenu;
+                @ReturnToMenu.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnReturnToMenu;
+                @Interact.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnInteract;
+                @Interact.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnInteract;
+                @Interact.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnInteract;
+            }
+            m_Wrapper.m_GameplayActionsCallbackInterface = instance;
+            if (instance != null)
+            {
+                @ReturnToMenu.started += instance.OnReturnToMenu;
+                @ReturnToMenu.performed += instance.OnReturnToMenu;
+                @ReturnToMenu.canceled += instance.OnReturnToMenu;
+                @Interact.started += instance.OnInteract;
+                @Interact.performed += instance.OnInteract;
+                @Interact.canceled += instance.OnInteract;
+            }
+        }
+    }
+    public GameplayActions @Gameplay => new GameplayActions(this);
     private int m_KBMSchemeIndex = -1;
     public InputControlScheme KBMScheme
     {
@@ -842,5 +966,10 @@ public class @InputMaster : IInputActionCollection, IDisposable
         void OnJump(InputAction.CallbackContext context);
         void OnDash(InputAction.CallbackContext context);
         void OnClimb(InputAction.CallbackContext context);
+    }
+    public interface IGameplayActions
+    {
+        void OnReturnToMenu(InputAction.CallbackContext context);
+        void OnInteract(InputAction.CallbackContext context);
     }
 }

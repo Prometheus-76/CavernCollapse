@@ -12,8 +12,11 @@ public class GameplayUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI coinsCollectedText;
     [SerializeField] private TextMeshProUGUI currentScoreText;
     [SerializeField] private TextMeshProUGUI timeRemainingText;
+    [SerializeField] private TextMeshProUGUI songText;
+    [SerializeField] private TextMeshProUGUI gameplayConfigurationText;
 
     public AttemptStats currentAttempt;
+    public GameplayConfiguration gameplayConfiguration;
 
     [HideInInspector] public int currentStageNumber;
     [HideInInspector] public string currentStageName;
@@ -46,5 +49,31 @@ public class GameplayUI : MonoBehaviour
         int minutes = Mathf.FloorToInt(remainingTime - seconds) / 60;
         minutes = Mathf.Max(0, minutes);
         timeRemainingText.text = "[ " + minutes.ToString("D2") + "m " + seconds.ToString("D2") + "s ]";
+
+        // Update gameplay config text
+        gameplayConfigurationText.text = gameplayConfiguration.difficulty.ToString() + " - " + (gameplayConfiguration.dataset == 0 ? "default" : "custom " + gameplayConfiguration.dataset.ToString());
+
+        // Update current song text
+        string songName = "";
+        switch (currentAttempt.stagesCleared)
+        {
+            case 0:
+                songName = "soma";
+                break;
+            case 1:
+                songName = "axil";
+                break;
+            case 2:
+                songName = "pluvium";
+                break;
+            case 3:
+                songName = "terra";
+                break;
+            case 4:
+                songName = "nodes";
+                break;
+        }
+
+        songText.text = "song: " + songName + " - magnofon";
     }
 }
