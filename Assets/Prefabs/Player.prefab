@@ -350,6 +350,8 @@ MonoBehaviour:
   climbUpSpeed: 5
   climbDownSpeed: 8
   ladderBounceForce: 15
+  jumpCoyoteDuration: 0.15
+  jumpBufferDuration: 0.2
   walkSprite: {fileID: 247834126454874297, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
   jumpSprite: {fileID: 252201331041706603, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
   fallSprite: {fileID: -2210027692027135063, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}

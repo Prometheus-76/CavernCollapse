@@ -28,6 +28,10 @@ public class PlayerController : MonoBehaviour
     public float climbDownSpeed;
     public float ladderBounceForce; // Small boost applied when reaching the top of a ladder
 
+    [Header("Timing Windows")]
+    public float jumpCoyoteDuration;
+    public float jumpBufferDuration;
+
     [Header("Sprites")]
     public Sprite walkSprite;
     public Sprite jumpSprite;
@@ -46,7 +50,9 @@ public class PlayerController : MonoBehaviour
     private float groundCheckTimer;
     private float dashSuspenseTimer;
     private float dashCooldownTimer;
-    
+    private float jumpCoyoteTimer;
+    private float jumpBufferTimer;
+
     // States
     private bool isGrounded;
     private bool isStandingOnPlatform;
@@ -92,6 +98,9 @@ public class PlayerController : MonoBehaviour
         facingRight = true;
         dashAvailable = true;
 
+        jumpBufferTimer = 0f;
+        jumpCoyoteTimer = 0f;
+
         #region Set Collider Shape
 
         // I'm using an edge collider for this because it stops the player getting caught on intersection between tiles
@@ -128,6 +137,7 @@ public class PlayerController : MonoBehaviour
         // Jumping
         jumpHeld = inputMaster.Player.Jump.ReadValue<float>() != 0f;
         jumpQueued = inputMaster.Player.Jump.triggered ? true : jumpQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
+        if (jumpQueued) jumpBufferTimer = jumpBufferDuration; // Set jump buffer briefly as we just queued a new input
 
         // Dashing
         dashQueued = inputMaster.Player.Dash.triggered ? true : dashQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
@@ -230,13 +240,18 @@ public class PlayerController : MonoBehaviour
             {
                 respawnCheckpoint = playerTransform.position;
             }
-
         }
         else
         {
             // Continue timer
             groundCheckTimer -= Time.fixedDeltaTime;
             if (groundCheckTimer < 0f) groundCheckTimer = 0f;
+        }
+
+        // Allow coyote time for a short duration after, because we're touching the ground currently
+        if (isGrounded)
+        {
+            jumpCoyoteTimer = jumpCoyoteDuration;
         }
 
         #endregion
@@ -256,6 +271,9 @@ public class PlayerController : MonoBehaviour
 
             // Disable platform collider for a short duration so we fall through it
             StartCoroutine(fallthroughPlatforms.FlipOnOff());
+
+            // Cancel coyote timer so we can't jump ourselves back through the platform
+            jumpCoyoteTimer = 0f;
         }
 
         #endregion
@@ -419,11 +437,29 @@ public class PlayerController : MonoBehaviour
         // Stop extending jump
         if (jumpHeld == false || isGrounded || playerRigidbody.velocity.y <= 0f) extendingJump = false;
 
-        // Start new jump
+        // Start new standard jump
         if (jumpQueued && (isGrounded || isConnectedToLadder))
         {
             Jump();
         }
+
+        // Start new coyote jump
+        if (jumpQueued && jumpCoyoteTimer > 0f)
+        {
+            Jump();
+        }
+
+        jumpCoyoteTimer -= Time.fixedDeltaTime;
+        jumpCoyoteTimer = Mathf.Max(jumpCoyoteTimer, 0f);
+
+        // Start new buffered jump
+        if (jumpBufferTimer > 0f && (isGrounded || isConnectedToLadder))
+        {
+            Jump();
+        }
+
+        jumpBufferTimer -= Time.fixedDeltaTime;
+        jumpBufferTimer = Mathf.Max(jumpBufferTimer, 0f);
 
         #endregion
 
@@ -484,6 +520,10 @@ public class PlayerController : MonoBehaviour
         // Disconnect from any ladder we were attached to
         if (isConnectedToLadder) climbHeldAndValid = false;
         isConnectedToLadder = false;
+
+        // Cancel timing windows
+        jumpBufferTimer = 0f;
+        jumpCoyoteTimer = 0f;
     }
 
     // Dash in a given direction
@@ -504,6 +544,14 @@ public class PlayerController : MonoBehaviour
         // Disconnect from any ladder we were attached to
         if (isConnectedToLadder) climbHeldAndValid = false;
         isConnectedToLadder = false;
+
+        // Reset jump timing windows
+        jumpBufferTimer = 0f;
+        jumpCoyoteTimer = 0f;
+
+        // For the rest of this FixedUpdate, pretend we're not on the ground
+        isGrounded = false;
+        isStandingOnPlatform = false;
     }
 
     void GameOver()
