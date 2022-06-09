@@ -272,8 +272,9 @@ public class PlayerController : MonoBehaviour
             // Disable platform collider for a short duration so we fall through it
             StartCoroutine(fallthroughPlatforms.FlipOnOff());
 
-            // Cancel coyote timer so we can't jump ourselves back through the platform
+            // Reset jump buffer windows so jank doesn't happen when falling through platforms
             jumpCoyoteTimer = 0f;
+            jumpBufferTimer = 0f;
         }
 
         #endregion
