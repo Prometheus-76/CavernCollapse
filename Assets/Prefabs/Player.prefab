@@ -341,12 +341,15 @@ MonoBehaviour:
   airMultiplier: 0.4
   runSpeed: 7
   minJumpHeight: 1
-  maxJumpHeight: 2.5
+  maxJumpHeight: 2.2
   dashForce: 15
   dashSuspenseDuration: 0.15
   dashCooldown: 0.3
   gravityStrength: 50
   terminalVelocity: 30
+  climbUpSpeed: 5
+  climbDownSpeed: 8
+  ladderBounceForce: 15
   walkSprite: {fileID: 247834126454874297, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
   jumpSprite: {fileID: 252201331041706603, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
   fallSprite: {fileID: -2210027692027135063, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
@@ -360,6 +363,20 @@ MonoBehaviour:
   spikeLayer:
     serializedVersion: 2
     m_Bits: 1024
+  ladderFilter:
+    useTriggers: 1
+    useLayerMask: 1
+    useDepth: 0
+    useOutsideDepth: 0
+    useNormalAngle: 0
+    useOutsideNormalAngle: 0
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 256
+    minDepth: 0
+    maxDepth: 0
+    minNormalAngle: 0
+    maxNormalAngle: 0
   currentAttempt: {fileID: 11400000, guid: 4362856ebe645d845893971388556b43, type: 2}
   playerSize: {x: 0.5, y: 0.5}
   playerTransform: {fileID: 8221834107138435568}

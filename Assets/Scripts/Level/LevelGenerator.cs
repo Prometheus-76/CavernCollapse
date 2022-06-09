@@ -68,6 +68,7 @@ public class LevelGenerator : MonoBehaviour
         CleanupPlatforms,
         WaveFunctionCollapseGameplay,
         ReconnectGameplay,
+        PruneSpikeFrequency,
         CleanupCoins,
         WaveFunctionCollapseDeco,
         ReconnectDeco,
@@ -96,12 +97,25 @@ public class LevelGenerator : MonoBehaviour
 
     private int totalCoins;
 
-    [Header("Configuration")]
-    [SerializeField, Tooltip("The target length of each frame during generation")] private float maxTimePerFrame;
-    [SerializeField, Tooltip("The dimensions of the stage (in rooms)")] private Vector2Int stageSize;
-    [SerializeField, Tooltip("The dimensions of each room (in tiles)")] private Vector2Int roomSize;
+    [Header("All Difficulties")]
+    [SerializeField, Tooltip("The target length of each frame during generation (helps keep things smooth)")] private float maxTimePerFrame;
     [SerializeField, Tooltip("The potential adjectives used in the first word of the level name")] private string[] nameAdjectives;
     [SerializeField, Tooltip("The potential nouns used in the second word of the level name")] private string[] nameNouns;
+
+    [Header("Beginner")]
+    [SerializeField, Tooltip("The frequency of spike removal on beginner difficulty (every n groups)")] private int beginnerSpikeRemoval;
+    [SerializeField, Tooltip("The dimensions of the stage (in rooms) on beginner")] private Vector2Int stageSizeBeginner;
+    [SerializeField, Tooltip("The dimensions of each room (in tiles) on beginner")] private Vector2Int roomSizeBeginner;
+
+    [Header("Standard")]
+    [SerializeField, Tooltip("The frequency of spike removal on standard difficulty (every n groups)")] private int standardSpikeRemoval;
+    [SerializeField, Tooltip("The dimensions of the stage (in rooms) on standard")] private Vector2Int stageSizeStandard;
+    [SerializeField, Tooltip("The dimensions of each room (in tiles) on standard")] private Vector2Int roomSizeStandard;
+
+    [Header("Expert")]
+    [SerializeField, Tooltip("The frequency of spike removal on expert difficulty (every n groups)")] private int expertSpikeRemoval;
+    [SerializeField, Tooltip("The dimensions of the stage (in rooms) on expert")] private Vector2Int stageSizeExpert;
+    [SerializeField, Tooltip("The dimensions of each room (in tiles) on expert")] private Vector2Int roomSizeExpert;
 
     [Header("Components")]
     public TileCollection tileCollection;
@@ -122,6 +136,10 @@ public class LevelGenerator : MonoBehaviour
     private LevelRoom[,] level;
     private List<Vector2Int> criticalPath;
 
+    private Vector2Int stageSize;
+    private Vector2Int roomSize;
+    private Vector2Int totalSize;
+
     #endregion
 
     #endregion
@@ -131,9 +149,6 @@ public class LevelGenerator : MonoBehaviour
     {
         criticalPath = new List<Vector2Int>();
         stopwatch = new Stopwatch();
-
-        // Allocate and initialise the level, all rooms and all default tiles within those rooms
-        InitialiseLevel();
     }
 
     void Start()
@@ -210,6 +225,9 @@ public class LevelGenerator : MonoBehaviour
                 break;
             case GenerationStep.ReconnectGameplay:
                 loadingScreen.SetStepText("Sharpening spikes...");
+                break;
+            case GenerationStep.PruneSpikeFrequency:
+                loadingScreen.SetStepText("Adjusting difficulty...");
                 break;
             case GenerationStep.CleanupCoins:
                 loadingScreen.SetStepText("Collecting coins...");
@@ -379,7 +397,7 @@ public class LevelGenerator : MonoBehaviour
                     continue;
 
                 // Skip the tile if its out of range of the grid
-                if (x + xOffset < 0 || x + xOffset >= stageSize.x * roomSize.x || y + yOffset < 0 || y + yOffset >= stageSize.y * roomSize.y)
+                if (x + xOffset < 0 || x + xOffset >= totalSize.x || y + yOffset < 0 || y + yOffset >= totalSize.y)
                     continue;
 
                 // Expand flood fill to this tile, if it hasn't already
@@ -445,6 +463,28 @@ public class LevelGenerator : MonoBehaviour
     // Responsible for calling coroutines sequentially to generate the level asynchronously
     IEnumerator GenerateLevel()
     {
+        // Set the stage and room size
+        switch (gameplayConfiguration.difficulty)
+        {
+            case GameplayConfiguration.DifficultyOptions.beginner:
+                stageSize = stageSizeBeginner;
+                roomSize = roomSizeBeginner;
+                break;
+            case GameplayConfiguration.DifficultyOptions.standard:
+                stageSize = stageSizeStandard;
+                roomSize = roomSizeStandard;
+                break;
+            case GameplayConfiguration.DifficultyOptions.expert:
+                stageSize = stageSizeExpert;
+                roomSize = roomSizeExpert;
+                break;
+        }
+
+        totalSize = roomSize * stageSize;
+
+        // Allocate and initialise the level, all rooms and all default tiles within those rooms
+        InitialiseLevel();
+
         // Randomise the seed
         seed = Random.Range(int.MinValue, int.MaxValue);
         Random.InitState(seed);
@@ -456,8 +496,8 @@ public class LevelGenerator : MonoBehaviour
         currentStep = (GenerationStep)0;
         awaitingNewStep = true;
 
-        waveFunctionCollapse.InitialiseWaveFunction(stageSize.x * roomSize.x, stageSize.y * roomSize.y);
-        dijkstraPathfinding.InitialiseDijkstraPath(stageSize.x * roomSize.x, stageSize.y * roomSize.y);
+        waveFunctionCollapse.InitialiseWaveFunction(totalSize.x, totalSize.y);
+        dijkstraPathfinding.InitialiseDijkstraPath(totalSize.x, totalSize.y);
 
         // Run until the generation is completed
         while (currentStep != GenerationStep.GenerationComplete)
@@ -520,6 +560,9 @@ public class LevelGenerator : MonoBehaviour
                         break;
                     case GenerationStep.ReconnectGameplay:
                         StartCoroutine(ReconnectGameplay());
+                        break;
+                    case GenerationStep.PruneSpikeFrequency:
+                        StartCoroutine(PruneSpikeFrequency());
                         break;
                     case GenerationStep.CleanupCoins:
                         StartCoroutine(CleanupCoins());
@@ -599,7 +642,7 @@ public class LevelGenerator : MonoBehaviour
                         level[stageX, stageY].tiles[roomX, roomY].blockType = BlockType.None;
 
                         iterationsCompleted++;
-                        stepProgress = (float)iterationsCompleted / (stageSize.y * stageSize.x * roomSize.y * roomSize.x);
+                        stepProgress = (float)iterationsCompleted / (totalSize.x * totalSize.y);
                         if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                         {
                             stopwatch.Restart();
@@ -874,7 +917,7 @@ public class LevelGenerator : MonoBehaviour
                         Vector2Int gridPos = StageToGrid(stageX, stageY, roomX, roomY);
                         
                         // Outer edge of border (place inner wall)
-                        if (gridPos.x == 0 || gridPos.x == (roomSize.x * stageSize.x) - 1 || gridPos.y == 0 || gridPos.y == (roomSize.y * stageSize.y) - 1)
+                        if (gridPos.x == 0 || gridPos.x == (totalSize.x) - 1 || gridPos.y == 0 || gridPos.y == (totalSize.y) - 1)
                         {
                             PlaceTile(stageX, stageY, roomX, roomY, 45, BlockType.Solid);
                             level[stageX, stageY].tiles[roomX, roomY].reservedTile = false;
@@ -882,7 +925,7 @@ public class LevelGenerator : MonoBehaviour
                         }
 
                         // Inner edge of border (set as blank space)
-                        if (gridPos.x == 1 || gridPos.x == (roomSize.x * stageSize.x) - 2 || gridPos.y == 1 || gridPos.y == (roomSize.y * stageSize.y) - 2)
+                        if (gridPos.x == 1 || gridPos.x == (totalSize.x) - 2 || gridPos.y == 1 || gridPos.y == (totalSize.y) - 2)
                         {
                             RemoveTile(stageX, stageY, roomX, roomY);
                             level[stageX, stageY].tiles[roomX, roomY].reservedTile = false;
@@ -1099,9 +1142,9 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Solid);
 
         // Calculate entropy of entire wave function collapse grid
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        for (int y = 0; y < (totalSize.y); y++)
         {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            for (int x = 0; x < (totalSize.x); x++)
             {
                 waveFunctionCollapse.RecalculateEntropy(x, y);
 
@@ -1183,9 +1226,9 @@ public class LevelGenerator : MonoBehaviour
         int cleanupIterations = 0;
         
         // Calculate entropy of entire wave function collapse grid
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        for (int y = 0; y < (totalSize.y); y++)
         {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            for (int x = 0; x < (totalSize.x); x++)
             {
                 waveFunctionCollapse.RecalculateEntropy(x, y);
 
@@ -1278,9 +1321,9 @@ public class LevelGenerator : MonoBehaviour
         int spacesEvaluated = 0;
 
         // Add crates to random spaces using perlin noise
-        for (int y = 0; y < stageSize.y * roomSize.y; y++)
+        for (int y = 0; y < totalSize.y; y++)
         {
-            for (int x = 0; x < stageSize.x * roomSize.x; x++)
+            for (int x = 0; x < totalSize.x; x++)
             {
                 Vector2Int stagePos = GridToStage(x, y);
                 Vector2Int roomPos = GridToRoom(x, y);
@@ -1298,7 +1341,7 @@ public class LevelGenerator : MonoBehaviour
                 }
 
                 spacesEvaluated++;
-                stepProgress = (float)spacesEvaluated / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2);
+                stepProgress = (float)spacesEvaluated / (totalSize.x * totalSize.y * 2);
                 if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                 {
                     stopwatch.Restart();
@@ -1308,9 +1351,9 @@ public class LevelGenerator : MonoBehaviour
         }
 
         // When surrounded by crates, convert isolated walls to crates
-        for (int y = 0; y < stageSize.y * roomSize.y; y++)
+        for (int y = 0; y < totalSize.y; y++)
         {
-            for (int x = 0; x < stageSize.x * roomSize.x; x++)
+            for (int x = 0; x < totalSize.x; x++)
             {
                 Vector2Int stagePos = GridToStage(x, y);
                 Vector2Int roomPos = GridToRoom(x, y);
@@ -1333,7 +1376,7 @@ public class LevelGenerator : MonoBehaviour
                                 continue;
 
                             // Skip if out of bounds of the map
-                            if (x + xOffset < 0 || x + xOffset >= roomSize.x * stageSize.x || y + yOffset < 0 || y + yOffset >= roomSize.y * stageSize.y)
+                            if (x + xOffset < 0 || x + xOffset >= totalSize.x || y + yOffset < 0 || y + yOffset >= totalSize.y)
                                 continue;
 
                             Vector2Int neighbourStagePos = GridToStage(x + xOffset, y + yOffset);
@@ -1366,7 +1409,7 @@ public class LevelGenerator : MonoBehaviour
                 }
 
                 spacesEvaluated++;
-                stepProgress = (float)spacesEvaluated / (stageSize.x * stageSize.y * roomSize.x * roomSize.y * 2);
+                stepProgress = (float)spacesEvaluated / (totalSize.x * totalSize.y * 2);
                 if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                 {
                     stopwatch.Restart();
@@ -1415,9 +1458,9 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Ladder);
 
         // Calculate entropy of entire wave function collapse grid
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        for (int y = 0; y < (totalSize.y); y++)
         {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            for (int x = 0; x < (totalSize.x); x++)
             {
                 waveFunctionCollapse.RecalculateEntropy(x, y);
 
@@ -1499,9 +1542,9 @@ public class LevelGenerator : MonoBehaviour
         int cleanupIterations = 0;
 
         // Iterate over every tile
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        for (int y = 0; y < (totalSize.y); y++)
         {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            for (int x = 0; x < (totalSize.x); x++)
             {
                 Vector2Int stagePos = GridToStage(x, y);
                 Vector2Int roomPos = GridToRoom(x, y);
@@ -1544,10 +1587,10 @@ public class LevelGenerator : MonoBehaviour
                         // Move up one space at a time until reaching the top of the ladder
                         // If the top of the ladder is also not connected, delete the whole ladder
 
-                        Vector2Int nextStageAbove = GridToStage(x, y);
-                        Vector2Int nextRoomAbove = GridToRoom(x, y);
-                        BlockType nextBlockAbove = level[stageAbove.x, stageAbove.y].tiles[roomAbove.x, roomAbove.y].blockType;
-                        bool disconnectedLadder = true;
+                        Vector2Int nextStageAbove;
+                        Vector2Int nextRoomAbove;
+                        BlockType nextBlockAbove;
+                        bool disconnectedLadder;
 
                         Vector2Int startPoint = new Vector2Int(x, y);
                         int ladderLengthSoFar = 1;
@@ -1603,7 +1646,7 @@ public class LevelGenerator : MonoBehaviour
                 }
 
                 cleanupIterations++;
-                stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
                 if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                 {
                     stopwatch.Restart();
@@ -1669,7 +1712,7 @@ public class LevelGenerator : MonoBehaviour
                 }
 
                 cleanupIterations++;
-                stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
                 if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                 {
                     stopwatch.Restart();
@@ -1712,9 +1755,9 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Coin);
 
         // Calculate entropy of entire wave function collapse grid
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        for (int y = 0; y < (totalSize.y); y++)
         {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            for (int x = 0; x < (totalSize.x); x++)
             {
                 waveFunctionCollapse.RecalculateEntropy(x, y);
 
@@ -1910,7 +1953,7 @@ public class LevelGenerator : MonoBehaviour
                         }
 
                         cleanupIterations++;
-                        stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                        stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
                         if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                         {
                             stopwatch.Restart();
@@ -1926,6 +1969,66 @@ public class LevelGenerator : MonoBehaviour
     }
 
     // Step 18 of level generation
+    // Removes every nth group of spikes, based on the set difficulty
+    IEnumerator PruneSpikeFrequency()
+    {
+        int cleanupIterations = 0;
+        int groupNumber = 0;
+        bool deleteSpike;
+        BlockType previousType = BlockType.None;
+
+        // Determine how frequently spike groups should be culled
+        int cullFrequency = -1;
+        switch (gameplayConfiguration.difficulty)
+        {
+            case GameplayConfiguration.DifficultyOptions.beginner:
+                cullFrequency = beginnerSpikeRemoval;
+                break;
+            case GameplayConfiguration.DifficultyOptions.standard:
+                cullFrequency = standardSpikeRemoval;
+                break;
+            case GameplayConfiguration.DifficultyOptions.expert:
+                cullFrequency = expertSpikeRemoval;
+                break;
+        }
+
+        // Left to right, bottom to top
+        for (int y = 0; y < totalSize.y; y++)
+        {
+            for (int x = 0; x < totalSize.x; x++)
+            {
+                Vector2Int stagePos = GridToStage(x, y);
+                Vector2Int roomPos = GridToRoom(x, y);
+                deleteSpike = false;
+
+                // We only care about spikes in this step
+                if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Spike)
+                {
+                    // If this is the first spike in this group, consider it a new group
+                    if (previousType != BlockType.Spike) groupNumber++;
+
+                    // If this group should be culled, mark the spike for deletion
+                    if (groupNumber % cullFrequency == 0) deleteSpike = true;
+                }
+
+                previousType = level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType;
+                if (deleteSpike) RemoveTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y); // This happens after the type is recorded
+
+                cleanupIterations++;
+                stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
+                    yield return null;
+                }
+            }
+        }
+
+        yield return null;
+        CompleteStep();
+    }
+
+    // Step 19 of level generation
     // Removes isolated and unreachable coins
     IEnumerator CleanupCoins()
     {
@@ -2001,7 +2104,7 @@ public class LevelGenerator : MonoBehaviour
                         }
 
                         cleanupIterations++;
-                        stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                        stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
                         if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                         {
                             stopwatch.Restart();
@@ -2016,7 +2119,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 19 of level generation
+    // Step 20 of level generation
     // Wave function collapse pass for foliage, vines, signs and torches
     IEnumerator WaveFunctionCollapseDeco()
     {
@@ -2048,9 +2151,9 @@ public class LevelGenerator : MonoBehaviour
         waveFunctionCollapse.AddToBlockPalette(BlockType.Torch);
 
         // Calculate entropy of entire wave function collapse grid
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        for (int y = 0; y < (totalSize.y); y++)
         {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            for (int x = 0; x < (totalSize.x); x++)
             {
                 waveFunctionCollapse.RecalculateEntropy(x, y);
 
@@ -2125,7 +2228,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 20 of level generation
+    // Step 21 of level generation
     // Marches floating torches/foliage towards the nearest surface, and attempts to reconnect it
     IEnumerator ReconnectDeco()
     {
@@ -2135,9 +2238,9 @@ public class LevelGenerator : MonoBehaviour
         BlockType previousTile = BlockType.Solid;
 
         // Loop upward through each column, left to right
-        for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+        for (int x = 0; x < (totalSize.x); x++)
         {
-            for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+            for (int y = 0; y < (totalSize.y); y++)
             {
                 Vector2Int stagePos = GridToStage(x, y);
                 Vector2Int roomPos = GridToRoom(x, y);
@@ -2191,7 +2294,7 @@ public class LevelGenerator : MonoBehaviour
                 previousTile = level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType;
 
                 cleanupIterations++;
-                stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
                 if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                 {
                     stopwatch.Restart();
@@ -2204,7 +2307,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 21 of level generation
+    // Step 22 of level generation
     // Removes floating vines and disconnected signs, adds air everywhere else
     IEnumerator CleanupDeco()
     {
@@ -2214,9 +2317,9 @@ public class LevelGenerator : MonoBehaviour
         BlockType previousTile = BlockType.Solid;
 
         // Loop downward through each column, left to right
-        for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+        for (int x = 0; x < (totalSize.x); x++)
         {
-            for (int y = (stageSize.y * roomSize.y) - 1; y >= 0; y--)
+            for (int y = (totalSize.y) - 1; y >= 0; y--)
             {
                 Vector2Int stagePos = GridToStage(x, y);
                 Vector2Int roomPos = GridToRoom(x, y);
@@ -2255,7 +2358,7 @@ public class LevelGenerator : MonoBehaviour
                 previousTile = level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType;
 
                 cleanupIterations++;
-                stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
                 if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                 {
                     stopwatch.Restart();
@@ -2268,7 +2371,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 22 of level generation
+    // Step 23 of level generation
     // Sets the player's spawn and exit door points in the level
     IEnumerator PlaceDoors()
     {
@@ -2365,7 +2468,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 23 of level generation
+    // Step 24 of level generation
     // Clears the area around doors and ensures tiles still appear correctly
     IEnumerator CleanupDoors()
     {
@@ -2537,16 +2640,16 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 24 of level generation
+    // Step 25 of level generation
     // Iterates through all sign arrows in the level and ensures the direction they are pointing aligns with the critical path of the stage
     IEnumerator RedirectSigns()
     {
         int cleanupIterations = 0;
 
         // Ensure signs are pointing in the right direction (aligned with critical path)
-        for (int y = 0; y < (stageSize.y * roomSize.y); y++)
+        for (int y = 0; y < (totalSize.y); y++)
         {
-            for (int x = 0; x < (stageSize.x * roomSize.x); x++)
+            for (int x = 0; x < (totalSize.x); x++)
             {
                 Vector2Int stagePos = GridToStage(x, y);
                 Vector2Int roomPos = GridToRoom(x, y);
@@ -2589,7 +2692,7 @@ public class LevelGenerator : MonoBehaviour
                 }
 
                 cleanupIterations++;
-                stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
                 if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                 {
                     stopwatch.Restart();
@@ -2602,7 +2705,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 25 of level generation
+    // Step 26 of level generation
     // Ensures all coins and the end goal are not unreachable due to spikes
     IEnumerator VerifyPaths()
     {
@@ -2634,7 +2737,7 @@ public class LevelGenerator : MonoBehaviour
                                 dijkstraPathfinding.SetNodeWeight(gridPos.x, gridPos.y, -1);
                                 break;
                             case BlockType.Spike:
-                                dijkstraPathfinding.SetNodeWeight(gridPos.x, gridPos.y, 1000);
+                                dijkstraPathfinding.SetNodeWeight(gridPos.x, gridPos.y, 100);
                                 break;
                             default:
                                 dijkstraPathfinding.SetNodeWeight(gridPos.x, gridPos.y, 1);
@@ -2684,7 +2787,7 @@ public class LevelGenerator : MonoBehaviour
                         }
 
                         cleanupIterations++;
-                        stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                        stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
                         if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                         {
                             stopwatch.Restart();
@@ -2715,7 +2818,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 26 of level generation
+    // Step 27 of level generation
     // Fills the empty spaces of the map with air tiles, this might be useful at some point
     IEnumerator FillEmptyAreas()
     {
@@ -2735,7 +2838,7 @@ public class LevelGenerator : MonoBehaviour
                         }
 
                         cleanupIterations++;
-                        stepProgress = (float)cleanupIterations / (stageSize.x * stageSize.y * roomSize.x * roomSize.y);
+                        stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
 
                         if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                         {
@@ -2751,10 +2854,12 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 27 of level generation
+    // Step 28 of level generation
     // Counts the coins and other stats of the level for configuration
     IEnumerator AnalyseStage()
     {
+        int cleanupIterations = 0;
+
         // Count coins in stage
         for (int y = 0; y < stageSize.y * roomSize.y; y++)
         {
@@ -2765,6 +2870,15 @@ public class LevelGenerator : MonoBehaviour
 
                 if (level[stagePos.x, stagePos.y].tiles[roomPos.x, roomPos.y].blockType == BlockType.Coin) 
                     totalCoins += 1;
+
+                cleanupIterations++;
+                stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
+
+                if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
+                {
+                    stopwatch.Restart();
+                    yield return null;
+                }
             }
         }
 
@@ -2772,10 +2886,12 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 28 of level generation
+    // Step 29 of level generation
     // Replaces placeholder tiles with prefabs where required, for things like coins
     IEnumerator SubstitutePrefabs()
     {
+        int cleanupIterations = 0;
+
         for (int y = 0; y < stageSize.y * roomSize.y; y++)
         {
             for (int x = 0; x < stageSize.x * roomSize.x; x++)
@@ -2792,6 +2908,9 @@ public class LevelGenerator : MonoBehaviour
                         break;
                 }
 
+                cleanupIterations++;
+                stepProgress = (float)cleanupIterations / (totalSize.x * totalSize.y);
+
                 // Break for a new frame if required
                 if (stopwatch.Elapsed.TotalSeconds >= maxTimePerFrame)
                 {
@@ -2805,7 +2924,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 29 of level generation
+    // Step 30 of level generation
     // Generates the colliders used by solids, platforms, ladders and spikes
     IEnumerator GenerateColliders()
     {
@@ -2815,7 +2934,7 @@ public class LevelGenerator : MonoBehaviour
         CompleteStep();
     }
 
-    // Step 30 of level generation
+    // Step 31 of level generation
     // Final setup before moving into gameplay, spawns the player, sets camera position, masks particles, etc
     IEnumerator FinalStageSetup()
     {
@@ -2833,12 +2952,12 @@ public class LevelGenerator : MonoBehaviour
 
         // Set the bounding mask of the stage for particles and other effects
         Vector3 particlesBoundingPos = Vector3.zero;
-        particlesBoundingPos.x = ((roomSize.x * stageSize.x) / 2f) - 0.5f;
-        particlesBoundingPos.y = ((roomSize.y * stageSize.y) / 2f) - 0.5f;
+        particlesBoundingPos.x = ((totalSize.x) / 2f) - 0.5f;
+        particlesBoundingPos.y = ((totalSize.y) / 2f) - 0.5f;
 
         Vector3 particlesBoundingScale = Vector3.one;
-        particlesBoundingScale.x = (roomSize.x * stageSize.x);
-        particlesBoundingScale.y = (roomSize.y * stageSize.y);
+        particlesBoundingScale.x = (totalSize.x);
+        particlesBoundingScale.y = (totalSize.y);
 
         // Set the size of the particle system to fit the stage
         stageMask.localPosition = particlesBoundingPos;
@@ -2847,7 +2966,7 @@ public class LevelGenerator : MonoBehaviour
         shape.scale = particlesBoundingScale;
 
         // Set the density of the particle system based on the stage volume
-        main.maxParticles = Mathf.CeilToInt((stageSize.x * stageSize.y * roomSize.x * roomSize.y) / 8f);
+        main.maxParticles = Mathf.CeilToInt((totalSize.x * totalSize.y) / 8f);
         emission.rateOverTime = Mathf.CeilToInt(main.maxParticles / 8f);
 
         yield return null;

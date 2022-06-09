@@ -7347,8 +7347,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stepProgress: 0
   maxTimePerFrame: 0.02
-  stageSize: {x: 4, y: 6}
-  roomSize: {x: 15, y: 12}
   nameAdjectives:
   - Mossy
   - Gloomy
@@ -7381,6 +7379,15 @@ MonoBehaviour:
   - Labyrinth
   - Hideout
   - Burrow
+  beginnerSpikeRemoval: 2
+  stageSizeBeginner: {x: 3, y: 4}
+  roomSizeBeginner: {x: 15, y: 12}
+  standardSpikeRemoval: 5
+  stageSizeStandard: {x: 4, y: 6}
+  roomSizeStandard: {x: 15, y: 12}
+  expertSpikeRemoval: 25
+  stageSizeExpert: {x: 5, y: 10}
+  roomSizeExpert: {x: 15, y: 12}
   tileCollection: {fileID: 11400000, guid: 02944e3e72749b1409e246caea09b8d0, type: 2}
   gameplayConfiguration: {fileID: 11400000, guid: f8a02774c90ec804297f31bdcd35b1ba, type: 2}
   loadingScreen: {fileID: 1576899062}

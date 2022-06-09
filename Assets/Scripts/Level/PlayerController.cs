@@ -23,6 +23,11 @@ public class PlayerController : MonoBehaviour
     public float gravityStrength;
     public float terminalVelocity;
 
+    [Header("Ladders")]
+    public float climbUpSpeed;
+    public float climbDownSpeed;
+    public float ladderBounceForce; // Small boost applied when reaching the top of a ladder
+
     [Header("Sprites")]
     public Sprite walkSprite;
     public Sprite jumpSprite;
@@ -33,6 +38,7 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayers;
     public LayerMask platformLayer;
     public LayerMask spikeLayer;
+    public ContactFilter2D ladderFilter;
     public AttemptStats currentAttempt;
     public Vector2 playerSize;
     
@@ -46,6 +52,9 @@ public class PlayerController : MonoBehaviour
     private bool isStandingOnPlatform;
     private bool extendingJump;
     private bool dashAvailable;
+    private bool isConnectedToLadder;
+    private float ladderX;
+    private Vector3 respawnCheckpoint;
 
     // Inputs
     private Vector2 movementInput;
@@ -53,7 +62,7 @@ public class PlayerController : MonoBehaviour
     private bool jumpQueued;
     private bool dashQueued;
     private bool facingRight;
-    private Vector3 respawnCheckpoint;
+    private bool climbQueued;
 
     [Header("Components")]
     public Transform playerTransform;
@@ -122,6 +131,9 @@ public class PlayerController : MonoBehaviour
         // Dashing
         dashQueued = inputMaster.Player.Dash.triggered ? true : dashQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
 
+        // Climbing
+        climbQueued = inputMaster.Player.LadderConnect.triggered ? true : climbQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
+
         #endregion
 
         #region Animations
@@ -130,10 +142,11 @@ public class PlayerController : MonoBehaviour
         playerSprite.flipX = (facingRight == false);
 
         // Determine which sprite to show
-        if (dashSuspenseTimer > 0f) playerSprite.sprite = blinkSprite;
-        else if (playerRigidbody.velocity.y > 0.1f) playerSprite.sprite = jumpSprite;
-        else if (playerRigidbody.velocity.y < -2f) playerSprite.sprite = fallSprite;
-        else playerSprite.sprite = walkSprite;
+        if (dashSuspenseTimer > 0f) playerSprite.sprite = blinkSprite; // Dashing
+        else if (isConnectedToLadder) playerSprite.sprite = blinkSprite; // Climbing
+        else if (playerRigidbody.velocity.y > 0.1f) playerSprite.sprite = jumpSprite; // Moving upwards (jump/dash)
+        else if (playerRigidbody.velocity.y < -2f) playerSprite.sprite = fallSprite; // Moving downwards (fall/dash)
+        else playerSprite.sprite = walkSprite; // Running
 
         #endregion
     }
@@ -244,40 +257,115 @@ public class PlayerController : MonoBehaviour
 
         #endregion
 
-        #region Horizontal Movement
+        #region Ladder Interaction
 
-        // How fast the player should be moving after fully accelerating
-        Vector3 targetVelocity = movementInput.x * Vector3.right * runSpeed;
-
-        // How fast the player is currently moving horizontally
-        Vector3 linearVelocity = playerRigidbody.velocity.x * Vector3.right;
-
-        // Default values in case there is no movement input (fixes divide by zero)
-        float projection = 0f;
-        Vector3 accelerationForce = Vector3.zero;
-        if (targetVelocity.sqrMagnitude > 0f)
+        if (isConnectedToLadder == false && climbQueued && movementInput.x == 0f && dashSuspenseTimer <= 0f)
         {
-            // The current velocity is projected onto the target velocity
-            projection = Vector3.Dot(targetVelocity, linearVelocity) / targetVelocity.magnitude;
+            // Connect the player to a new ladder
 
-            // The acceleration velocity to add to reach the target velocity, given a deceleration velocity
-            accelerationForce = (targetVelocity.magnitude - projection) * targetVelocity.normalized;
+            #region Ladder Connection
+
+            Vector2 boxCentre = playerTransform.position;
+            boxCentre.y += playerSize.y / 2f;
+
+            // If the player is touching a ladder
+            List<Collider2D> results = new List<Collider2D>();
+            if (Physics2D.OverlapBox(boxCentre, playerSize, 0f, ladderFilter, results) > 0)
+            {
+                // Ensure the player has no velocity carrying over
+                playerRigidbody.AddForce(-playerRigidbody.velocity, ForceMode2D.Impulse);
+
+                Vector3 snappedPosition = playerTransform.position;
+                snappedPosition.x = Mathf.Round(results[0].ClosestPoint(playerTransform.position).x);
+                ladderX = snappedPosition.x;
+
+                isConnectedToLadder = true;
+                dashAvailable = true;
+            }
+
+            #endregion
+        }
+        else if (isConnectedToLadder)
+        {
+            // When connected to a ladder
+
+            #region Ladder Climbing
+
+            // Push the player up/down the ladder
+            float targetYVel = 0f;
+            if (movementInput.y > 0f) targetYVel = climbUpSpeed;
+            if (movementInput.y < 0f) targetYVel = -climbDownSpeed;
+
+            Vector2 movePos = Vector2.zero;
+            movePos.x = Mathf.Lerp(playerTransform.position.x, ladderX, 20f * Time.fixedDeltaTime);
+            movePos.y = (targetYVel * Time.fixedDeltaTime) + playerTransform.position.y;
+
+            // Take a step up or down the ladder
+            playerRigidbody.MovePosition(movePos);
+
+            #endregion
+
+            #region Ladder Disconnection
+
+            // Disconnect when pressing up and no ladder above
+            Vector2 boxCentreAbove = playerTransform.position;
+            boxCentreAbove.y += playerSize.y * 1.4f;
+            if (movementInput.y > 0f && Physics2D.OverlapBox(boxCentreAbove, playerSize, 0f, ladderFilter.layerMask) == false)
+            {
+                // Apply a small bump up force when reaching the top of the ladder
+                playerRigidbody.AddForce(Vector2.up * ladderBounceForce, ForceMode2D.Impulse);
+                isConnectedToLadder = false;
+            }
+
+            // Disconnect when pressing down and no ladder below
+            Vector2 boxCentreBelow = playerTransform.position;
+            boxCentreBelow.y -= playerSize.y * 0.6f;
+            if (movementInput.y < 0f && Physics2D.OverlapBox(boxCentreBelow, playerSize, 0f, ladderFilter.layerMask) == false)
+            {
+                // Disconnect the player from this ladder
+                isConnectedToLadder = false;
+            }
+
+            #endregion
         }
 
-        // The deceleration velocity to add which aligns the current velocity with the target as efficiently as possible, given a desired target velocity
-        // This should result in the most responsive turning while preserving deceleration and game feel
-        Vector3 decelerationForce = (targetVelocity.normalized * projection) - linearVelocity;
+        #endregion
 
-        // Calculate movement (acceleration + deceleration) force based on grounded state
-        Vector3 movementForce = Vector3.zero;
-        movementForce += accelerationForce * (isGrounded ? acceleration : acceleration * airMultiplier);
-        movementForce += decelerationForce * (isGrounded ? deceleration : deceleration * airMultiplier);
+        #region Horizontal Movement
 
-        // When dashing, ignore normal movement forces
-        if (dashSuspenseTimer > 0f) movementForce = Vector3.zero;
+        // The player is allowed to run when not dashing and not climbing
+        if (dashSuspenseTimer <= 0f && isConnectedToLadder == false)
+        {
+            // How fast the player should be moving after fully accelerating
+            Vector3 targetVelocity = movementInput.x * Vector3.right * runSpeed;
 
-        // Apply horizontal movement forces (acceleration/deceleration)
-        playerRigidbody.AddForce(movementForce, ForceMode2D.Force);
+            // How fast the player is currently moving horizontally
+            Vector3 linearVelocity = playerRigidbody.velocity.x * Vector3.right;
+
+            // Default values in case there is no movement input (fixes divide by zero)
+            float projection = 0f;
+            Vector3 accelerationForce = Vector3.zero;
+            if (targetVelocity.sqrMagnitude > 0f)
+            {
+                // The current velocity is projected onto the target velocity
+                projection = Vector3.Dot(targetVelocity, linearVelocity) / targetVelocity.magnitude;
+
+                // The acceleration velocity to add to reach the target velocity, given a deceleration velocity
+                accelerationForce = (targetVelocity.magnitude - projection) * targetVelocity.normalized;
+            }
+
+            // The deceleration velocity to add which aligns the current velocity with the target as efficiently as possible, given a desired target velocity
+            // This should result in the most responsive turning while preserving deceleration and game feel
+            Vector3 decelerationForce = (targetVelocity.normalized * projection) - linearVelocity;
+
+            // Calculate movement (acceleration + deceleration) force based on grounded state
+            Vector3 movementForce = Vector3.zero;
+            movementForce += accelerationForce * (isGrounded ? acceleration : acceleration * airMultiplier);
+            movementForce += decelerationForce * (isGrounded ? deceleration : deceleration * airMultiplier);
+
+            // Apply horizontal movement forces (acceleration/deceleration)
+            playerRigidbody.AddForce(movementForce, ForceMode2D.Force);
+        }
 
         #endregion
 
@@ -321,10 +409,10 @@ public class PlayerController : MonoBehaviour
         #region Jumping
 
         // Stop extending jump
-        if (jumpHeld == false || isGrounded || playerRigidbody.velocity.y < 0f) extendingJump = false;
+        if (jumpHeld == false || isGrounded || playerRigidbody.velocity.y <= 0f) extendingJump = false;
 
         // Start new jump
-        if (jumpQueued && isGrounded)
+        if (jumpQueued && (isGrounded || isConnectedToLadder))
         {
             Jump();
         }
@@ -333,8 +421,8 @@ public class PlayerController : MonoBehaviour
 
         #region Gravity + Terminal Velocity
 
-        // Only apply when off ground
-        if (isGrounded == false && dashSuspenseTimer <= 0f)
+        // Only apply when off ground and ladders, and not dashing
+        if (isGrounded == false && dashSuspenseTimer <= 0f && isConnectedToLadder == false)
         {
             // When the player is extending a jump, keep their gravity lowered so they can reach the max height
             float currentGravity = gravityStrength;
@@ -362,6 +450,7 @@ public class PlayerController : MonoBehaviour
         // Reset queued inputs
         jumpQueued = false;
         dashQueued = false;
+        climbQueued = false;
     }
 
     // Do a normal jump
@@ -384,6 +473,9 @@ public class PlayerController : MonoBehaviour
         groundCheckTimer = 0.1f;
         isGrounded = false;
         isStandingOnPlatform = false;
+
+        // Disconnect from any ladder we were attached to
+        isConnectedToLadder = false;
     }
 
     // Dash in a given direction
@@ -400,6 +492,9 @@ public class PlayerController : MonoBehaviour
 
         // Stop player from holding jump and dashing to make super jump upwards
         extendingJump = false;
+
+        // Disconnect from any ladder we were attached to
+        isConnectedToLadder = false;
     }
 
     void GameOver()
