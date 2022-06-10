@@ -17,6 +17,8 @@ public class GameplayUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI gameplayConfigurationText;
     [SerializeField] private TextMeshProUGUI returnToMenuText;
     [SerializeField] private MenuButton proceedButton;
+    [SerializeField] private TextMeshProUGUI completionHealthText;
+    [SerializeField] private TextMeshProUGUI hitsHealthText;
 
     [Header("Completion")]
     [SerializeField] private GameObject stageCompleteUI;
@@ -110,6 +112,10 @@ public class GameplayUI : MonoBehaviour
         {
             proceedButton.SetDefaultText("Complete Descent");
         }
+
+        // Show gained health
+        completionHealthText.enabled = (currentAttempt.coinsCollectedStage >= totalCoins);
+        hitsHealthText.enabled = (currentAttempt.startingHealth - currentAttempt.currentHealth <= 0);
 
         stageCompleteUI.SetActive(true);
     }
