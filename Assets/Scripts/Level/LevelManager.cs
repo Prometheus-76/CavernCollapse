@@ -5,11 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class LevelManager : MonoBehaviour
 {
-    [HideInInspector] public int currentStageNumber;
-    [HideInInspector] public int totalCoins;
     [HideInInspector] public float remainingTime;
-
-    [HideInInspector] public int startingHealth;
+    [HideInInspector] public int totalCoinsInStage;
 
     public int collapseTimeStage1;
     public int collapseTimeStage2;
@@ -19,6 +16,7 @@ public class LevelManager : MonoBehaviour
 
     private bool levelGenerated = false;
     private float returnToMenuTimer;
+    private int currentStageNumber;
 
     public GameplayUI gameplayUI;
     public AttemptStats currentAttempt;
@@ -55,7 +53,7 @@ public class LevelManager : MonoBehaviour
             }
 
             gameplayUI.currentStageNumber = currentStageNumber;
-            gameplayUI.totalCoins = totalCoins;
+            gameplayUI.totalCoins = totalCoinsInStage;
             gameplayUI.remainingTime = remainingTime;
 
             // Returning to menu
@@ -88,11 +86,8 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    public void StageBegin(int startingHealth, int totalCoins)
+    public void StageBegin()
     {
-        this.startingHealth = startingHealth;
-        this.totalCoins = totalCoins;
-
         switch (currentAttempt.stagesCleared)
         {
             case 0:
@@ -117,15 +112,13 @@ public class LevelManager : MonoBehaviour
         levelGenerated = true;
     }
 
-    public void StageComplete(int coinsCollected, int currentHealth)
+    public void StageComplete()
     {
         currentAttempt.stagesCleared += 1;
-        currentAttempt.coinsCollectedTotal += totalCoins;
+        currentAttempt.coinsCollectedTotal += currentAttempt.coinsCollectedStage;
 
-        if (currentHealth >= startingHealth) currentAttempt.flawlessStages += 1;
-        if (coinsCollected >= totalCoins) currentAttempt.fullCoinStages += 1;
-
-        currentAttempt.startingHealth = startingHealth;
+        if (currentAttempt.currentHealth >= currentAttempt.startingHealth) currentAttempt.flawlessStages += 1;
+        if (currentAttempt.coinsCollectedStage >= totalCoinsInStage) currentAttempt.fullCoinStages += 1;
 
         #region Score Calculation
 
@@ -133,7 +126,7 @@ public class LevelManager : MonoBehaviour
         // 1. coinsCollected * 100
         // 2. secondsRemaining * 75
         // 3. if stage is flawless, 15000 * currentHealth
-        // 4. if coins collected, 500 * coinsCollected
+        // 4. if all coins collected, 500 * coinsCollected
         // ...Then multiplied by stage number and difficulty multiplier
 
         // Multiplier based on difficulty
@@ -151,10 +144,10 @@ public class LevelManager : MonoBehaviour
                 break;
         }
 
-        int coinScore = 100 * coinsCollected;
+        int coinScore = 100 * currentAttempt.coinsCollectedStage;
         int timeScore = 75 * Mathf.FloorToInt(remainingTime);
-        int flawlessScore = (currentHealth >= startingHealth ? 15000 * currentHealth : 0);
-        int fullCoinScore = (coinsCollected >= totalCoins ? 500 * coinsCollected : 0);
+        int flawlessScore = (currentAttempt.currentHealth >= currentAttempt.startingHealth ? 15000 * currentAttempt.currentHealth : 0);
+        int fullCoinScore = (currentAttempt.coinsCollectedStage >= totalCoinsInStage ? 500 * currentAttempt.coinsCollectedStage : 0);
 
         int stageScore = coinScore + timeScore + flawlessScore + fullCoinScore;
         stageScore *= difficultyMultiplier * currentAttempt.stagesCleared;
@@ -163,7 +156,35 @@ public class LevelManager : MonoBehaviour
 
         #endregion
 
+        currentAttempt.currentScore += stageScore;
+
         gameplayUI.StageCompleteUI();
+
+        // Restore 1hp for going flawless
+        if (currentAttempt.currentHealth >= currentAttempt.startingHealth)
+        {
+            currentAttempt.currentHealth += 1;
+            currentAttempt.currentHealth = Mathf.Min(currentAttempt.currentHealth, 4);
+        }
+
+        // Restore another 1hp if all coins were collected
+        if (currentAttempt.coinsCollectedStage >= totalCoinsInStage)
+        {
+            currentAttempt.currentHealth += 1;
+            currentAttempt.currentHealth = Mathf.Min(currentAttempt.currentHealth, 4);
+        }
+        
+        currentAttempt.startingHealth = currentAttempt.currentHealth;
+
+        // Fade out music when stage completed
+        if (MusicPlayer.GetInstance() != null)
+            MusicPlayer.GetInstance().CrossFade(0);
+    }
+
+    public void NextStage()
+    {
+        // Reloading this scene is the same as progressing to the next level, at least for now
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void CollectCoin()

@@ -23,6 +23,7 @@ public class AttemptStats : ScriptableObject
         startingHealth = 4;
         currentHealth = 4;
         coinsCollectedStage = 0;
+        stageScore = 0;
 
         stagesCleared = 0;
         coinsCollectedTotal = 0;

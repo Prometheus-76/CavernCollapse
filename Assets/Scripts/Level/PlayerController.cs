@@ -53,6 +53,7 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayers;
     public LayerMask platformLayer;
     public LayerMask spikeLayer;
+    public LayerMask exitDoorLayer;
     public ContactFilter2D ladderFilter;
     public Vector2 playerSize;
     
@@ -85,6 +86,8 @@ public class PlayerController : MonoBehaviour
     private bool facingRight;
     private bool climbHeldAndValid;
     private float lastClimbValue;
+    private bool interactQueued;
+    private bool interactedWithDoor;
 
     [Header("Components")]
     public Transform playerTransform;
@@ -97,6 +100,7 @@ public class PlayerController : MonoBehaviour
     private CameraController cameraController;
     private FallthroughPlatform fallthroughPlatforms;
     private InputMaster inputMaster;
+    private LevelManager levelManager;
     public AttemptStats currentAttempt;
 
     #endregion
@@ -111,10 +115,12 @@ public class PlayerController : MonoBehaviour
         cameraController.SetTarget(cameraTarget);
 
         fallthroughPlatforms = GameObject.FindWithTag("Platforms").GetComponent<FallthroughPlatform>();
+        levelManager = GameObject.FindWithTag("Level").GetComponent<LevelManager>();
 
         // Starting state
         facingRight = true;
         dashAvailable = true;
+        interactedWithDoor = false;
 
         jumpBufferTimer = 0f;
         jumpCoyoteTimer = 0f;
@@ -148,7 +154,7 @@ public class PlayerController : MonoBehaviour
     {
         #region Input
 
-        if (respawnInputDelayTimer <= 0f && currentAttempt.currentHealth > 0)
+        if (respawnInputDelayTimer <= 0f && currentAttempt.currentHealth > 0 && interactedWithDoor == false)
         {
             // WASD movement
             movementInput.x = inputMaster.Player.Horizontal.ReadValue<float>();
@@ -168,6 +174,9 @@ public class PlayerController : MonoBehaviour
             climbHeldAndValid = (lastClimbValue <= 0.3f && inputMaster.Player.Climb.ReadValue<float>() > 0.3f) ? true : climbHeldAndValid; // True on the Update frame the button is pressed, false when released or after dashing/jumping from a ladder
             if (inputMaster.Player.Climb.ReadValue<float>() <= 0.3f) climbHeldAndValid = false; // False if released
             lastClimbValue = inputMaster.Player.Climb.ReadValue<float>();
+
+            // Interaction
+            interactQueued = inputMaster.Gameplay.Interact.triggered ? true : interactQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
         }
         else
         {
@@ -564,9 +573,31 @@ public class PlayerController : MonoBehaviour
 
         #endregion
 
+        #region Stage Exit
+
+        if (isGrounded && currentAttempt.currentHealth > 0 && interactQueued)
+        {
+            Vector2 boxCentre = playerTransform.position;
+            boxCentre.y += playerSize.y / 2f;
+
+            // If the player is touching a ladder
+            List<Collider2D> results = new List<Collider2D>();
+            if (Physics2D.OverlapBox(boxCentre, playerSize, 0f, exitDoorLayer))
+            {
+                // Ensure the player has no velocity
+                playerRigidbody.AddForce(-playerRigidbody.velocity, ForceMode2D.Impulse);
+
+                levelManager.StageComplete();
+                interactedWithDoor = true;
+            }
+        }
+
+        #endregion
+
         // Reset queued inputs
         jumpQueued = false;
         dashQueued = false;
+        interactQueued = false;
     }
 
     // Do a normal jump
@@ -627,8 +658,7 @@ public class PlayerController : MonoBehaviour
         isStandingOnPlatform = false;
 
         // Shake the screen
-        cameraController.AddTrauma(0.5f);
-        cameraController.SetShakeDirection(direction);
+        cameraController.AddTrauma(0.6f);
     }
 
     // When the player is out of lives
@@ -639,7 +669,6 @@ public class PlayerController : MonoBehaviour
 
         // Shake the screen
         cameraController.AddTrauma(1f);
-        cameraController.SetShakeDirection(Vector2.zero);
 
         // Bounce around the screen
         playerRigidbody.sharedMaterial = bounceMaterial;
@@ -662,8 +691,7 @@ public class PlayerController : MonoBehaviour
         respawnInputDelayTimer = respawnInputDelay;
 
         // Shake the screen
-        cameraController.AddTrauma(1f);
-        cameraController.SetShakeDirection(Vector2.zero);
+        cameraController.AddTrauma(0.9f);
     }
 
     #region Input System

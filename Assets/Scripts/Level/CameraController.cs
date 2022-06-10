@@ -18,7 +18,6 @@ public class CameraController : MonoBehaviour
     private Transform camTransform;
     private Transform holderTransform;
     private float screenshakeTrauma;
-    private Vector2 shakeDirection;
 
     // Start is called before the first frame update
     void Start()
@@ -55,17 +54,8 @@ public class CameraController : MonoBehaviour
             // Calculate offset strength due to trauma
             Vector3 screenshakeOffset = Vector3.zero;
             float scaledTime = Time.time * screenshakeFrequency;
-            if (shakeDirection != Vector2.zero)
-            {
-                // Directional shake
-                screenshakeOffset = Mathf.PerlinNoise(scaledTime + 1f, scaledTime + 1f) * Mathf.Clamp01(screenshakeTrauma * screenshakeTrauma) * shakeDirection;
-            }
-            else
-            {
-                // Random noise shake
-                screenshakeOffset.x = Mathf.PerlinNoise(scaledTime + 1f, scaledTime + 1f) * Mathf.Clamp01(screenshakeTrauma * screenshakeTrauma);
-                screenshakeOffset.y = Mathf.PerlinNoise(scaledTime + 2f, scaledTime + 2f) * Mathf.Clamp01(screenshakeTrauma * screenshakeTrauma);
-            }
+            screenshakeOffset.x = (Mathf.PerlinNoise(scaledTime + 1f, scaledTime + 1f) - 0.5f) * Mathf.Clamp01(screenshakeTrauma * screenshakeTrauma);
+            screenshakeOffset.y = (Mathf.PerlinNoise(scaledTime + 2f, scaledTime + 2f) - 0.5f) * Mathf.Clamp01(screenshakeTrauma * screenshakeTrauma);
 
             // Apply new positions
             holderTransform.position = newPosition;
@@ -77,10 +67,5 @@ public class CameraController : MonoBehaviour
     {
         screenshakeTrauma += amount;
         screenshakeTrauma = Mathf.Clamp01(screenshakeTrauma);
-    }
-
-    public void SetShakeDirection(Vector2 direction)
-    {
-        shakeDirection = direction;
     }
 }

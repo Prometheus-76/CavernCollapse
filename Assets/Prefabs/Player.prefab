@@ -370,6 +370,9 @@ MonoBehaviour:
   spikeLayer:
     serializedVersion: 2
     m_Bits: 1024
+  exitDoorLayer:
+    serializedVersion: 2
+    m_Bits: 8192
   ladderFilter:
     useTriggers: 1
     useLayerMask: 1

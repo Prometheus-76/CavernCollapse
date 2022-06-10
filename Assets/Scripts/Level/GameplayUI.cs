@@ -45,7 +45,7 @@ public class GameplayUI : MonoBehaviour
         }
 
         // Update stage details
-        stageNumberText.text = "Stage " + (currentAttempt.stagesCleared + 1) + " of 5";
+        stageNumberText.text = "Stage " + (currentStageNumber) + " of 5";
         stageNameText.text = currentStageName;
 
         // Update coin counter
@@ -95,7 +95,7 @@ public class GameplayUI : MonoBehaviour
     public void StageCompleteUI()
     {
         completedStageText.text = "STAGE: " + currentAttempt.stagesCleared + " - " + currentStageName + " [ " + gameplayConfiguration.difficulty.ToString().ToUpper() + " ]";
-        completedCompletionText.text = "COMPLETION: " + Mathf.RoundToInt(currentAttempt.coinsCollectedStage / (float)totalCoins) + "%";
+        completedCompletionText.text = "COMPLETION: " + (Mathf.RoundToInt((currentAttempt.coinsCollectedStage / (float)totalCoins) * 100f) + "%");
         completedHitsText.text = "HITS TAKEN: " + ((currentAttempt.startingHealth - currentAttempt.currentHealth) > 0 ? (currentAttempt.startingHealth - currentAttempt.currentHealth).ToString() : "Flawless");
         completedScoreText.text = "STAGE SCORE: +" + currentAttempt.stageScore.ToString("N0");
 

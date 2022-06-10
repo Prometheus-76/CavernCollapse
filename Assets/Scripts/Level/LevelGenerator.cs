@@ -458,7 +458,7 @@ public class LevelGenerator : MonoBehaviour
         if (MusicPlayer.GetInstance() != null)
             MusicPlayer.GetInstance().CrossFade(currentAttempt.stagesCleared + 2);
 
-        levelManager.StageBegin(4, totalCoins);
+        levelManager.StageBegin();
     }
 
     // Responsible for calling coroutines sequentially to generate the level asynchronously
@@ -2969,6 +2969,8 @@ public class LevelGenerator : MonoBehaviour
         // Set the density of the particle system based on the stage volume
         main.maxParticles = Mathf.CeilToInt((totalSize.x * totalSize.y) / 8f);
         emission.rateOverTime = Mathf.CeilToInt(main.maxParticles / 8f);
+
+        levelManager.totalCoinsInStage = totalCoins;
 
         yield return null;
         CompleteStep();
