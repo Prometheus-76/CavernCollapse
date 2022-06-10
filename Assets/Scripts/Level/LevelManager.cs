@@ -26,8 +26,18 @@ public class LevelManager : MonoBehaviour
     {
         if (levelGenerated)
         {
-            remainingTime -= Time.deltaTime;
-            remainingTime = Mathf.Max(remainingTime, 0f);
+            if (remainingTime > 0f && currentAttempt.currentHealth > 0)
+            {
+                remainingTime -= Time.deltaTime;
+                remainingTime = Mathf.Max(remainingTime, 0f);
+
+                // When time runs out
+                if (remainingTime <= 0f)
+                {
+                    PlayerController playerController = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
+                    playerController.Die();
+                }
+            }
 
             gameplayUI.currentStageNumber = currentStageNumber;
             gameplayUI.totalCoins = totalCoins;
@@ -59,5 +69,10 @@ public class LevelManager : MonoBehaviour
     {
         // Add the coin to the collected count
         currentAttempt.coinsCollectedStage++;
+    }
+
+    public void GameOver()
+    {
+
     }
 }

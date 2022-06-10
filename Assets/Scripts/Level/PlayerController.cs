@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    #region Variables 
+
     [Header("Horizontal Movement")]
     public float acceleration;
     public float deceleration;
@@ -38,12 +40,20 @@ public class PlayerController : MonoBehaviour
     public Sprite fallSprite;
     public Sprite blinkSprite;
 
+    [Header("Camera")]
+    public float cameraPanAmount;
+    public float cameraPanDelay;
+    public float cameraPanSpeed;
+
+    [Header("Respawning")]
+    public float respawnInputDelay;
+    public PhysicsMaterial2D bounceMaterial;
+
     [Header("Configuration")]
     public LayerMask groundLayers;
     public LayerMask platformLayer;
     public LayerMask spikeLayer;
     public ContactFilter2D ladderFilter;
-    public AttemptStats currentAttempt;
     public Vector2 playerSize;
     
     // Timers
@@ -52,6 +62,8 @@ public class PlayerController : MonoBehaviour
     private float dashCooldownTimer;
     private float jumpCoyoteTimer;
     private float jumpBufferTimer;
+    private float cameraPanDelayTimer;
+    private float respawnInputDelayTimer;
 
     // States
     private bool isGrounded;
@@ -60,7 +72,10 @@ public class PlayerController : MonoBehaviour
     private bool dashAvailable;
     private bool isConnectedToLadder;
     private float ladderX;
+
+    // Info
     private Vector3 respawnCheckpoint;
+    private Vector3 cameraTargetOffset;
 
     // Inputs
     private Vector2 movementInput;
@@ -82,6 +97,9 @@ public class PlayerController : MonoBehaviour
     private CameraController cameraController;
     private FallthroughPlatform fallthroughPlatforms;
     private InputMaster inputMaster;
+    public AttemptStats currentAttempt;
+
+    #endregion
 
     // Start is called before the first frame update
     void Awake()
@@ -89,7 +107,7 @@ public class PlayerController : MonoBehaviour
         inputMaster = new InputMaster();
 
         // Make the camera follow the player
-        cameraController = Camera.main.GetComponent<CameraController>();
+        cameraController = GameObject.FindGameObjectWithTag("CameraHolder").GetComponent<CameraController>();
         cameraController.SetTarget(cameraTarget);
 
         fallthroughPlatforms = GameObject.FindWithTag("Platforms").GetComponent<FallthroughPlatform>();
@@ -100,6 +118,8 @@ public class PlayerController : MonoBehaviour
 
         jumpBufferTimer = 0f;
         jumpCoyoteTimer = 0f;
+
+        cameraTargetOffset = cameraTarget.localPosition;
 
         #region Set Collider Shape
 
@@ -128,24 +148,43 @@ public class PlayerController : MonoBehaviour
     {
         #region Input
 
-        // WASD movement
-        movementInput.x = inputMaster.Player.Horizontal.ReadValue<float>();
-        movementInput.y = inputMaster.Player.Vertical.ReadValue<float>();
-        if (movementInput.x < 0f) facingRight = false;
-        if (movementInput.x > 0f) facingRight = true;
+        if (respawnInputDelayTimer <= 0f && currentAttempt.currentHealth > 0)
+        {
+            // WASD movement
+            movementInput.x = inputMaster.Player.Horizontal.ReadValue<float>();
+            movementInput.y = inputMaster.Player.Vertical.ReadValue<float>();
+            if (movementInput.x < 0f) facingRight = false;
+            if (movementInput.x > 0f) facingRight = true;
 
-        // Jumping
-        jumpHeld = inputMaster.Player.Jump.ReadValue<float>() != 0f;
-        jumpQueued = inputMaster.Player.Jump.triggered ? true : jumpQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
-        if (jumpQueued) jumpBufferTimer = jumpBufferDuration; // Set jump buffer briefly as we just queued a new input
+            // Jumping
+            jumpHeld = inputMaster.Player.Jump.ReadValue<float>() != 0f;
+            jumpQueued = inputMaster.Player.Jump.triggered ? true : jumpQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
+            if (jumpQueued) jumpBufferTimer = jumpBufferDuration; // Set jump buffer briefly as we just queued a new input
 
-        // Dashing
-        dashQueued = inputMaster.Player.Dash.triggered ? true : dashQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
+            // Dashing
+            dashQueued = inputMaster.Player.Dash.triggered ? true : dashQueued; // True on the Update frame the button is pressed, false when triggered or at the end of FixedUpdate
 
-        // Climbing
-        climbHeldAndValid = (lastClimbValue <= 0.3f && inputMaster.Player.Climb.ReadValue<float>() > 0.3f) ? true : climbHeldAndValid; // True on the Update frame the button is pressed, false when released or after dashing/jumping from a ladder
-        if (inputMaster.Player.Climb.ReadValue<float>() <= 0.3f) climbHeldAndValid = false; // False if released
-        lastClimbValue = inputMaster.Player.Climb.ReadValue<float>();
+            // Climbing
+            climbHeldAndValid = (lastClimbValue <= 0.3f && inputMaster.Player.Climb.ReadValue<float>() > 0.3f) ? true : climbHeldAndValid; // True on the Update frame the button is pressed, false when released or after dashing/jumping from a ladder
+            if (inputMaster.Player.Climb.ReadValue<float>() <= 0.3f) climbHeldAndValid = false; // False if released
+            lastClimbValue = inputMaster.Player.Climb.ReadValue<float>();
+        }
+        else
+        {
+            // Inputs must be on cooldown due to respawning
+
+            // Reduce timer
+            respawnInputDelayTimer -= Time.deltaTime;
+            respawnInputDelayTimer = Mathf.Max(respawnInputDelayTimer, 0f);
+
+            // Set inputs to default states
+            movementInput = Vector2.zero;
+            jumpHeld = false;
+            jumpQueued = false;
+            dashQueued = false;
+            climbHeldAndValid = false;
+            lastClimbValue = 0f;
+        }
 
         #endregion
 
@@ -155,11 +194,44 @@ public class PlayerController : MonoBehaviour
         playerSprite.flipX = (facingRight == false);
 
         // Determine which sprite to show
-        if (dashSuspenseTimer > 0f) playerSprite.sprite = blinkSprite; // Dashing
+        if (currentAttempt.currentHealth <= 0) playerSprite.sprite = blinkSprite; // Dead
+        else if (dashSuspenseTimer > 0f) playerSprite.sprite = blinkSprite; // Dashing
         else if (isConnectedToLadder) playerSprite.sprite = blinkSprite; // Climbing
         else if (playerRigidbody.velocity.y > 0.1f) playerSprite.sprite = jumpSprite; // Moving upwards (jump/dash)
         else if (playerRigidbody.velocity.y < -2f) playerSprite.sprite = fallSprite; // Moving downwards (fall/dash)
         else playerSprite.sprite = walkSprite; // Running
+
+        #endregion
+
+        #region Camera Vertical Panning
+
+        if (isGrounded && movementInput.y != 0f && movementInput.x == 0f)
+        {
+            // When grounded and holding up or down only
+            cameraPanDelayTimer -= Time.deltaTime;
+            cameraPanDelayTimer = Mathf.Max(cameraPanDelayTimer, 0f);
+
+            // After the delay has completed, pan the camera target up/down
+            if (cameraPanDelayTimer <= 0f)
+            {
+                Vector3 target = cameraTargetOffset + (movementInput.y * cameraPanAmount * Vector3.up);
+                Vector3 from = cameraTarget.localPosition;
+                Vector3 newPos = Vector3.Lerp(from, target, cameraPanSpeed * Time.deltaTime);
+
+                cameraTarget.localPosition = newPos;
+            }
+        }
+        else
+        {
+            // Reset delay timer
+            cameraPanDelayTimer = cameraPanDelay;
+
+            // Revert to standard position
+            Vector3 from = cameraTarget.localPosition;
+            Vector3 newPos = Vector3.Lerp(from, cameraTargetOffset, cameraPanSpeed * Time.deltaTime);
+
+            cameraTarget.localPosition = newPos;
+        }
 
         #endregion
     }
@@ -361,7 +433,7 @@ public class PlayerController : MonoBehaviour
         #region Horizontal Movement
 
         // The player is allowed to run when not dashing and not climbing
-        if (dashSuspenseTimer <= 0f && isConnectedToLadder == false)
+        if (dashSuspenseTimer <= 0f && isConnectedToLadder == false && currentAttempt.currentHealth > 0)
         {
             // How fast the player should be moving after fully accelerating
             Vector3 targetVelocity = movementInput.x * Vector3.right * runSpeed;
@@ -553,12 +625,28 @@ public class PlayerController : MonoBehaviour
         // For the rest of this FixedUpdate, pretend we're not on the ground
         isGrounded = false;
         isStandingOnPlatform = false;
+
+        // Shake the screen
+        cameraController.AddTrauma(0.5f);
+        cameraController.SetShakeDirection(direction);
     }
 
     // When the player is out of lives
-    void Die()
+    public void Die()
     {
-        Debug.Log("Game Over!");
+        // Ensure lives are set to 0
+        currentAttempt.currentHealth = 0;
+
+        // Shake the screen
+        cameraController.AddTrauma(1f);
+        cameraController.SetShakeDirection(Vector2.zero);
+
+        // Bounce around the screen
+        playerRigidbody.sharedMaterial = bounceMaterial;
+        playerCollider.sharedMaterial = bounceMaterial;
+        Vector2 randomDirection = new Vector2(Random.Range(0.4f, 0.8f) * (Random.Range(0, 2) == 0 ? 1 : -1), Random.Range(0.5f, 1f));
+        randomDirection.Normalize();
+        playerRigidbody.AddForce(randomDirection * 40f, ForceMode2D.Impulse);
     }
 
     // When the player has extra lives to try again
@@ -569,6 +657,13 @@ public class PlayerController : MonoBehaviour
         playerRigidbody.AddForce(-playerRigidbody.velocity, ForceMode2D.Impulse);
 
         playerTrail.Clear();
+
+        // Start a short timer until the player can control their inputs again
+        respawnInputDelayTimer = respawnInputDelay;
+
+        // Shake the screen
+        cameraController.AddTrauma(1f);
+        cameraController.SetShakeDirection(Vector2.zero);
     }
 
     #region Input System

@@ -356,6 +356,11 @@ MonoBehaviour:
   jumpSprite: {fileID: 252201331041706603, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
   fallSprite: {fileID: -2210027692027135063, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
   blinkSprite: {fileID: -3233984137963000349, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
+  cameraPanAmount: 7
+  cameraPanDelay: 0.5
+  cameraPanSpeed: 10
+  respawnInputDelay: 0.4
+  bounceMaterial: {fileID: 6200000, guid: 81debb23fdd664c4abbebfbf184bc523, type: 2}
   groundLayers:
     serializedVersion: 2
     m_Bits: 192
@@ -379,7 +384,6 @@ MonoBehaviour:
     maxDepth: 0
     minNormalAngle: 0
     maxNormalAngle: 0
-  currentAttempt: {fileID: 11400000, guid: 4362856ebe645d845893971388556b43, type: 2}
   playerSize: {x: 0.5, y: 0.5}
   playerTransform: {fileID: 8221834107138435568}
   playerRigidbody: {fileID: 8221834107138435573}
@@ -387,6 +391,7 @@ MonoBehaviour:
   playerSprite: {fileID: 4324473466806582936}
   cameraTarget: {fileID: 8221834107076095284}
   playerTrail: {fileID: 62749924385300367}
+  currentAttempt: {fileID: 11400000, guid: 4362856ebe645d845893971388556b43, type: 2}
 --- !u!330 &-7248388658191451664
 ParticleSystemForceField:
   m_ObjectHideFlags: 0

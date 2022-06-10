@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Platforms
   - Level
+  - CameraHolder
   layers:
   - Default
   - TransparentFX
