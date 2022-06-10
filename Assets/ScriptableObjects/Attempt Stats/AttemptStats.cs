@@ -6,7 +6,9 @@ using UnityEngine;
 public class AttemptStats : ScriptableObject
 {
     [Header("Stage")]
+    public int startingHealth = 0;
     public int currentHealth = 0;
+    public int stageScore = 0;
     public int coinsCollectedStage = 0;
 
     [Header("Attempt")]
@@ -18,6 +20,7 @@ public class AttemptStats : ScriptableObject
 
     public void NewAttempt()
     {
+        startingHealth = 4;
         currentHealth = 4;
         coinsCollectedStage = 0;
 
@@ -30,6 +33,8 @@ public class AttemptStats : ScriptableObject
 
     public void NewStage()
     {
+        stageScore = 0;
+        startingHealth = currentHealth;
         coinsCollectedStage = 0;
     }
 }

@@ -6,6 +6,7 @@ using TMPro;
 
 public class GameplayUI : MonoBehaviour
 {
+    [Header("Gameplay")]
     [SerializeField] private Image[] heartSprites;
     [SerializeField] private TextMeshProUGUI stageNumberText;
     [SerializeField] private TextMeshProUGUI stageNameText;
@@ -16,6 +17,14 @@ public class GameplayUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI gameplayConfigurationText;
     [SerializeField] private TextMeshProUGUI returnToMenuText;
 
+    [Header("Completion")]
+    [SerializeField] private GameObject stageCompleteUI;
+    [SerializeField] private TextMeshProUGUI completedStageText;
+    [SerializeField] private TextMeshProUGUI completedCompletionText;
+    [SerializeField] private TextMeshProUGUI completedHitsText;
+    [SerializeField] private TextMeshProUGUI completedScoreText;
+
+    [Header("Other Data")]
     public AttemptStats currentAttempt;
     public GameplayConfiguration gameplayConfiguration;
 
@@ -81,5 +90,15 @@ public class GameplayUI : MonoBehaviour
         // Update return to menu text
         returnToMenuText.enabled = (returningTimer < 2f);
         returnToMenuText.text = "returning to menu... [ " + returningTimer.ToString("F1") + "s ]";
+    }
+
+    public void StageCompleteUI()
+    {
+        completedStageText.text = "STAGE: " + currentAttempt.stagesCleared + " - " + currentStageName + " [ " + gameplayConfiguration.difficulty.ToString().ToUpper() + " ]";
+        completedCompletionText.text = "COMPLETION: " + Mathf.RoundToInt(currentAttempt.coinsCollectedStage / (float)totalCoins) + "%";
+        completedHitsText.text = "HITS TAKEN: " + ((currentAttempt.startingHealth - currentAttempt.currentHealth) > 0 ? (currentAttempt.startingHealth - currentAttempt.currentHealth).ToString() : "Flawless");
+        completedScoreText.text = "STAGE SCORE: +" + currentAttempt.stageScore.ToString("N0");
+
+        stageCompleteUI.SetActive(true);
     }
 }

@@ -22,6 +22,7 @@ public class LevelManager : MonoBehaviour
 
     public GameplayUI gameplayUI;
     public AttemptStats currentAttempt;
+    public GameplayConfiguration gameplayConfiguration;
 
     private InputMaster inputMaster;
 
@@ -123,6 +124,46 @@ public class LevelManager : MonoBehaviour
 
         if (currentHealth >= startingHealth) currentAttempt.flawlessStages += 1;
         if (coinsCollected >= totalCoins) currentAttempt.fullCoinStages += 1;
+
+        currentAttempt.startingHealth = startingHealth;
+
+        #region Score Calculation
+
+        // Score calculated as sum of the following:
+        // 1. coinsCollected * 100
+        // 2. secondsRemaining * 75
+        // 3. if stage is flawless, 15000 * currentHealth
+        // 4. if coins collected, 500 * coinsCollected
+        // ...Then multiplied by stage number and difficulty multiplier
+
+        // Multiplier based on difficulty
+        int difficultyMultiplier = 0;
+        switch (gameplayConfiguration.difficulty)
+        {
+            case GameplayConfiguration.DifficultyOptions.beginner:
+                difficultyMultiplier = 1;
+                break;
+            case GameplayConfiguration.DifficultyOptions.standard:
+                difficultyMultiplier = 2;
+                break;
+            case GameplayConfiguration.DifficultyOptions.expert:
+                difficultyMultiplier = 3;
+                break;
+        }
+
+        int coinScore = 100 * coinsCollected;
+        int timeScore = 75 * Mathf.FloorToInt(remainingTime);
+        int flawlessScore = (currentHealth >= startingHealth ? 15000 * currentHealth : 0);
+        int fullCoinScore = (coinsCollected >= totalCoins ? 500 * coinsCollected : 0);
+
+        int stageScore = coinScore + timeScore + flawlessScore + fullCoinScore;
+        stageScore *= difficultyMultiplier * currentAttempt.stagesCleared;
+
+        currentAttempt.stageScore = stageScore;
+
+        #endregion
+
+        gameplayUI.StageCompleteUI();
     }
 
     public void CollectCoin()
