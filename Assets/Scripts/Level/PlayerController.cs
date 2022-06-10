@@ -292,7 +292,7 @@ public class PlayerController : MonoBehaviour
             int platformHits = 0;
             Vector2 rayOrigin = Vector2.zero;
             rayOrigin.y = playerTransform.position.y + 0.01f;
-            float rayLength = 0.1f;
+            float rayLength = 0.05f;
         
             // Raycast down from the bottom edge of the player hitbox
             for (int rayNumber = 0; rayNumber <= 8; rayNumber++)
