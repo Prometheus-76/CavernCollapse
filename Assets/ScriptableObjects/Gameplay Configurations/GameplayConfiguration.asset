@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: GameplayConfiguration
   m_EditorClassIdentifier: 
   dataset: 0
-  difficulty: 0
+  difficulty: 2

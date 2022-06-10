@@ -1091,7 +1091,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.9450981, g: 0.93725497, b: 0.8470589, a: 1}
+  m_Color: {r: 0.30588236, g: 0.2784314, b: 0.30980393, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1182,8 +1182,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4292538610
-  m_fontColor: {r: 0.9490196, g: 0.9411765, b: 0.85490197, a: 1}
+    rgba: 4283385678
+  m_fontColor: {r: 0.30588236, g: 0.2784314, b: 0.30980393, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2938,7 +2938,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameSettings: {fileID: 11400000, guid: d28882eb795bfd8439c36533315c578c, type: 2}
-  postProcessing: {fileID: 0}
   audioMixer: {fileID: 24100000, guid: 0c3d3c540e0d5db4c934c5be1649df63, type: 2}
   loadSettingsOnStart: 1
 --- !u!4 &1160368875
@@ -3005,7 +3004,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.9450981, g: 0.93725497, b: 0.8470589, a: 1}
+  m_Color: {r: 0.30588236, g: 0.2784314, b: 0.30980393, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3932,7 +3931,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.9450981, g: 0.93725497, b: 0.8470589, a: 1}
+  m_Color: {r: 0.30588236, g: 0.2784314, b: 0.30980393, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
