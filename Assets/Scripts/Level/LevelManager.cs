@@ -17,7 +17,10 @@ public class LevelManager : MonoBehaviour
     private bool levelGenerated = false;
     private float returnToMenuTimer;
     private int currentStageNumber;
+    private bool pauseTimer;
 
+    public AudioSource audioSource;
+    public KeepWhilePlaying keepWhilePlaying;
     public GameplayUI gameplayUI;
     public AttemptStats currentAttempt;
     public GameplayConfiguration gameplayConfiguration;
@@ -33,13 +36,14 @@ public class LevelManager : MonoBehaviour
     {
         levelGenerated = false;
         returnToMenuTimer = 2f;
+        pauseTimer = false;
     }
 
     public void Update()
     {
         if (levelGenerated)
         {
-            if (remainingTime > 0f && currentAttempt.currentHealth > 0)
+            if (remainingTime > 0f && currentAttempt.currentHealth > 0 && pauseTimer == false)
             {
                 remainingTime -= Time.deltaTime;
                 remainingTime = Mathf.Max(remainingTime, 0f);
@@ -179,10 +183,19 @@ public class LevelManager : MonoBehaviour
         // Fade out music when stage completed
         if (MusicPlayer.GetInstance() != null)
             MusicPlayer.GetInstance().CrossFade(0);
+
+        pauseTimer = true;
     }
 
     public void NextStage()
     {
+        // Play button sound
+        audioSource.Play();
+        keepWhilePlaying.canBeDestroyed = true;
+
+        if (currentStageNumber >= 5)
+            Debug.Log("Run completed");
+
         // Reloading this scene is the same as progressing to the next level, at least for now
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }

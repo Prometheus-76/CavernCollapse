@@ -66,21 +66,21 @@ public class GameplayUI : MonoBehaviour
 
         // Update current song text
         string songName = "";
-        switch (currentAttempt.stagesCleared)
+        switch (currentStageNumber)
         {
-            case 0:
+            case 1:
                 songName = "soma";
                 break;
-            case 1:
+            case 2:
                 songName = "axil";
                 break;
-            case 2:
+            case 3:
                 songName = "pluvium";
                 break;
-            case 3:
+            case 4:
                 songName = "terra";
                 break;
-            case 4:
+            case 5:
                 songName = "nodes";
                 break;
         }

@@ -347,8 +347,8 @@ MonoBehaviour:
   dashCooldown: 0.3
   gravityStrength: 50
   terminalVelocity: 30
-  climbUpSpeed: 5
-  climbDownSpeed: 8
+  climbUpSpeed: 7
+  climbDownSpeed: 10
   ladderBounceForce: 15
   jumpCoyoteDuration: 0.15
   jumpBufferDuration: 0.2
@@ -357,8 +357,8 @@ MonoBehaviour:
   fallSprite: {fileID: -2210027692027135063, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
   blinkSprite: {fileID: -3233984137963000349, guid: 5c5d4ea255777174098cfe37c5db4986, type: 3}
   cameraPanAmount: 7
-  cameraPanDelay: 0.5
-  cameraPanSpeed: 10
+  cameraPanDelay: 0.3
+  cameraPanSpeed: 20
   respawnInputDelay: 0.4
   bounceMaterial: {fileID: 6200000, guid: 81debb23fdd664c4abbebfbf184bc523, type: 2}
   groundLayers:
