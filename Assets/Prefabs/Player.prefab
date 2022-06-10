@@ -469,7 +469,7 @@ MonoBehaviour:
   airMultiplier: 0.4
   runSpeed: 7
   minJumpHeight: 1
-  maxJumpHeight: 2.2
+  maxJumpHeight: 2.5
   dashForce: 15
   dashSuspenseDuration: 0.15
   dashCooldown: 0.3

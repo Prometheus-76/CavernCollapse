@@ -582,7 +582,7 @@ public class PlayerController : MonoBehaviour
 
         #region Stage Exit
 
-        if (isGrounded && currentAttempt.currentHealth > 0 && interactQueued)
+        if (isGrounded && currentAttempt.currentHealth > 0 && interactQueued && movementInput.x == 0f)
         {
             Vector2 boxCentre = playerTransform.position;
             boxCentre.y += playerSize.y / 2f;
