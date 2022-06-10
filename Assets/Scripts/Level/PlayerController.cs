@@ -646,7 +646,7 @@ public class PlayerController : MonoBehaviour
         playerCollider.sharedMaterial = bounceMaterial;
         Vector2 randomDirection = new Vector2(Random.Range(0.4f, 0.8f) * (Random.Range(0, 2) == 0 ? 1 : -1), Random.Range(0.5f, 1f));
         randomDirection.Normalize();
-        playerRigidbody.AddForce(randomDirection * 40f, ForceMode2D.Impulse);
+        playerRigidbody.AddForce(randomDirection * 30f, ForceMode2D.Impulse);
     }
 
     // When the player has extra lives to try again

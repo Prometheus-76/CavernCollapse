@@ -14031,6 +14031,10 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 8300000, guid: 00da2aa7c066ffc458418f5f32acef22, type: 3}
   - {fileID: 8300000, guid: 3e9a637f84812234a9756665929e102a, type: 3}
+  - {fileID: 8300000, guid: a8e5d0e16bc6f5f42869dedc546a9b3b, type: 3}
+  - {fileID: 8300000, guid: 960a90cc140995f4d8b3b910533c1325, type: 3}
+  - {fileID: 8300000, guid: cef3d060a016a9e49863beb0579e5308, type: 3}
+  - {fileID: 8300000, guid: a31c74bdb6e24d84aaa9adf44090f72d, type: 3}
   audioSourceA: {fileID: 1622198080}
   audioSourceB: {fileID: 1622198083}
   crossfadeTime: 3

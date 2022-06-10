@@ -14,6 +14,7 @@ public class GameplayUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI timeRemainingText;
     [SerializeField] private TextMeshProUGUI songText;
     [SerializeField] private TextMeshProUGUI gameplayConfigurationText;
+    [SerializeField] private TextMeshProUGUI returnToMenuText;
 
     public AttemptStats currentAttempt;
     public GameplayConfiguration gameplayConfiguration;
@@ -23,6 +24,7 @@ public class GameplayUI : MonoBehaviour
     [HideInInspector] public int totalCoins;
     [HideInInspector] public int currentScore;
     [HideInInspector] public float remainingTime;
+    [HideInInspector] public float returningTimer;
 
     // Update is called once per frame
     void Update()
@@ -75,5 +77,9 @@ public class GameplayUI : MonoBehaviour
         }
 
         songText.text = "song: " + songName + " - magnofon";
+
+        // Update return to menu text
+        returnToMenuText.enabled = (returningTimer < 2f);
+        returnToMenuText.text = "returning to menu... [ " + returningTimer.ToString("F1") + "s ]";
     }
 }

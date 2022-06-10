@@ -130,6 +130,7 @@ public class LevelGenerator : MonoBehaviour
     public LevelManager levelManager;
     public ParticleSystem ambientParticles;
     public Transform stageMask;
+    public AttemptStats currentAttempt;
 
     #region Private
 
@@ -455,7 +456,7 @@ public class LevelGenerator : MonoBehaviour
     {
         // Play level music when generation is completed
         if (MusicPlayer.GetInstance() != null)
-            MusicPlayer.GetInstance().CrossFade(2);
+            MusicPlayer.GetInstance().CrossFade(currentAttempt.stagesCleared + 2);
 
         levelManager.StageBegin(4, totalCoins);
     }

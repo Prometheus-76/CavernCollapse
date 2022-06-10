@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef0b4bbdefc579742a157a34e7194b07, type: 3}
   m_Name: CurrentAttempt
   m_EditorClassIdentifier: 
-  currentHealth: 0
-  coinsCollectedStage: 16
+  currentHealth: 4
+  coinsCollectedStage: 0
   stagesCleared: 0
   coinsCollectedTotal: 0
   flawlessStages: 0
