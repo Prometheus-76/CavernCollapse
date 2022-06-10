@@ -16,6 +16,7 @@ public class GameplayUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI songText;
     [SerializeField] private TextMeshProUGUI gameplayConfigurationText;
     [SerializeField] private TextMeshProUGUI returnToMenuText;
+    [SerializeField] private MenuButton proceedButton;
 
     [Header("Completion")]
     [SerializeField] private GameObject stageCompleteUI;
@@ -34,6 +35,11 @@ public class GameplayUI : MonoBehaviour
     [HideInInspector] public int currentScore;
     [HideInInspector] public float remainingTime;
     [HideInInspector] public float returningTimer;
+
+    private void Start()
+    {
+        stageCompleteUI.SetActive(false);
+    }
 
     // Update is called once per frame
     void Update()
@@ -95,9 +101,15 @@ public class GameplayUI : MonoBehaviour
     public void StageCompleteUI()
     {
         completedStageText.text = "STAGE: " + currentAttempt.stagesCleared + " - " + currentStageName + " [ " + gameplayConfiguration.difficulty.ToString().ToUpper() + " ]";
-        completedCompletionText.text = "COMPLETION: " + (Mathf.RoundToInt((currentAttempt.coinsCollectedStage / (float)totalCoins) * 100f) + "%");
+        completedCompletionText.text = "COMPLETION: " + Mathf.RoundToInt((currentAttempt.coinsCollectedStage / (float)totalCoins) * 100f) + "%";
         completedHitsText.text = "HITS TAKEN: " + ((currentAttempt.startingHealth - currentAttempt.currentHealth) > 0 ? (currentAttempt.startingHealth - currentAttempt.currentHealth).ToString() : "Flawless");
         completedScoreText.text = "STAGE SCORE: +" + currentAttempt.stageScore.ToString("N0");
+
+        // Override button text if on the last stage
+        if (currentAttempt.stagesCleared >= 5)
+        {
+            proceedButton.SetDefaultText("Complete Descent");
+        }
 
         stageCompleteUI.SetActive(true);
     }

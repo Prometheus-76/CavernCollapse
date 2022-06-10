@@ -14,13 +14,18 @@ public class LevelManager : MonoBehaviour
     public int collapseTimeStage4;
     public int collapseTimeStage5;
 
+    [Header("Audio")]
+    public AudioClip[] coinSounds;
+    public AudioClip doorEntrySound;
+    public AudioSource soundEffectAudioSource;
+
     private bool levelGenerated = false;
     private float returnToMenuTimer;
     private int currentStageNumber;
     private bool pauseTimer;
 
-    public AudioSource audioSource;
-    public KeepWhilePlaying keepWhilePlaying;
+    public AudioSource buttonAudioSource;
+    public KeepWhilePlaying keepWhilePlayingButton;
     public GameplayUI gameplayUI;
     public AttemptStats currentAttempt;
     public GameplayConfiguration gameplayConfiguration;
@@ -185,25 +190,37 @@ public class LevelManager : MonoBehaviour
             MusicPlayer.GetInstance().CrossFade(0);
 
         pauseTimer = true;
+
+        soundEffectAudioSource.PlayOneShot(doorEntrySound);
     }
 
     public void NextStage()
     {
         // Play button sound
-        audioSource.Play();
-        keepWhilePlaying.canBeDestroyed = true;
+        buttonAudioSource.Play();
+        keepWhilePlayingButton.canBeDestroyed = true;
 
-        if (currentStageNumber >= 5)
-            Debug.Log("Run completed");
+        // Until the final stage, progress to the next one
+        if (currentStageNumber < 5)
+        {
+            // Reloading this scene is the same as progressing to the next level
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+        else
+        {
+            // Show the run completed UI
 
-        // Reloading this scene is the same as progressing to the next level, at least for now
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
     }
 
     public void CollectCoin()
     {
         // Add the coin to the collected count
         currentAttempt.coinsCollectedStage++;
+
+        // Play a coin collection sound
+        int coinSound = Random.Range(0, coinSounds.Length);
+        soundEffectAudioSource.PlayOneShot(coinSounds[coinSound]);
     }
 
     public void GameOver()

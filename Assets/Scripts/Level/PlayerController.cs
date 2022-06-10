@@ -49,6 +49,12 @@ public class PlayerController : MonoBehaviour
     public float respawnInputDelay;
     public PhysicsMaterial2D bounceMaterial;
 
+    [Header("Audio")]
+    public AudioClip jumpSound;
+    public AudioClip dashSound;
+    public AudioClip hitSound;
+    public AudioClip deathSound;
+
     [Header("Configuration")]
     public LayerMask groundLayers;
     public LayerMask platformLayer;
@@ -102,6 +108,7 @@ public class PlayerController : MonoBehaviour
     private InputMaster inputMaster;
     private LevelManager levelManager;
     public AttemptStats currentAttempt;
+    public AudioSource playerAudio;
 
     #endregion
 
@@ -581,7 +588,6 @@ public class PlayerController : MonoBehaviour
             boxCentre.y += playerSize.y / 2f;
 
             // If the player is touching a ladder
-            List<Collider2D> results = new List<Collider2D>();
             if (Physics2D.OverlapBox(boxCentre, playerSize, 0f, exitDoorLayer))
             {
                 // Ensure the player has no velocity
@@ -628,6 +634,8 @@ public class PlayerController : MonoBehaviour
         // Cancel timing windows
         jumpBufferTimer = 0f;
         jumpCoyoteTimer = 0f;
+
+        playerAudio.PlayOneShot(jumpSound);
     }
 
     // Dash in a given direction
@@ -659,6 +667,8 @@ public class PlayerController : MonoBehaviour
 
         // Shake the screen
         cameraController.AddTrauma(0.6f);
+
+        playerAudio.PlayOneShot(dashSound);
     }
 
     // When the player is out of lives
@@ -676,6 +686,8 @@ public class PlayerController : MonoBehaviour
         Vector2 randomDirection = new Vector2(Random.Range(0.4f, 0.8f) * (Random.Range(0, 2) == 0 ? 1 : -1), Random.Range(0.5f, 1f));
         randomDirection.Normalize();
         playerRigidbody.AddForce(randomDirection * 30f, ForceMode2D.Impulse);
+
+        playerAudio.PlayOneShot(deathSound);
     }
 
     // When the player has extra lives to try again
@@ -692,6 +704,8 @@ public class PlayerController : MonoBehaviour
 
         // Shake the screen
         cameraController.AddTrauma(0.9f);
+
+        playerAudio.PlayOneShot(hitSound);
     }
 
     #region Input System
