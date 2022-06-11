@@ -27,6 +27,14 @@ public class GameplayUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI completedHitsText;
     [SerializeField] private TextMeshProUGUI completedScoreText;
 
+    [Header("Game Over")]
+    [SerializeField] private GameObject gameOverUI;
+    [SerializeField] private TextMeshProUGUI gemsCollectedText;
+    [SerializeField] private TextMeshProUGUI runDurationText;
+    [SerializeField] private TextMeshProUGUI finalScoreText;
+    [SerializeField] private TextMeshProUGUI highScoreText;
+    [SerializeField] private TextMeshProUGUI newBestText;
+
     [Header("Other Data")]
     public AttemptStats currentAttempt;
     public GameplayConfiguration gameplayConfiguration;
@@ -41,6 +49,7 @@ public class GameplayUI : MonoBehaviour
     private void Start()
     {
         stageCompleteUI.SetActive(false);
+        gameOverUI.SetActive(false);
     }
 
     // Update is called once per frame
@@ -118,5 +127,24 @@ public class GameplayUI : MonoBehaviour
         hitsHealthText.enabled = (currentAttempt.startingHealth - currentAttempt.currentHealth <= 0);
 
         stageCompleteUI.SetActive(true);
+    }
+
+    public void GameOverUI()
+    {
+        gemsCollectedText.text = "GEMS COLLECTED: " + currentAttempt.coinsCollectedTotal.ToString("N0");
+
+        // Update remaining time
+        int seconds = Mathf.FloorToInt(currentAttempt.totalTime % 60f);
+        seconds = Mathf.Max(0, seconds);
+        int minutes = Mathf.FloorToInt(currentAttempt.totalTime - seconds) / 60;
+        minutes = Mathf.Max(0, minutes);
+        runDurationText.text = "DURATION: " + minutes.ToString("D2") + "m " + seconds.ToString("D2") + "s";
+        finalScoreText.text = "FINAL SCORE: " + currentAttempt.currentScore.ToString("N0");
+        highScoreText.text = "HIGH SCORE: " + Mathf.Max(PlayerPrefs.GetInt("HighScore", 0), currentAttempt.currentScore).ToString("N0");
+
+        // Show new best score
+        newBestText.enabled = (PlayerPrefs.GetInt("HighScore", 0) <= currentAttempt.currentScore);
+
+        gameOverUI.SetActive(true);
     }
 }

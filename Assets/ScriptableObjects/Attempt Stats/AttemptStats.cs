@@ -17,6 +17,7 @@ public class AttemptStats : ScriptableObject
     public int flawlessStages = 0;
     public int fullCoinStages = 0;
     public int currentScore = 0;
+    public int totalTime = 0;
 
     public void NewAttempt()
     {
@@ -30,6 +31,7 @@ public class AttemptStats : ScriptableObject
         flawlessStages = 0;
         fullCoinStages = 0;
         currentScore = 0;
+        totalTime = 0;
     }
 
     public void NewStage()

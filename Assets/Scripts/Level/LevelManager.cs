@@ -23,6 +23,7 @@ public class LevelManager : MonoBehaviour
     private float returnToMenuTimer;
     private int currentStageNumber;
     private bool pauseTimer;
+    private int stageStartingTime;
 
     public AudioSource buttonAudioSource;
     public KeepWhilePlaying keepWhilePlayingButton;
@@ -101,18 +102,23 @@ public class LevelManager : MonoBehaviour
         {
             case 0:
                 remainingTime = collapseTimeStage1;
+                stageStartingTime = collapseTimeStage1;
                 break;
             case 1:
                 remainingTime = collapseTimeStage2;
+                stageStartingTime = collapseTimeStage2;
                 break;
             case 2:
                 remainingTime = collapseTimeStage3;
+                stageStartingTime = collapseTimeStage3;
                 break;
             case 3:
                 remainingTime = collapseTimeStage4;
+                stageStartingTime = collapseTimeStage4;
                 break;
             case 4:
                 remainingTime = collapseTimeStage5;
+                stageStartingTime = collapseTimeStage5;
                 break;
         }
 
@@ -128,6 +134,9 @@ public class LevelManager : MonoBehaviour
 
         if (currentAttempt.currentHealth >= currentAttempt.startingHealth) currentAttempt.flawlessStages += 1;
         if (currentAttempt.coinsCollectedStage >= totalCoinsInStage) currentAttempt.fullCoinStages += 1;
+
+        int timeTaken = stageStartingTime - Mathf.FloorToInt(remainingTime);
+        currentAttempt.totalTime += timeTaken;
 
         #region Score Calculation
 
@@ -213,6 +222,19 @@ public class LevelManager : MonoBehaviour
         }
     }
 
+    public void ReturnHome()
+    {
+        // Play button sound
+        buttonAudioSource.Play();
+        keepWhilePlayingButton.canBeDestroyed = true;
+
+        // Change back to menu music
+        if (MusicPlayer.GetInstance() != null)
+            MusicPlayer.GetInstance().CrossFade(1);
+
+        SceneManager.LoadScene(0);
+    }
+
     public void CollectCoin()
     {
         // Add the coin to the collected count
@@ -223,11 +245,64 @@ public class LevelManager : MonoBehaviour
         soundEffectAudioSource.PlayOneShot(coinSounds[coinSound]);
     }
 
-    public void GameOver()
+    public IEnumerator GameOver()
     {
         // Fade music out on game over
         if (MusicPlayer.GetInstance() != null)
             MusicPlayer.GetInstance().CrossFade(0);
+
+        yield return new WaitForSeconds(3f);
+
+        // Do calculation stuff
+        currentAttempt.coinsCollectedTotal += currentAttempt.coinsCollectedStage;
+
+        int timeTaken = stageStartingTime - Mathf.FloorToInt(remainingTime);
+        currentAttempt.totalTime += timeTaken;
+
+        #region Score Calculation
+
+        // Score calculated as sum of the following:
+        // 1. coinsCollected * 100
+        // 2. secondsRemaining * 75
+        // ...Then multiplied by stage number and difficulty multiplier
+
+        // Multiplier based on difficulty
+        int difficultyMultiplier = 0;
+        switch (gameplayConfiguration.difficulty)
+        {
+            case GameplayConfiguration.DifficultyOptions.beginner:
+                difficultyMultiplier = 1;
+                break;
+            case GameplayConfiguration.DifficultyOptions.standard:
+                difficultyMultiplier = 2;
+                break;
+            case GameplayConfiguration.DifficultyOptions.expert:
+                difficultyMultiplier = 3;
+                break;
+        }
+
+        int coinScore = 100 * currentAttempt.coinsCollectedStage;
+
+        int stageScore = coinScore;
+        stageScore *= difficultyMultiplier * Mathf.Max(currentAttempt.stagesCleared, 1);
+
+        currentAttempt.stageScore = stageScore;
+
+        #endregion
+
+        currentAttempt.currentScore += stageScore;
+
+        pauseTimer = true;
+
+        gameplayUI.GameOverUI();
+
+        // Save new high scores
+        if (currentAttempt.currentScore >= PlayerPrefs.GetInt("HighScore", 0)) PlayerPrefs.SetInt("HighScore", currentAttempt.currentScore);
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        player.SetActive(false);
+
+        yield return null;
     }
 
     #region Input System

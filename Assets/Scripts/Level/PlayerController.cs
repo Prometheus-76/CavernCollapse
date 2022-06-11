@@ -688,6 +688,8 @@ public class PlayerController : MonoBehaviour
         playerRigidbody.AddForce(randomDirection * 30f, ForceMode2D.Impulse);
 
         playerAudio.PlayOneShot(deathSound);
+
+        StartCoroutine(levelManager.GameOver());
     }
 
     // When the player has extra lives to try again
