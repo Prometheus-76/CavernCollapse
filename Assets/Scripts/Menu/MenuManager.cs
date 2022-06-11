@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.IO;
+using TMPro;
 
 // Manages the UI and screen transitions of the main menu
 // Also coordinates calling settings related functions in the SettingsManager for the main menu
@@ -37,6 +38,7 @@ public class MenuManager : MonoBehaviour
     [Header("Gameplay")]
     public GameplayConfiguration gameplayConfiguration;
     public AttemptStats currentAttempt;
+    public TextMeshProUGUI highScoreText;
     private int datasetStyle;
     private int difficulty;
 
@@ -51,6 +53,10 @@ public class MenuManager : MonoBehaviour
         datasetStyle = 0;
         difficulty = 0;
         UpdateGameplayConfiguration();
+
+        int highScore = PlayerPrefs.GetInt("HighScore", 0);
+        if (highScore > 0) highScoreText.text = "HIGH SCORE: " + highScore.ToString("N0");
+        else highScoreText.text = "A NEW ADVENTURE AWAITS...";
     }
 
     #region Menu Navigation

@@ -14,6 +14,7 @@ public class AttemptStats : ScriptableObject
     [Header("Attempt")]
     public int stagesCleared = 0;
     public int coinsCollectedTotal = 0;
+    public int coinsInRunTotal = 0;
     public int flawlessStages = 0;
     public int fullCoinStages = 0;
     public int currentScore = 0;
@@ -28,6 +29,7 @@ public class AttemptStats : ScriptableObject
 
         stagesCleared = 0;
         coinsCollectedTotal = 0;
+        coinsInRunTotal = 0;
         flawlessStages = 0;
         fullCoinStages = 0;
         currentScore = 0;

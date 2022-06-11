@@ -13607,6 +13607,7 @@ MonoBehaviour:
   menuCamera: {fileID: 176220480}
   gameplayConfiguration: {fileID: 11400000, guid: f8a02774c90ec804297f31bdcd35b1ba, type: 2}
   currentAttempt: {fileID: 11400000, guid: 4362856ebe645d845893971388556b43, type: 2}
+  highScoreText: {fileID: 2125791364}
 --- !u!4 &1377044283
 Transform:
   m_ObjectHideFlags: 0
@@ -14757,7 +14758,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: choose how you want to play
+  m_text: CHOOSE YOUR PLAYSTYLE
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1bd226d3ddf21104784f1fa2242b97b9, type: 2}
   m_sharedMaterial: {fileID: 2027933923960231310, guid: 1bd226d3ddf21104784f1fa2242b97b9, type: 2}
@@ -16385,7 +16386,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: a new adventure awaits...
+  m_text: A NEW ADVENTURE AWAITS...
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1bd226d3ddf21104784f1fa2242b97b9, type: 2}
   m_sharedMaterial: {fileID: 2027933923960231310, guid: 1bd226d3ddf21104784f1fa2242b97b9, type: 2}

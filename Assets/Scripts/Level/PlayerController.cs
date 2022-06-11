@@ -60,6 +60,7 @@ public class PlayerController : MonoBehaviour
     public LayerMask platformLayer;
     public LayerMask spikeLayer;
     public LayerMask exitDoorLayer;
+    public LayerMask endingChestLayer;
     public ContactFilter2D ladderFilter;
     public Vector2 playerSize;
     
@@ -93,7 +94,7 @@ public class PlayerController : MonoBehaviour
     private bool climbHeldAndValid;
     private float lastClimbValue;
     private bool interactQueued;
-    private bool interactedWithDoor;
+    private bool interactedWithGoal;
 
     [Header("Components")]
     public Transform playerTransform;
@@ -127,7 +128,7 @@ public class PlayerController : MonoBehaviour
         // Starting state
         facingRight = true;
         dashAvailable = true;
-        interactedWithDoor = false;
+        interactedWithGoal = false;
 
         jumpBufferTimer = 0f;
         jumpCoyoteTimer = 0f;
@@ -161,7 +162,7 @@ public class PlayerController : MonoBehaviour
     {
         #region Input
 
-        if (respawnInputDelayTimer <= 0f && currentAttempt.currentHealth > 0 && interactedWithDoor == false)
+        if (respawnInputDelayTimer <= 0f && currentAttempt.currentHealth > 0 && interactedWithGoal == false)
         {
             // WASD movement
             movementInput.x = inputMaster.Player.Horizontal.ReadValue<float>();
@@ -587,14 +588,35 @@ public class PlayerController : MonoBehaviour
             Vector2 boxCentre = playerTransform.position;
             boxCentre.y += playerSize.y / 2f;
 
-            // If the player is touching a ladder
+            // If the player is touching the end door
             if (Physics2D.OverlapBox(boxCentre, playerSize, 0f, exitDoorLayer))
             {
                 // Ensure the player has no velocity
                 playerRigidbody.AddForce(-playerRigidbody.velocity, ForceMode2D.Impulse);
 
                 levelManager.StageComplete();
-                interactedWithDoor = true;
+                interactedWithGoal = true;
+            }
+        }
+
+        #endregion
+
+        #region Run Completion
+
+        if (isGrounded && currentAttempt.currentHealth > 0 && interactQueued && movementInput.x == 0f)
+        {
+            Vector2 boxCentre = playerTransform.position;
+            boxCentre.y += playerSize.y / 2f;
+
+            // If the player is touching the ending chest
+            if (Physics2D.OverlapBox(boxCentre, playerSize, 0f, endingChestLayer))
+            {
+                // Ensure the player has no velocity
+                playerRigidbody.AddForce(-playerRigidbody.velocity, ForceMode2D.Impulse);
+
+                EndingManager endingManager = GameObject.FindGameObjectWithTag("Level").GetComponent<EndingManager>();
+                StartCoroutine(endingManager.RunComplete());
+                interactedWithGoal = true;
             }
         }
 

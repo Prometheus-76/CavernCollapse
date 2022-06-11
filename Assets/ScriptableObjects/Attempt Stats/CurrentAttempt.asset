@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startingHealth: 4
   currentHealth: 4
-  stageScore: 639750
-  coinsCollectedStage: 88
-  stagesCleared: 5
-  coinsCollectedTotal: 348
-  flawlessStages: 5
-  fullCoinStages: 5
-  currentScore: 1825500
+  stageScore: 411875
+  coinsCollectedStage: 46
+  stagesCleared: 4
+  coinsCollectedTotal: 94
+  coinsInRunTotal: 177
+  flawlessStages: 3
+  fullCoinStages: 0
+  currentScore: 1216625
+  totalTime: 140

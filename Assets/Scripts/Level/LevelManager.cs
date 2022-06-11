@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class LevelManager : MonoBehaviour
@@ -18,6 +19,7 @@ public class LevelManager : MonoBehaviour
     public AudioClip[] coinSounds;
     public AudioClip doorEntrySound;
     public AudioSource soundEffectAudioSource;
+    public AudioSource loopingReturnAudio;
 
     private bool levelGenerated = false;
     private float returnToMenuTimer;
@@ -25,11 +27,13 @@ public class LevelManager : MonoBehaviour
     private bool pauseTimer;
     private int stageStartingTime;
 
+    [Header("Components")]
     public AudioSource buttonAudioSource;
     public KeepWhilePlaying keepWhilePlayingButton;
     public GameplayUI gameplayUI;
     public AttemptStats currentAttempt;
     public GameplayConfiguration gameplayConfiguration;
+    public Image screenOverlayImage;
 
     private InputMaster inputMaster;
 
@@ -71,6 +75,8 @@ public class LevelManager : MonoBehaviour
             {
                 if (inputMaster.Gameplay.ReturnToMenu.ReadValue<float>() != 0f)
                 {
+                    if (loopingReturnAudio.isPlaying == false) loopingReturnAudio.Play();
+
                     // When button is held
                     returnToMenuTimer -= Time.deltaTime;
                     returnToMenuTimer = Mathf.Max(returnToMenuTimer, 0f);
@@ -82,6 +88,7 @@ public class LevelManager : MonoBehaviour
                         if (MusicPlayer.GetInstance() != null)
                             MusicPlayer.GetInstance().CrossFade(1);
 
+                        loopingReturnAudio.Stop();
                         SceneManager.LoadScene(0);
                     }
                 }
@@ -89,6 +96,7 @@ public class LevelManager : MonoBehaviour
                 {
                     // When button is released
                     returnToMenuTimer = 2f;
+                    loopingReturnAudio.Stop();
                 }
             }
 
@@ -137,6 +145,8 @@ public class LevelManager : MonoBehaviour
 
         int timeTaken = stageStartingTime - Mathf.FloorToInt(remainingTime);
         currentAttempt.totalTime += timeTaken;
+
+        currentAttempt.coinsInRunTotal += totalCoinsInStage;
 
         #region Score Calculation
 
@@ -217,8 +227,8 @@ public class LevelManager : MonoBehaviour
         }
         else
         {
-            // Show the run completed UI
-
+            // Go to the run ending scene
+            StartCoroutine(FadeThenTransition());
         }
     }
 
@@ -298,10 +308,29 @@ public class LevelManager : MonoBehaviour
 
         // Save new high scores
         if (currentAttempt.currentScore >= PlayerPrefs.GetInt("HighScore", 0)) PlayerPrefs.SetInt("HighScore", currentAttempt.currentScore);
+        PlayerPrefs.Save();
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         player.SetActive(false);
 
+        yield return null;
+    }
+
+    public IEnumerator FadeThenTransition()
+    {
+        Color panelColour = Color.white;
+        panelColour.a = 0f;
+
+        while (panelColour.a < 1f)
+        {
+            panelColour.a += 0.2f;
+            panelColour.a = Mathf.Min(panelColour.a, 1f);
+            screenOverlayImage.color = panelColour;
+
+            yield return new WaitForSeconds(0.2f);
+        }
+
+        SceneManager.LoadScene(3);
         yield return null;
     }
 
