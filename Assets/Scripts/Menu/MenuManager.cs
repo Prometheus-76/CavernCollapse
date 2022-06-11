@@ -99,6 +99,15 @@ public class MenuManager : MonoBehaviour
         Application.Quit();
     }
 
+    // Opens the gameplay tutorial
+    public void OpenTutorial()
+    {
+        menuAudio.PlaySound(MenuAudio.MenuSounds.Positive);
+
+        // This is a total stopgap right now, but it let me cut down on the time to develop an in-engine tutorial for the gameplay
+        Application.OpenURL(Application.dataPath + "/GameplayTutorial.pdf");
+    }
+
     #endregion  
 
     #region Scene Navigation
