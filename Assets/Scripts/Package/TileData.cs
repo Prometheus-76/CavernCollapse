@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// Darcy Matheson 2022
+
 // Storage format for data that represents the type of tile at a position in the editor
 
 // Every distinct type of tile which can appear in the game

@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson 2022
+
+// Controls the movement and screenshake of the scene camera during gameplay
 public class CameraController : MonoBehaviour
 {
     [Header("Following")]
@@ -26,11 +29,13 @@ public class CameraController : MonoBehaviour
         holderTransform = transform;
     }
 
+    // Set the start position of the camera (kind of irrelevant function)
     public void SetStartPosition(Vector3 startPos)
     {
         holderTransform.position = startPos + offset;
     }
 
+    // Set the following target of the camera
     public void SetTarget(Transform target)
     {
         targetTransform = target;
@@ -63,6 +68,7 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    // Adds some camera shake trauma
     public void AddTrauma(float amount)
     {
         screenshakeTrauma += amount;

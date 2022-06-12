@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson
+
+// Controls an individual gem, and it's collection and magnetism towards the player
 public class CollectableCoin : MonoBehaviour
 {
     public float xScale;

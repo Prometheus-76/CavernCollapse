@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
+// Darcy Matheson 2022
+
+// Generic custom button class, handles the unique "pinching" effect with concatenated chevrons on button click
 public class MenuButton : MonoBehaviour
 {
     private TextMeshProUGUI textComponent;

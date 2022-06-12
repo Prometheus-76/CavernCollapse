@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson 2022
+
+// Used to verify spike-free paths in the level generator
 public class DijkstraPathfinding : MonoBehaviour
 {
     public class DijkstraNode

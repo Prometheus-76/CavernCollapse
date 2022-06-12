@@ -5,9 +5,10 @@ using UnityEngine.SceneManagement;
 using System.IO;
 using TMPro;
 
+// Darcy Matheson 2022
+
 // Manages the UI and screen transitions of the main menu
 // Also coordinates calling settings related functions in the SettingsManager for the main menu
-
 public class MenuManager : MonoBehaviour
 {
     [Header("Menu Screens")]

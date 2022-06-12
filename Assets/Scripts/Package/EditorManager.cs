@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
+// Darcy Matheson 2022
+
 // Interfaces with the user, allowing them to build templates
 // It also handles determining which sprites to show given neighbouring tiles
 public class EditorManager : MonoBehaviour
@@ -497,8 +499,7 @@ public class EditorManager : MonoBehaviour
     {
         // Uses a byte to represent flags of surrounding tiles
         // Ordered left to right, bottom to top
-        TileNeighbours neighbours = new TileNeighbours();
-        neighbours = 0; // Reset all flags
+        TileNeighbours neighbours = 0;
 
         // Loop over neighbouring cells
         int neighbourIndex = 0;

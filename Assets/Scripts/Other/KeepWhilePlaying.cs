@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Keeps an audio source alive while playing
+// Darcy Matheson 2022
 
+// Keeps an audio source alive while playing
 public class KeepWhilePlaying : MonoBehaviour
 {
     public AudioSource audioSource;

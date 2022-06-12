@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef0b4bbdefc579742a157a34e7194b07, type: 3}
   m_Name: CurrentAttempt
   m_EditorClassIdentifier: 
-  startingHealth: 3
-  currentHealth: 3
+  startingHealth: 4
+  currentHealth: 4
   stageScore: 0
   coinsCollectedStage: 0
   stagesCleared: 5
-  coinsCollectedTotal: 130
-  coinsInRunTotal: 262
-  flawlessStages: 4
-  fullCoinStages: 0
-  currentScore: 1568000
-  totalTime: 199
+  coinsCollectedTotal: 190
+  coinsInRunTotal: 322
+  flawlessStages: 5
+  fullCoinStages: 1
+  currentScore: 2054000
+  totalTime: 262

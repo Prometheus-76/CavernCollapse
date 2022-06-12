@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// Darcy Matheson 2022
+
+// Manages all the UI in the main gameplay scene
 public class GameplayUI : MonoBehaviour
 {
     [Header("Gameplay")]

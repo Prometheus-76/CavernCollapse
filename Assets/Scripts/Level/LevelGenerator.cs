@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 
+// Darcy Matheson 2022
+
 // Generates the data of the level and coordinates all the steps required for the process
 public class LevelGenerator : MonoBehaviour
 {
@@ -518,10 +520,12 @@ public class LevelGenerator : MonoBehaviour
                         StartCoroutine(CreateStageName());
                         break;
                     case GenerationStep.LoadDataset:
-                        StartCoroutine(datasetAnalyser.LoadDataset(gameplayConfiguration.dataset, maxTimePerFrame));
+                        datasetAnalyser.LoadDataset(gameplayConfiguration.dataset);
+                        CompleteStep(); // Functions are completed in one frame
                         break;
                     case GenerationStep.ConstructRuleset:
-                        StartCoroutine(datasetAnalyser.ConstructRuleset(maxTimePerFrame));
+                        datasetAnalyser.ConstructRuleset();
+                        CompleteStep(); // Functions are completed in one frame
                         break;
                     case GenerationStep.AssembleRoomSequence:
                         StartCoroutine(AssembleRoomSequence());
@@ -1179,8 +1183,8 @@ public class LevelGenerator : MonoBehaviour
                 // Collapse this position
                 if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
                 {
-                    collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
-                    collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    collapsedType = waveFunctionCollapse.GetTileType(positionToCollapse.x, positionToCollapse.y);
+                    collapsedTileIndex = waveFunctionCollapse.GetTileIndex(positionToCollapse.x, positionToCollapse.y);
                     stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
                     roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
                     PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
@@ -1495,8 +1499,8 @@ public class LevelGenerator : MonoBehaviour
                 // Collapse this position
                 if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
                 {
-                    collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
-                    collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    collapsedType = waveFunctionCollapse.GetTileType(positionToCollapse.x, positionToCollapse.y);
+                    collapsedTileIndex = waveFunctionCollapse.GetTileIndex(positionToCollapse.x, positionToCollapse.y);
                     stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
                     roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
                     PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
@@ -1792,8 +1796,8 @@ public class LevelGenerator : MonoBehaviour
                 // Collapse this position
                 if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
                 {
-                    collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
-                    collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    collapsedType = waveFunctionCollapse.GetTileType(positionToCollapse.x, positionToCollapse.y);
+                    collapsedTileIndex = waveFunctionCollapse.GetTileIndex(positionToCollapse.x, positionToCollapse.y);
                     stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
                     roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
                     PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);
@@ -2188,8 +2192,8 @@ public class LevelGenerator : MonoBehaviour
                 // Collapse this position
                 if (waveFunctionCollapse.CollapseTile(positionToCollapse.x, positionToCollapse.y))
                 {
-                    collapsedType = waveFunctionCollapse.GetCollapsedType(positionToCollapse.x, positionToCollapse.y);
-                    collapsedTileIndex = waveFunctionCollapse.GetCollapsedTileIndex(positionToCollapse.x, positionToCollapse.y);
+                    collapsedType = waveFunctionCollapse.GetTileType(positionToCollapse.x, positionToCollapse.y);
+                    collapsedTileIndex = waveFunctionCollapse.GetTileIndex(positionToCollapse.x, positionToCollapse.y);
                     stagePos = GridToStage(positionToCollapse.x, positionToCollapse.y);
                     roomPos = GridToRoom(positionToCollapse.x, positionToCollapse.y);
                     PlaceTile(stagePos.x, stagePos.y, roomPos.x, roomPos.y, collapsedTileIndex, collapsedType);

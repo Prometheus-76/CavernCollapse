@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Rendering;
+
+// Darcy Matheson 2022
 
 // Fades in from splash screen
-
 public class IntroTransition : MonoBehaviour
 {
     public float transitionTime;

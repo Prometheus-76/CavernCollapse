@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
+// Darcy Matheson 2022
+
+// Manages gameplay elements of the level, as well as sounds
 public class LevelManager : MonoBehaviour
 {
     [HideInInspector] public float remainingTime;
@@ -323,11 +326,11 @@ public class LevelManager : MonoBehaviour
 
         while (panelColour.a < 1f)
         {
-            panelColour.a += 0.2f;
+            panelColour.a += Time.deltaTime;
             panelColour.a = Mathf.Min(panelColour.a, 1f);
             screenOverlayImage.color = panelColour;
 
-            yield return new WaitForSeconds(0.2f);
+            yield return null;
         }
 
         SceneManager.LoadScene(3);

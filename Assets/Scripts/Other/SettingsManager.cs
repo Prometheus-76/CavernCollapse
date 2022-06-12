@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
-// Responsible for saving and loading settings in all scenes
+// Darcy Matheson 2022
 
+// Responsible for saving and loading settings in all scenes
 public class SettingsManager : MonoBehaviour
 {
     [Header("Settings")]
@@ -23,7 +24,7 @@ public class SettingsManager : MonoBehaviour
 
     public void ApplySettings()
     {
-        // Sound
+        // Convert sound to log scale
         float scaledMusic = (gameSettings.musicVolume > 0) ? Mathf.Log10(Mathf.Clamp(gameSettings.musicVolume / 10f, 0.001f, 1f)) * 40f : -80f;
         audioMixer.SetFloat("MusicVolume", scaledMusic);
 

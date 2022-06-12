@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// Darcy Matheson 2022
+
+// Manages the UI of the loading screen shown before transitioning into the beginning of a stage
 public class LoadingScreen : MonoBehaviour
 {
     [Header("Configuration")]

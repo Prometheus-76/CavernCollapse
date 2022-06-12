@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
+// Darcy Matheson 2022
+
 // Interfaces on behalf of the level editor directly with the files and directories used for storing datasets and samples
 public class FileManager : MonoBehaviour
 {

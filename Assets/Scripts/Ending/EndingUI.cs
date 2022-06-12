@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// Darcy Matheson 2022
+
+// Controls the UI of the ending scene
 public class EndingUI : MonoBehaviour
 {
     public AttemptStats currentAttempt;
@@ -86,6 +89,7 @@ public class EndingUI : MonoBehaviour
         RunCompleteScreen.SetActive(true);
     }
 
+    // Fades the panel away to transition into the final stage
     public IEnumerator FadeFromTransition()
     {
         Color panelColour = Color.white;
@@ -93,11 +97,11 @@ public class EndingUI : MonoBehaviour
 
         while (panelColour.a > 0f)
         {
-            panelColour.a -= 0.2f;
+            panelColour.a -= Time.deltaTime;
             panelColour.a = Mathf.Max(panelColour.a, 0f);
             screenOverlayImage.color = panelColour;
 
-            yield return new WaitForSeconds(0.2f);
+            yield return null;
         }
 
         yield return null;

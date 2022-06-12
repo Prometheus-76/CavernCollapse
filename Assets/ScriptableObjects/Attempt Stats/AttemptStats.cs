@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson 2022
+
+// Stores data about a given attempt, and the current stage of the player
 [CreateAssetMenu(fileName = "Attempt Stats")]
 public class AttemptStats : ScriptableObject
 {

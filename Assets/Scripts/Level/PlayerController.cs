@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson 2022
+
+// Controls every aspect of the player
 public class PlayerController : MonoBehaviour
 {
     #region Variables 

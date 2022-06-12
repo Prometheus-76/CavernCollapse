@@ -2,7 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson 2022
 
+// Manages all the music in the game, persists between scenes. Transitions are crossfaded.
 public class MusicPlayer : MonoBehaviour
 {
     public AudioClip[] songs;
@@ -60,6 +62,7 @@ public class MusicPlayer : MonoBehaviour
         audioSourceB.volume = sourceDominance;
     }
 
+    // Transition to a new song, 0 = no song
     public void CrossFade(int newSong)
     {
         // Flip to other audio source

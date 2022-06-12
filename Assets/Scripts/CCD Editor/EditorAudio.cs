@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson 2022
+
+// Controls audio within the CCD editor scene
 public class EditorAudio : MonoBehaviour
 {
     [Header("Audio Sources")]

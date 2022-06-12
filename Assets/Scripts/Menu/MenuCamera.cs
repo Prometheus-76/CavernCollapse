@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson 2022
+
+// Manages the main cameras "fly upwards" transition into gameplay
 public class MenuCamera : MonoBehaviour
 {
     [Header("Parameters")]

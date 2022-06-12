@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson 2022
+
+// Manages the audio of the main menu scene
 public class MenuAudio : MonoBehaviour
 {
     [Header("Audio Sources")]

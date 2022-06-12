@@ -2,8 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Darcy Matheson 2022
+
+// Manages Wave Function Collapse implementation including internal grid, tile entropies, etc
 public class WaveFunctionCollapse : MonoBehaviour
 {
+    #region Variables
+
     public TileCollection tileCollection;
     public DatasetAnalyser datasetAnalyser;
 
@@ -24,15 +29,7 @@ public class WaveFunctionCollapse : MonoBehaviour
     private Vector2Int gridSize;
     private BlockTypeFlags blockPalette;
 
-    public BlockType GetCollapsedType(int x, int y)
-    {
-        return waveFunctionGrid[x, y].blockType;
-    }
-
-    public int GetCollapsedTileIndex(int x, int y)
-    {
-        return waveFunctionGrid[x, y].tileIndex;
-    }
+    #endregion
 
     // Called from external script to set internal array to correct size
     public void InitialiseWaveFunction(int xSize, int ySize)
@@ -58,6 +55,47 @@ public class WaveFunctionCollapse : MonoBehaviour
         ResetBlockPalette();
     }
 
+    #region Tile Grid Accessors
+
+    // Returns the type of the tile at this position
+    public BlockType GetTileType(int x, int y)
+    {
+        return waveFunctionGrid[x, y].blockType;
+    }
+
+    // Returns the int value of the tile at this position
+    public int GetTileIndex(int x, int y)
+    {
+        return waveFunctionGrid[x, y].tileIndex;
+    }
+
+    // Returns true if the tile is uncollapsed at this position
+    public bool GetTileCollapsable(int x, int y)
+    {
+        return waveFunctionGrid[x, y].canCollapse;
+    }
+
+    // Returns the number of tiles which haven't been collapsed yet
+    public int GetUncollapsedCount()
+    {
+        int count = 0;
+
+        for (int y = 0; y < gridSize.y; y++)
+        {
+            for (int x = 0; x < gridSize.x; x++)
+            {
+                if (waveFunctionGrid[x, y].canCollapse)
+                    count++;
+            }
+        }
+
+        return count;
+    }
+
+    #endregion
+
+    #region Tile Grid Modifiers
+
     // Allows external scripts to predetermine a tile before wave function collapse
     // Also called internal when collapsing tiles automatically
     public void SetTile(int x, int y, BlockType blockType, int tileIndex)
@@ -82,6 +120,10 @@ public class WaveFunctionCollapse : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Entropy Functions
+
     // Recalculates the entropy for a given tile
     public void RecalculateEntropy(int x, int y)
     {
@@ -99,6 +141,7 @@ public class WaveFunctionCollapse : MonoBehaviour
         #region Cache
 
         int ruleWeight = 0;
+        int inverseNeighbour = -1;
         BlockType ruleType = BlockType.None;
         Vector2Int neighbourPosition = -Vector2Int.one;
 
@@ -126,12 +169,14 @@ public class WaveFunctionCollapse : MonoBehaviour
                 if (waveFunctionGrid[neighbourPosition.x, neighbourPosition.y].canCollapse)
                     continue;
 
+                inverseNeighbour = 7 - neighbourIndex;
+                
                 // For every tile superposition for this neighbour
                 for (int tileIndex = 0; tileIndex < tileCollection.tiles.Length; tileIndex++)
                 {
                     // Get the rule data from the perspective of the neighbour tile, inward to the centre tile
-                    ruleWeight = datasetAnalyser.GetWeightFromRuleset(waveFunctionGrid[neighbourPosition.x, neighbourPosition.y].tileIndex, 7 - neighbourIndex, tileIndex);
-                    ruleType = datasetAnalyser.GetTypeFromRuleset(waveFunctionGrid[neighbourPosition.x, neighbourPosition.y].tileIndex, 7 - neighbourIndex, tileIndex);
+                    ruleWeight = datasetAnalyser.GetWeightFromRuleset(waveFunctionGrid[neighbourPosition.x, neighbourPosition.y].tileIndex, inverseNeighbour, tileIndex);
+                    ruleType = datasetAnalyser.GetTypeFromRuleset(waveFunctionGrid[neighbourPosition.x, neighbourPosition.y].tileIndex, inverseNeighbour, tileIndex);
 
                     // Only consider entropy of a set of superpositions
                     if (IsBlockInPalette(ruleType))
@@ -168,7 +213,7 @@ public class WaveFunctionCollapse : MonoBehaviour
         }
     }
 
-    // Finds the uncollapsed, collapsable tile with the smallest number of remaining possibilities
+    // Finds the uncollapsed tile with the smallest number of remaining possibilities
     // Generally speaking, this one should be collapsed sooner rather than later
     public Vector2Int GetLowestEntropyTile(bool allowZero)
     {
@@ -217,6 +262,8 @@ public class WaveFunctionCollapse : MonoBehaviour
         return lowestEntropySpace;
     }
 
+    #endregion
+
     // Collapses a tile at a position, given the palette and weight values
     public bool CollapseTile(int x, int y)
     {
@@ -259,24 +306,7 @@ public class WaveFunctionCollapse : MonoBehaviour
         return false;
     }
 
-    // Returns the number of tiles which haven't been collapsed yet
-    public int GetUncollapsedCount()
-    {
-        int count = 0;
-
-        for (int y = 0; y < gridSize.y; y++)
-        {
-            for (int x = 0; x < gridSize.x; x++)
-            {
-                if (waveFunctionGrid[x, y].canCollapse)
-                    count++;
-            }
-        }
-
-        return count;
-    }
-
-    #region Block Palette
+    #region Block Palette Functions
 
     // Resets the block palette to allow no block types (should then be followed by AddToBlockPalette calls to configure palette as desired)
     public void ResetBlockPalette()

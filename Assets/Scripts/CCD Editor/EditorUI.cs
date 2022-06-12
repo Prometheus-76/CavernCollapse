@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// Darcy Matheson 2022
+
+// Controls the UI of the CCD editor scene
 public class EditorUI : MonoBehaviour
 {
     public EditorManager editorManager;
