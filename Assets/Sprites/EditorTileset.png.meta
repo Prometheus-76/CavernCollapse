@@ -243,7 +243,7 @@ TextureImporter:
       213: 6830264059518240611
     second: EditorTileset_79
   externalObjects: {}
-  serializedVersion: 11
+  serializedVersion: 12
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -260,10 +260,12 @@ TextureImporter:
     externalNormalMap: 0
     heightScale: 0.25
     normalMapFilter: 0
+    flipGreenChannel: 0
   isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
+  ignoreMipmapLimit: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -273,11 +275,11 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
-    wrapW: -1
+    wrapW: 0
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
@@ -302,6 +304,8 @@ TextureImporter:
   textureFormatSet: 0
   ignorePngGamma: 0
   applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 1
   platformSettings:
   - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
@@ -313,6 +317,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
@@ -325,6 +330,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
@@ -337,6 +343,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
@@ -349,6 +356,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
@@ -361,6 +369,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
@@ -373,6 +382,20 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Server
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
@@ -2348,9 +2371,89 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
-  spritePackingTag: 
+    nameFileIdTable:
+      EditorTileset_0: -6781157977658832135
+      EditorTileset_1: -2816447372735978497
+      EditorTileset_10: -8497416513453579722
+      EditorTileset_11: 4676935774553776900
+      EditorTileset_12: -7766731299700248605
+      EditorTileset_13: 7052408603186689201
+      EditorTileset_14: -2181640101540572311
+      EditorTileset_15: 7251522516665630360
+      EditorTileset_16: -3905536645286826491
+      EditorTileset_17: 3247367539671647201
+      EditorTileset_18: 7920661222169743527
+      EditorTileset_19: -2008908195354630455
+      EditorTileset_2: 2421848024374042438
+      EditorTileset_20: 350843626205185863
+      EditorTileset_21: 5023063764206315137
+      EditorTileset_22: -532841823520624756
+      EditorTileset_23: -111041631880683961
+      EditorTileset_24: -5371898345711106944
+      EditorTileset_25: -2675947439694560500
+      EditorTileset_26: 5877645919725332504
+      EditorTileset_27: -1803861775762864316
+      EditorTileset_28: 625440407744683739
+      EditorTileset_29: -6185220023708013724
+      EditorTileset_3: 4452330334708815138
+      EditorTileset_30: -4748949109084470210
+      EditorTileset_31: 9212167230646315879
+      EditorTileset_32: 795676234688978564
+      EditorTileset_33: 8297312093282159510
+      EditorTileset_34: 6510123161124596453
+      EditorTileset_35: -2680381908304843080
+      EditorTileset_36: 4836021313355903372
+      EditorTileset_37: 2034446046804437884
+      EditorTileset_38: -4509565659295388116
+      EditorTileset_39: 1443154737636581031
+      EditorTileset_4: -7055836074447228674
+      EditorTileset_40: 2392422869793468037
+      EditorTileset_41: 7680594188982680129
+      EditorTileset_42: -6102582354684665531
+      EditorTileset_43: -1086101699747333755
+      EditorTileset_44: -6208834345345420405
+      EditorTileset_45: 1484936148698376717
+      EditorTileset_46: 8054893741113967795
+      EditorTileset_47: -8171541250131662269
+      EditorTileset_48: -4238077000090378430
+      EditorTileset_49: 9105104307411114869
+      EditorTileset_5: -8525866977748088661
+      EditorTileset_50: 821090931922028994
+      EditorTileset_51: 4766478091460158665
+      EditorTileset_52: 1801436407856478980
+      EditorTileset_53: 2257828393265867872
+      EditorTileset_54: 7558727247093774657
+      EditorTileset_55: 1873728070962785190
+      EditorTileset_56: -3396548004125235168
+      EditorTileset_57: 4795601677089843129
+      EditorTileset_58: 37745907267974712
+      EditorTileset_59: 1359874506899600033
+      EditorTileset_6: 7189968672320619932
+      EditorTileset_60: 3176100452820424504
+      EditorTileset_61: -3859082131329047579
+      EditorTileset_62: 1666752959297953841
+      EditorTileset_63: 5528734689792430474
+      EditorTileset_64: 9006677423584985683
+      EditorTileset_65: 1547962517358540251
+      EditorTileset_66: 503026087675404148
+      EditorTileset_67: -8615796942396423324
+      EditorTileset_68: -8021341952369685670
+      EditorTileset_69: 943885459745203038
+      EditorTileset_7: 4137527498416841176
+      EditorTileset_70: 4368697415971013200
+      EditorTileset_71: 2113405815913782219
+      EditorTileset_72: -4412443447234112482
+      EditorTileset_73: -4812090279928145362
+      EditorTileset_74: 3054418606050386928
+      EditorTileset_75: 3090642465896596369
+      EditorTileset_76: 718754343690708539
+      EditorTileset_77: -8105713000682256093
+      EditorTileset_78: -6389113148296478673
+      EditorTileset_79: 6830264059518240611
+      EditorTileset_8: 58821748335268086
+      EditorTileset_9: -481081449230354256
+  mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  pSDShowRemoveMatteOption: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 

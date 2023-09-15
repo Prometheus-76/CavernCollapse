@@ -179,7 +179,7 @@ public class MenuManager : MonoBehaviour
     public void IncrementStyle()
     {
         datasetStyle += 1;
-        int datasetCount = Directory.GetDirectories(Application.persistentDataPath + "/SampleData").Length;
+        int datasetCount = Directory.Exists(Application.persistentDataPath + "/SampleData") ? Directory.GetDirectories(Application.persistentDataPath + "/SampleData").Length : 0;
         datasetStyle %= datasetCount + 1;
 
         menuAudio.PlaySound(MenuAudio.MenuSounds.Toggle);

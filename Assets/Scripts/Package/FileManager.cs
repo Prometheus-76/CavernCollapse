@@ -114,7 +114,7 @@ public class FileManager : MonoBehaviour
             // 3. Load the sample within the dataset
 
             currentDataset += 1;
-            int datasetCount = Directory.GetDirectories(Application.persistentDataPath + "/SampleData").Length;
+            int datasetCount = Directory.Exists(Application.persistentDataPath + "/SampleData") ? Directory.GetDirectories(Application.persistentDataPath + "/SampleData").Length : 0;
 
             // Wrap around if above the maximum number of custom datasets
             if (currentDataset > datasetCount)
